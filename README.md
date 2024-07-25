@@ -1,8 +1,8 @@
 # mccn-engine
-# README 
-## _Installing the MCCN and using the demo notebook._
+## Installing the MCCN and using the demo notebook.
 
-Here are some of the main steps to install dependencies so you are able to use the MCCN demo notebook.
+It is recommended to clone this repository into a pyenv managed virtual environment and install its dependencies with Poetry.
+Here are some of the main steps to set up your environment so you are able to use the MCCN demo notebook.
 
 
 ### 1. Install pyenv and pyenv-virtualenv plugin
@@ -17,7 +17,7 @@ Here are some of the main steps to install dependencies so you are able to use t
 
 ### 3. Activate virtualenv
 ``
-pyenv activate mccn
+pyenv activate <env_name>
 ``
 
 - For more info follow this [link](https://github.com/pyenv/pyenv-virtualenv?tab=readme-ov-file#activate-virtualenv)
@@ -32,16 +32,19 @@ pyenv activate mccn
 Note: You might want to add Poetry to the $PATH, copy the $PATH showed when you install Poetry. 
 
 **On MAC**
+
 ``
 vim ~/.zshrc
 ``
+
 Paste the $PATH in the first row of the file and save file
 
 ### 6. Install dependencies 
 
+In the root directory of this repository run the following command:
 
-``cd mccn-engine``
 ``poetry install``
 
 ### 7. Start the Notebook server
+
 ``python -m notebook``
