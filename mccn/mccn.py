@@ -1,8 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing
 from io import BytesIO
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Dict
 
+import numpy as np
 from odc.geo.geobox import GeoBox
 from odc.stac import stac_load
 import pystac_client
@@ -19,15 +20,18 @@ class Mccn:
         # described data into an x-array data structure.
         print(f"Connection to the STAC endpoint at {stac_url}.")
         self.stac_client = pystac_client.Client.open(stac_url)
+        self.lat_count = None
+        self.lon_count = None
+        self.bbox = None
 
     def _query(self, col_id: str) -> Iterator:
         # TODO: Add options for querying.
         query = self.stac_client.search(collections=[col_id])
         return query.items()
 
-    def load(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
-             crs: Optional[str] = None, geobox: Optional[GeoBox] = None,
-             lazy=False) -> xarray.Dataset:
+    def load_stac(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
+                  crs: Optional[str] = None, geobox: Optional[GeoBox] = None,
+                  lazy: bool = False) -> xarray.Dataset:
         # TODO: Expose other parameters to the stac_load function
         print(f"Loading data for {col_id}.")
         pool = ThreadPoolExecutor(max_workers=multiprocessing.cpu_count())
@@ -36,15 +40,22 @@ class Mccn:
             chunks = {'x': 2048, 'y': 2048}
         else:
             chunks = None
-        return stac_load(
+        xx = stac_load(
             self._query(col_id), bands=bands, groupby=groupby, chunks=chunks,  # type: ignore
             progress=tqdm, pool=pool, crs=crs, geobox=geobox
         )
+        self.lat_count = xx.dims["latitude"]
+        self.lon_count = xx.dims["longitude"]
+        min_lon = xx.longitude.min().item()
+        max_lon = xx.longitude.max().item()
+        min_lat = xx.latitude.min().item()
+        max_lat = xx.latitude.max().item()
+        self.bbox = [min_lon, min_lat, max_lon, max_lat]
+        return xx
 
-    @staticmethod
-    def load_public(source: str, bbox: List[float]):
+    def load_public(self, source: str, bbox: List[float], layername=None):
         # Demo basic load function for WCS endpoint. Only DEM is currently supported.
-        response = WcsImporterFactory().get_wcs_importer(source).get_data(bbox)
+        response = WcsImporterFactory().get_wcs_importer(source).get_data(bbox, layername)
         return rioxarray.open_rasterio(BytesIO(response.read()))
 
     @staticmethod
@@ -59,3 +70,32 @@ class Mccn:
             vmin=int(xx_0.min()),
             vmax=int(xx_0.max()),
         )
+
+    def load(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
+             crs: Optional[str] = None, geobox: Optional[GeoBox] = None, lazy: bool = False,
+             source: Optional[Dict[str, str]] = None):
+        xx = self.load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
+                            lazy=lazy)
+        # min_lon = xx.longitude.min().item()
+        # max_lon = xx.longitude.max().item()
+        # min_lat = xx.latitude.min().item()
+        # max_lat = xx.latitude.max().item()
+        for source_name, layer_name in source.items():
+            yy = self.load_public(source=source_name, bbox=self.bbox, layername=layer_name)
+            # yy = yy.astype(np.int32)
+            yy = yy.rename({"x": "longitude", "y": "latitude"})
+            yy = yy.interp(
+                # longitude=np.linspace(min_lon, max_lon, self.lon_count),
+                # latitude=np.linspace(min_lat, max_lat, self.lat_count),
+                longitude=list(xx.longitude.values),
+                latitude=list(xx.latitude.values),
+                method="linear"
+            )
+            # yy = yy.squeeze()
+            yy = yy.to_dataset(name="elevation")
+            yy["spatial_ref"] = xx.spatial_ref
+            yy["time"] = xx.time
+            yy = yy.squeeze(dim="band")
+            xy = xarray.concat([xx, yy], dim="time")
+
+        return xy

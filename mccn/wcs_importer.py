@@ -1,37 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any, List, Optional
 
 from owslib.wcs import WebCoverageService
 
 
 class WcsImporter(ABC):
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, version: Optional[str] = None) -> None:
         self.url = url
         # TODO: It may be poor design to instantiate a WCS in the constructor and use it later.
         # TODO: Consider if preferable to create new instances each time a request is made.
-        self.wcs = WebCoverageService(url, version="1.0.0", timeout=300)
+        self.wcs = WebCoverageService(url, version=version, timeout=300)
 
     @abstractmethod
     def get_metadata(self) -> None:
         pass
-
-    @abstractmethod
-    def get_capabilities(self) -> tuple:
-        pass
-
-    @abstractmethod
-    def get_data(self, bbox: List[float]) -> Any:
-        pass
-
-
-class DemWcsImporter(WcsImporter):
-    def __init__(self) -> None:
-        super().__init__(
-            url="https://services.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/"
-                "MapServer/WCSServer?request=GetCapabilities&service=WCS")
-
-    def get_metadata(self) -> None:
-        raise NotImplementedError
 
     def get_capabilities(self) -> tuple:
         # Get coverages and content dict keys
@@ -54,17 +36,73 @@ class DemWcsImporter(WcsImporter):
 
         return keys, title_list, description_list, bbox_list
 
-    def get_data(self, bbox=List[float]) -> Any:
+    @abstractmethod
+    def get_data(self, bbox: List[float], layername: str) -> Any:
+        pass
+
+
+class DeaWcsImporter(WcsImporter):
+    def __init__(self) -> None:
+        # DEA supports WCS versions 1.0.0, 2.0.0 and 2.1.0. OWS
+        super().__init__(url="https://ows.dea.ga.gov.au", version="1.0.0")
+
+    def get_metadata(self) -> None:
+        raise NotImplementedError
+
+    def get_data(self, bbox: List[float], layername: Optional[str] = None,
+                 width: Optional[int] = None, height: Optional[int] = None) -> Any:
+        response = self.wcs.getCoverage(identifier=layername, bbox=bbox, format="GeoTIFF",
+                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600,
+                                        Styles="tc")
+        return response
+
+
+class DemWcsImporter(WcsImporter):
+    def __init__(self) -> None:
+        super().__init__(
+            url="https://services.ga.gov.au/site_9/services/DEM_SRTM_1Second_Hydro_Enforced/"
+                "MapServer/WCSServer?service=WCS",
+            version="1.0.0"
+        )
+
+    def get_metadata(self) -> None:
+        raise NotImplementedError
+
+    def get_data(self, bbox: List[float], layername: Optional[str] = None) -> Any:
         response = self.wcs.getCoverage(identifier="1", bbox=bbox, format="GeoTIFF",
-                                        crs="EPSG:4326",
-                                        resx=1 / 3600, resy=1 / 3600, Styles="tc")
+                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600,
+                                        Styles="tc")
+        return response
+
+
+# class SiloWcsImporter(WcsImporter):
+#     def __init__(self) -> None:
+#         # SILO is not served via WCS
+#         super().__init__("pass")
+
+
+class SlgaWcsImporter(WcsImporter):
+    def __init__(self) -> None:
+        # Have to use version="1.0.0" for SGLA.
+        super().__init__(url="https://www.asris.csiro.au/ArcGIS/services/TERN/CLY_ACLEP_AU_NAT_C/MapServer/WCSServer", version="1.0.0")
+
+    def get_metadata(self) -> None:
+        raise NotImplementedError
+
+    def get_data(self, bbox: List[float], layername: Optional[str] = None) -> Any:
+        response = self.wcs.getCoverage(identifier="1", bbox=bbox, format="GeoTIFF",
+                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600, Styles="tc")
         return response
 
 
 class WcsImporterFactory:
     @staticmethod
     def get_wcs_importer(source: str) -> WcsImporter:
-        if source == "dem":
+        if source == "dea":
+            return DeaWcsImporter()
+        elif source == "dem":
             return DemWcsImporter()
+        elif source == "slga":
+            return SlgaWcsImporter()
         else:
             raise ValueError(f"Source: {source} is not supported.")
