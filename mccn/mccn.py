@@ -50,7 +50,8 @@ class Mccn:
         self.bbox = [min_lon, min_lat, max_lon, max_lat]
         return xx
 
-    def load_public(self, source: str, bbox: List[float], layername=None):
+    @staticmethod
+    def load_public(source: str, bbox: List[float], layername=None):
         # Demo basic load function for WCS endpoint. Only DEM is currently supported.
         response = WcsImporterFactory().get_wcs_importer(source).get_data(bbox, layername)
         return rioxarray.open_rasterio(BytesIO(response.read()))
@@ -73,6 +74,9 @@ class Mccn:
              source: Optional[Dict[str, str]] = None):
         xx = self.load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
                             lazy=lazy)
+
+        # TODO: The following works only for a single layer from the DEM endpoint. This code for
+        # TODO: combining data needs to be generalised for all use cases.
         if source is not None:
             for source_name, layer_name in source.items():
                 if source_name != "dem":
