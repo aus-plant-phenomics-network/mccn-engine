@@ -52,7 +52,7 @@ class DeaWcsImporter(WcsImporter):
     def get_data(self, bbox: List[float], layername: Optional[str] = None,
                  width: Optional[int] = None, height: Optional[int] = None) -> Any:
         response = self.wcs.getCoverage(identifier=layername, bbox=bbox, format="GeoTIFF",
-                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600,
+                                        crs="EPSG:4326", resx=1/7200, resy=1/7200,
                                         Styles="tc")
         return response
 
@@ -70,7 +70,7 @@ class DemWcsImporter(WcsImporter):
 
     def get_data(self, bbox: List[float], layername: Optional[str] = None) -> Any:
         response = self.wcs.getCoverage(identifier="1", bbox=bbox, format="GeoTIFF",
-                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600,
+                                        crs="EPSG:4326", resx=1, resy=1,
                                         Styles="tc")
         return response
 
@@ -84,14 +84,17 @@ class DemWcsImporter(WcsImporter):
 class SlgaWcsImporter(WcsImporter):
     def __init__(self) -> None:
         # Have to use version="1.0.0" for SGLA.
-        super().__init__(url="https://www.asris.csiro.au/ArcGIS/services/TERN/CLY_ACLEP_AU_NAT_C/MapServer/WCSServer", version="1.0.0")
+        super().__init__(url="https://www.asris.csiro.au/ArcGIS/services/TERN/CLY_ACLEP_AU_NAT_C/"
+                             "MapServer/WCSServer", version="1.0.0")
+        # TODO: There are many WCS endpoints for SLGA that serve different types of data. We should
+        # TODO: find a way to support all of the sources we are interested int.
 
     def get_metadata(self) -> None:
         raise NotImplementedError
 
     def get_data(self, bbox: List[float], layername: Optional[str] = None) -> Any:
         response = self.wcs.getCoverage(identifier="1", bbox=bbox, format="GeoTIFF",
-                                        crs="EPSG:4326", resx=1 / 3600, resy=1 / 3600, Styles="tc")
+                                        crs="EPSG:4326", resx=1, resy=1, Styles="tc")
         return response
 
 

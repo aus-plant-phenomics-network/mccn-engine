@@ -3,7 +3,6 @@ import multiprocessing
 from io import BytesIO
 from typing import Iterator, List, Optional, Dict
 
-import numpy as np
 from odc.geo.geobox import GeoBox
 from odc.stac import stac_load
 import pystac_client
@@ -44,8 +43,6 @@ class Mccn:
             self._query(col_id), bands=bands, groupby=groupby, chunks=chunks,  # type: ignore
             progress=tqdm, pool=pool, crs=crs, geobox=geobox
         )
-        self.lat_count = xx.dims["latitude"]
-        self.lon_count = xx.dims["longitude"]
         min_lon = xx.longitude.min().item()
         max_lon = xx.longitude.max().item()
         min_lat = xx.latitude.min().item()
@@ -76,26 +73,27 @@ class Mccn:
              source: Optional[Dict[str, str]] = None):
         xx = self.load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
                             lazy=lazy)
-        # min_lon = xx.longitude.min().item()
-        # max_lon = xx.longitude.max().item()
-        # min_lat = xx.latitude.min().item()
-        # max_lat = xx.latitude.max().item()
+
         for source_name, layer_name in source.items():
+            if source_name != "dem":
+                raise NotImplementedError(f"Datacube stacking for {source_name} has not been"
+                                          f"implemented.")
             yy = self.load_public(source=source_name, bbox=self.bbox, layername=layer_name)
-            # yy = yy.astype(np.int32)
             yy = yy.rename({"x": "longitude", "y": "latitude"})
             yy = yy.interp(
-                # longitude=np.linspace(min_lon, max_lon, self.lon_count),
-                # latitude=np.linspace(min_lat, max_lat, self.lat_count),
                 longitude=list(xx.longitude.values),
                 latitude=list(xx.latitude.values),
-                method="linear"
+                method="linear",
+                kwargs={"fill_value": "extrapolate"}
             )
-            # yy = yy.squeeze()
-            yy = yy.to_dataset(name="elevation")
+            # While the datasets have the same EPSG, they are defined differently in the spatial_ref
+            # layer. This aligns them but have to investigate further.
             yy["spatial_ref"] = xx.spatial_ref
-            yy["time"] = xx.time
-            yy = yy.squeeze(dim="band")
-            xy = xarray.concat([xx, yy], dim="time")
+            # DEM is a static over time dataset.
+            yy = yy.expand_dims(dim={"time": xx.time})
+            yy = yy.squeeze(dim="band", drop=True)
+            # This is where the layer in the datacube is named
+            yy = yy.to_dataset(name="elevation")
+            xx = xarray.combine_by_coords([xx, yy])
 
-        return xy
+        return xx
