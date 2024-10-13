@@ -7,14 +7,16 @@ from odc.geo.geobox import GeoBox
 from odc.stac import stac_load
 import pystac_client
 from tqdm import tqdm
+import rasterio
 import rioxarray
 import xarray
 
+from mccn.loader import vector_loader
 from mccn.wcs_importer import WcsImporterFactory
 
 
 class Mccn:
-    def __init__(self, stac_url):
+    def __init__(self, stac_url: str):
         # This class needs to be responsible for gathering both public WCS and node generated STAC
         # described data into an x-array data structure.
         print(f"Connection to the STAC endpoint at {stac_url}.")
@@ -28,7 +30,7 @@ class Mccn:
         query = self.stac_client.search(collections=[col_id])
         return query.items()
 
-    def load_stac(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
+    def _load_stac(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
                   crs: Optional[str] = None, geobox: Optional[GeoBox] = None,
                   lazy: bool = False) -> xarray.Dataset:
         # TODO: Expose other parameters to the stac_load function
@@ -39,14 +41,25 @@ class Mccn:
             chunks = {'x': 2048, 'y': 2048}
         else:
             chunks = None
+        # TODO: We likely need a unique load function here depending on data type. For example
+        # TODO: we need to write at least one for raster data and time series data.
         xx = stac_load(
             self._query(col_id), bands=bands, groupby=groupby, chunks=chunks,  # type: ignore
             progress=tqdm, pool=pool, crs=crs, geobox=geobox
         )
-        min_lon = xx.longitude.min().item()
-        max_lon = xx.longitude.max().item()
-        min_lat = xx.latitude.min().item()
-        max_lat = xx.latitude.max().item()
+        if 'x' in xx.xindexes and 'y' in xx.xindexes:
+            min_lon = xx.x.min().item()
+            max_lon = xx.x.max().item()
+            min_lat = xx.y.min().item()
+            max_lat = xx.y.max().item()
+        elif 'longitude' in xx.xindexes and 'latitude' in xx.xindexes:
+            min_lon = xx.longitude.min().item()
+            max_lon = xx.longitude.max().item()
+            min_lat = xx.latitude.min().item()
+            max_lat = xx.latitude.max().item()
+        else:
+            raise AttributeError("Spatial axes must contain either x and y or "
+                                 "longitude and latitude.")
         self.bbox = [min_lon, min_lat, max_lon, max_lat]
         return xx
 
@@ -71,10 +84,38 @@ class Mccn:
 
     def load(self, col_id: str, bands: Optional[List[str]] = None, groupby: str = "id",
              crs: Optional[str] = None, geobox: Optional[GeoBox] = None, lazy: bool = False,
-             source: Optional[Dict[str, str]] = None):
-        xx = self.load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
+             source: Optional[Dict[str, str]] = None, mask=None):
+        """
+        Load the STAC items for a given collection ID into an xarray dataset. Several options are
+        available for sub-selection and transformation of the data upon loading.
+        :param col_id: STAC collection id for study.
+        :param bands: List of band names to load, defaults to All. Also accepts single band name as
+        input
+        :param groupby:
+        :param crs:
+        :param geobox:
+        :param lazy:
+        :param source:
+        :param mask:
+        :return:
+        """
+        xx = self._load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
                             lazy=lazy)
+        if mask:
+            # TODO: We get the parameters from the reference raster explicitly. Cannot easily get from
+            # TODO: STAC query result as the values do not come out of the stac_load function. Consider
+            # TODO: building from the xarray object instead of reference raster.
+            raster = rasterio.open("reference_tif")
+            memfile = vector_loader("vector_file",
+                                    shape=raster.shape, transform=raster.transform, crs=raster.crs)
+            zz = rioxarray.open_rasterio(memfile.name)
+            # zz = zz.rename({"x": "latitude", "y": "longitude"})
 
+            zz["spatial_ref"] = xx.spatial_ref
+            zz = zz.expand_dims(dim={"time": xx.time})
+            zz = zz.squeeze(dim="band", drop=True)
+            zz = zz.to_dataset(name="mask")
+            xx = xarray.combine_by_coords([xx, zz])
         # TODO: The following works only for a single layer from the DEM endpoint. This code for
         # TODO: combining data needs to be generalised for all use cases.
         if source is not None:
