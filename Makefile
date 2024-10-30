@@ -29,23 +29,6 @@ upgrade:       										## Upgrade all dependencies to the latest stable versio
 # =============================================================================
 # Developer Utils
 # =============================================================================
-.PHONY: install-pdm
-install-pdm: 										## Install latest version of PDM
-	@curl -sSLO https://pdm.fming.dev/install-pdm.py && \
-	curl -sSL https://pdm.fming.dev/install-pdm.py.sha256 | shasum -a 256 -c - && \
-	python3 install-pdm.py && \
-	rm install-pdm.py
-
-.PHONY: install
-install: clean										## Install the project, dependencies, and pre-commit for local development
-	@if ! $(PDM) --version > /dev/null; then echo '=> Installing PDM'; $(MAKE) install-pdm; fi
-	@if [ "$(VENV_EXISTS)" ]; then echo "=> Removing existing virtual environment"; fi
-	if [ "$(VENV_EXISTS)" ]; then $(MAKE) destroy; fi
-	if [ "$(VENV_EXISTS)" ]; then $(MAKE) clean; fi
-	@if [ "$(USING_PDM)" ]; then $(PDM) config --local venv.in_project true && python3 -m venv --copies .venv && . $(ENV_PREFIX)/activate && $(ENV_PREFIX)/pip install --quiet -U wheel setuptools cython mypy pip; fi
-	@if [ "$(USING_PDM)" ]; then $(PDM) install -dG:all; fi
-	@echo "=> Install complete! Note: If you want to re-install re-run 'make install'"
-
 .PHONY: clean
 clean: 												## Cleanup temporary build artifacts
 	@echo "=> Cleaning working directory"
@@ -61,10 +44,6 @@ clean: 												## Cleanup temporary build artifacts
 	@rm -rf .coverage coverage.xml coverage.json htmlcov/ .pytest_cache tests/.pytest_cache tests/**/.pytest_cache .mypy_cache
 	$(MAKE) docs-clean
 
-.PHONY: destroy
-destroy: 											## Destroy the virtual environment
-	@rm -rf .venv
-
 .PHONY: refresh-lockfiles
 refresh-lockfiles:                                 ## Sync lockfiles with requirements files.
 	pdm update --update-reuse --group :all
@@ -79,17 +58,8 @@ lock:                                             ## Rebuild lockfiles from scra
 .PHONY: mypy
 mypy:                                               ## Run mypy
 	@echo "=> Running mypy"
-	@$(PDM) run dmypy run
+	@$(PDM) run mypy
 	@echo "=> mypy complete"
-
-.PHONY: mypy-nocache
-mypy-nocache:                                       ## Run Mypy without cache
-	@echo "=> Running mypy without a cache"
-	@$(PDM) run dmypy run -- --cache-dir=/dev/null
-	@echo "=> mypy complete"
-
-.PHONY: type-check
-type-check: mypy		                            ## Run all type checking
 
 .PHONY: pre-commit
 pre-commit: 										## Runs pre-commit hooks; includes ruff formatting and linting, codespell
@@ -98,12 +68,12 @@ pre-commit: 										## Runs pre-commit hooks; includes ruff formatting and lin
 	@echo "=> Pre-commit complete"
 
 .PHONY: lint
-lint: pre-commit type-check 						## Run all linting
+lint: pre-commit mypy 						## Run all linting
 
 .PHONY: coverage
 coverage:  											## Run the tests and generate coverage report
 	@echo "=> Running tests with coverage"
-	@$(PDM) run pytest tests --cov appnlib --cov-report html
+	@$(PDM) run pytest tests --cov src --cov-report html
 
 .PHONY: test
 test:  												## Run the tests
@@ -111,17 +81,5 @@ test:  												## Run the tests
 	@$(PDM) run pytest tests
 	@echo "=> Tests complete"
 
-.PHONY: test-examples
-test-examples:            			              	## Run the examples tests
-	@$(PDM) run pytest docs/examples
-
-.PHONY: test-all
-test-all: test test-examples 						## Run all tests
-
 .PHONY: check-all
-check-all: lint test-all coverage                   ## Run all linting, tests, and coverage checks
-
-
-.PHONY: docs
-docs: 												## Serve mkdocs
-	@$(PDM) run mkdocs serve
+check-all: lint test coverage                   ## Run all linting, tests, and coverage checks
