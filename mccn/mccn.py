@@ -7,16 +7,15 @@ from odc.geo.geobox import GeoBox
 from odc.stac import stac_load
 import pystac_client
 from tqdm import tqdm
-import rasterio
 import rioxarray
 import xarray
 
-from mccn.loader import vector_loader
+from mccn.loader import stac_load_vector  # , ShapefileDriver
 from mccn.wcs_importer import WcsImporterFactory
 
 
 class Mccn:
-    def __init__(self, stac_url: str):
+    def __init__(self, stac_url: str) -> None:
         # This class needs to be responsible for gathering both public WCS and node generated STAC
         # described data into an x-array data structure.
         print(f"Connection to the STAC endpoint at {stac_url}.")
@@ -43,6 +42,7 @@ class Mccn:
             chunks = None
         # TODO: We likely need a unique load function here depending on data type. For example
         # TODO: we need to write at least one for raster data and time series data.
+
         xx = stac_load(
             self._query(col_id), bands=bands, groupby=groupby, chunks=chunks,  # type: ignore
             progress=tqdm, pool=pool, crs=crs, geobox=geobox
@@ -102,20 +102,10 @@ class Mccn:
         xx = self._load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
                             lazy=lazy)
         if mask:
-            # TODO: We get the parameters from the reference raster explicitly. Cannot easily get from
-            # TODO: STAC query result as the values do not come out of the stac_load function. Consider
-            # TODO: building from the xarray object instead of reference raster.
-            raster = rasterio.open("reference_tif")
-            memfile = vector_loader("vector_file",
-                                    shape=raster.shape, transform=raster.transform, crs=raster.crs)
-            zz = rioxarray.open_rasterio(memfile.name)
-            # zz = zz.rename({"x": "latitude", "y": "longitude"})
-
-            zz["spatial_ref"] = xx.spatial_ref
-            zz = zz.expand_dims(dim={"time": xx.time})
-            zz = zz.squeeze(dim="band", drop=True)
-            zz = zz.to_dataset(name="mask")
-            xx = xarray.combine_by_coords([xx, zz])
+            vector_array = stac_load_vector(
+                list(self._query(col_id)), gbox=geobox
+            )
+            # TODO: Combine rasterised vector layers with other raster layers.
         # TODO: The following works only for a single layer from the DEM endpoint. This code for
         # TODO: combining data needs to be generalised for all use cases.
         if source is not None:
