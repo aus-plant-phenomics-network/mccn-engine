@@ -105,7 +105,9 @@ class Mccn:
             vector_array = stac_load_vector(
                 list(self._query(col_id)), gbox=geobox
             )
-            # TODO: Combine rasterised vector layers with other raster layers.
+            # TODO: Combine rasterised vector layers with other raster layers. Below is placeholder
+            # TODO: to appease ruff.
+            xx = xarray.combine_by_coords([xx, vector_array])
         # TODO: The following works only for a single layer from the DEM endpoint. This code for
         # TODO: combining data needs to be generalised for all use cases.
         if source is not None:
