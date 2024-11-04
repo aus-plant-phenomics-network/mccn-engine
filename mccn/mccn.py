@@ -9,6 +9,7 @@ import pystac_client
 from tqdm import tqdm
 import rioxarray
 import xarray
+from xarray import DataArray, Dataset
 
 from mccn.loader import stac_load_vector  # , ShapefileDriver
 from mccn.wcs_importer import WcsImporterFactory
@@ -20,9 +21,7 @@ class Mccn:
         # described data into an x-array data structure.
         print(f"Connection to the STAC endpoint at {stac_url}.")
         self.stac_client = pystac_client.Client.open(stac_url)
-        self.lat_count = None
-        self.lon_count = None
-        self.bbox = None
+        self.bbox: list[float] | None = None
 
     def _query(self, col_id: str) -> Iterator:
         # TODO: Add options for querying.
@@ -70,7 +69,7 @@ class Mccn:
         return rioxarray.open_rasterio(BytesIO(response.read()))
 
     @staticmethod
-    def plot(xx: xarray.Dataset):
+    def plot(xx: Dataset):
         # TODO: Only plots the time=0 index of the array. Options are to handle multiple time
         # TODO: indices in this function or stipulate one index as parameter.
         reduce_dim = "band"
@@ -99,9 +98,9 @@ class Mccn:
         :param mask:
         :return:
         """
-        xx = self._load_stac(col_id, bands=bands, groupby=groupby, crs=crs, geobox=geobox,
-                            lazy=lazy)
-        if mask:
+        xx: Dataset | DataArray = self._load_stac(col_id, bands=bands, groupby=groupby, crs=crs,
+                                                  geobox=geobox, lazy=lazy)
+        if mask and geobox:
             vector_array = stac_load_vector(
                 list(self._query(col_id)), gbox=geobox
             )
@@ -110,7 +109,7 @@ class Mccn:
             xx = xarray.combine_by_coords([xx, vector_array])
         # TODO: The following works only for a single layer from the DEM endpoint. This code for
         # TODO: combining data needs to be generalised for all use cases.
-        if source is not None:
+        if source is not None and self.bbox:
             for source_name, layer_name in source.items():
                 if source_name != "dem":
                     raise NotImplementedError(f"Datacube stacking for {source_name} has not been"

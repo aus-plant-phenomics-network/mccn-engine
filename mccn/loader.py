@@ -51,4 +51,4 @@ def stac_load_vector(items: list[pystac.item.Item], gbox: GeoBox) -> xarray.Data
     # The temporary raster file can then be read into xarray like a normal raster file.
     xx = rioxarray.open_rasterio(memfile.name)
     # TODO: Label the layers in the datacube
-    return xx
+    return xx  # type: ignore
