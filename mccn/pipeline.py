@@ -118,7 +118,7 @@ class CsvPipeline(Pipeline[gpd.GeoDataFrame]):
                     Y_name,
                     item.properties.get("T"),
                     item.properties.get("date_format", "ISO8601"),
-                    columns,
+                    cast(list[str], columns),
                     item.properties.get("groupby"),
                 ),
                 X_name,

@@ -1,7 +1,7 @@
 import multiprocessing
-from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
+from typing import Any, Dict, Iterator, List, Optional
 
 import pystac_client
 import rioxarray
@@ -52,7 +52,7 @@ class Mccn:
             self._query(col_id),
             bands=bands,
             groupby=groupby,
-            chunks=chunks,  # type: ignore
+            chunks=chunks,  # type: ignore[arg-type]
             progress=tqdm,
             pool=pool,
             crs=crs,
@@ -76,7 +76,7 @@ class Mccn:
         return xx
 
     @staticmethod
-    def load_public(source: str, bbox: list[float], layername=None):
+    def load_public(source: str, bbox: List[float], layername=None):  # type: ignore[no-untyped-def]
         # Demo basic load function for WCS endpoint. Only DEM is currently supported.
         response = (
             WcsImporterFactory().get_wcs_importer(source).get_data(bbox, layername)
@@ -84,7 +84,7 @@ class Mccn:
         return rioxarray.open_rasterio(BytesIO(response.read()))
 
     @staticmethod
-    def plot(xx: Dataset):
+    def plot(xx: Dataset):  # type: ignore[no-untyped-def]
         # TODO: Only plots the time=0 index of the array. Options are to handle multiple time
         # TODO: indices in this function or stipulate one index as parameter.
         reduce_dim = "band"
@@ -105,8 +105,8 @@ class Mccn:
         geobox: Optional[GeoBox] = None,
         lazy: bool = False,
         source: Optional[Dict[str, str]] = None,
-        mask=None,
-    ):
+        mask: Any = None,
+    ) -> Dataset | DataArray:
         """
         Load the STAC items for a given collection ID into an xarray dataset. Several options are
         available for sub-selection and transformation of the data upon loading.
@@ -156,6 +156,6 @@ class Mccn:
                 yy = yy.squeeze(dim="band", drop=True)
                 # This is where the layer in the datacube is named
                 yy = yy.to_dataset(name="elevation")
-                xx = xarray.combine_by_coords([xx, yy])  # type: ignore
+                xx = xarray.combine_by_coords([xx, yy])
 
         return xx
