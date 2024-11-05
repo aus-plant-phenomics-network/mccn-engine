@@ -78,7 +78,9 @@ class Mccn:
     @staticmethod
     def load_public(source: str, bbox: list[float], layername=None):
         # Demo basic load function for WCS endpoint. Only DEM is currently supported.
-        response = WcsImporterFactory().get_wcs_importer(source).get_data(bbox, layername)
+        response = (
+            WcsImporterFactory().get_wcs_importer(source).get_data(bbox, layername)
+        )
         return rioxarray.open_rasterio(BytesIO(response.read()))
 
     @staticmethod
@@ -133,9 +135,12 @@ class Mccn:
             for source_name, layer_name in source.items():
                 if source_name != "dem":
                     raise NotImplementedError(
-                        f"Datacube stacking for {source_name} has not been" f"implemented."
+                        f"Datacube stacking for {source_name} has not been"
+                        f"implemented."
                     )
-                yy = self.load_public(source=source_name, bbox=self.bbox, layername=layer_name)
+                yy = self.load_public(
+                    source=source_name, bbox=self.bbox, layername=layer_name
+                )
                 yy = yy.rename({"x": "longitude", "y": "latitude"})
                 yy = yy.interp(
                     longitude=list(xx.longitude.values),

@@ -27,25 +27,25 @@ class Pipeline(abc.ABC, Generic[T]):
         interp: str | None = None,
         fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
     ) -> None:
-        self.items = items
-        self.geobox = geobox
-        self.interp = interp
-        self.fields = fields
+        self._items = items
+        self._geobox = geobox
+        self._interp = interp
+        self._fields = fields
 
     def execute(self) -> xr.Dataset:
-        items = self.load_items(self.items, self.fields)
-        items = self.spatial_query(
+        items = self.load_items(self._items, self._fields)
+        items = self.query_bbox(
             items,
-            cast(CRS, self.geobox.crs),
+            cast(CRS, self._geobox.crs),
             (
-                self.geobox.boundingbox.left,
-                self.geobox.boundingbox.bottom,
-                self.geobox.boundingbox.right,
-                self.geobox.boundingbox.top,
+                self._geobox.boundingbox.left,
+                self._geobox.boundingbox.bottom,
+                self._geobox.boundingbox.right,
+                self._geobox.boundingbox.top,
             ),
         )
         ds = self.to_xarray(items)
-        return self.interp_to_grid(ds, self.geobox, self.interp)
+        return self.interp(ds, self._geobox, self._interp)
 
     @abc.abstractmethod
     @staticmethod
@@ -65,7 +65,7 @@ class Pipeline(abc.ABC, Generic[T]):
 
     @abc.abstractmethod
     @staticmethod
-    def spatial_query(src: T, crs: CRS | None = None, bbox: BBox_T | None = None) -> T:
+    def query_bbox(src: T, crs: CRS | None = None, bbox: BBox_T | None = None) -> T:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -75,9 +75,7 @@ class Pipeline(abc.ABC, Generic[T]):
 
     @abc.abstractmethod
     @staticmethod
-    def interp_to_grid(
-        src: xr.Dataset, geobox: GeoBox, method: str | None
-    ) -> xr.Dataset:
+    def interp(src: xr.Dataset, geobox: GeoBox, method: str | None) -> xr.Dataset:
         raise NotImplementedError
 
 
@@ -135,7 +133,7 @@ class CsvPipeline(Pipeline[gpd.GeoDataFrame]):
         return pd.concat(df_list)
 
     @staticmethod
-    def spatial_query(
+    def query_bbox(
         src: gpd.GeoDataFrame,
         crs: CRS | None = None,
         bbox: BBox_T | None = None,
