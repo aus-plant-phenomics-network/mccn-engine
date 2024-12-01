@@ -14,7 +14,7 @@ dependencies = [
     "tqdm<5.0.0,>=4.66.4",
     "rioxarray<1.0.0,>=0.16.0",
     "scipy<2.0.0,>=1.14.0",
-    "pystac-generator>=0.1.15",
+    "pystac-generator>=0.1.17",
 ]
 requires-python = ">=3.11"
 readme = "README.md"

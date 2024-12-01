@@ -1,17 +1,20 @@
-from typing import Literal, Self
+from __future__ import annotations
 
-from affine import Affine
-from odc.geo.geobox import GeoBox, GeoboxAnchor
-from odc.geo.types import XY, Resolution, Shape2d
-from pyproj.crs.crs import CRS
+import datetime
+from functools import cached_property
+from typing import TYPE_CHECKING, Self
 
-X_T = float
-Y_T = float
-BBox_T = tuple[float, float, float, float]
-CRS_T = str | int | CRS
-AnchorPos_T = Literal["center", "edge", "floating", "default"] | tuple[X_T, Y_T]
+import pandas as pd
+
+if TYPE_CHECKING:
+    from affine import Affine
+    from odc.geo.geobox import GeoBox, GeoboxAnchor
+    from odc.geo.types import XY, Resolution, Shape2d
+
+    from mccn._types import CRS_T, AnchorPos_T, BBox_T
 
 
+# Placeholder - might be useful for extracting geobox from all items in a collection
 class GeoBoxBuilder:
     """Utility class to build odc.geo.GeoBox.
 
@@ -85,7 +88,7 @@ class GeoBoxBuilder:
     def __init__(
         self,
         crs: CRS_T,
-        tol: float = 0.01,
+        tol: float = 1e-3,
         anchor: AnchorPos_T = "default",
     ) -> None:
         self._crs = crs
@@ -152,7 +155,12 @@ class GeoBoxBuilder:
         :return: the current builder for method chaining
         :rtype: Self
         """
-        self._bbox = bbox
+        self._bbox = (
+            bbox[0],
+            bbox[1],
+            bbox[2],
+            bbox[3],
+        )
         return self
 
     def set_transformation(self, transform: Affine) -> Self:
@@ -186,3 +194,24 @@ class GeoBoxBuilder:
             anchor=self._anchor,
             tol=self._tol,
         )
+
+
+# Similar to GeoBox but for time
+class TimeBox:
+    def __init__(
+        self,
+        start: str | datetime.datetime,
+        end: str | datetime.datetime,
+        shape: int | None = None,
+        resolution: str | datetime.timedelta | None = "D",
+        tz: datetime.tzinfo = datetime.UTC,
+    ) -> None:
+        self.start = start
+        self.end = end
+        self.shape = shape
+        self.resolution = resolution
+        self.tz = tz
+
+    @cached_property
+    def coordinates(self) -> pd.DatetimeIndex:
+        return pd.date_range(self.start, self.end, self.shape, self.resolution, self.tz)
