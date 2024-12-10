@@ -1,0 +1,190 @@
+[
+  {
+    "id": "adelaide_airport",
+    "location": "tests/files/integration_tests/point/data/adelaide_airport.csv",
+    "collection_date": "2023-01-01",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "max_temp",
+        "description": "Observed daily maximum temperature in degree C"
+      },
+      {
+        "name": "min_temp",
+        "description": "Observed daily minimum temperature in degree C"
+      },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      },
+      { "name": "mslp", "description": "Mean sea level pressure in hPa" }
+    ]
+  },
+  {
+    "id": "adelaide_salisbury_bowling_club",
+    "location": "tests/files/integration_tests/point/data/adelaide_salisbury_bowling_club.csv",
+    "collection_date": "2023-01-02",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      }
+    ]
+  },
+  {
+    "id": "aston_coop",
+    "location": "tests/files/integration_tests/point/data/aston_coop.csv",
+    "collection_date": "2023-01-03",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "max_temp",
+        "description": "Observed daily maximum temperature in degree C"
+      },
+      {
+        "name": "min_temp",
+        "description": "Observed daily minimum temperature in degree C"
+      }
+    ]
+  },
+  {
+    "id": "belair",
+    "location": "tests/files/integration_tests/point/data/belair.csv",
+    "collection_date": "2023-01-04",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" }
+    ]
+  },
+  {
+    "id": "edinburg_raaf",
+    "location": "tests/files/integration_tests/point/data/edinburg_raaf.csv",
+    "collection_date": "2023-01-05",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "max_temp",
+        "description": "Observed daily maximum temperature in degree C"
+      },
+      {
+        "name": "min_temp",
+        "description": "Observed daily minimum temperature in degree C"
+      },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      },
+      { "name": "mslp", "description": "Mean sea level pressure in hPa" }
+    ]
+  },
+  {
+    "id": "glen_osmond",
+    "location": "tests/files/integration_tests/point/data/glen_osmond.csv",
+    "collection_date": "2023-01-06",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      }
+    ]
+  },
+  {
+    "id": "happy_valley_reservoir",
+    "location": "tests/files/integration_tests/point/data/happy_valley_reservoir.csv",
+    "collection_date": "2023-01-07",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" }
+    ]
+  },
+  {
+    "id": "hope_valley_reservoir",
+    "location": "tests/files/integration_tests/point/data/hope_valley_reservoir.csv",
+    "collection_date": "2023-01-08",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      }
+    ]
+  },
+  {
+    "id": "north_adelaide",
+    "location": "tests/files/integration_tests/point/data/north_adelaide.csv",
+    "collection_date": "2023-01-09",
+    "collection_time": "09:00:00",
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "epsg": 7843,
+    "column_info": [
+      { "name": "daily_rain", "description": "Observed daily rain fall in mm" },
+      {
+        "name": "radiation",
+        "description": "Total incoming downward shortwave radiation on a horizontal surface MJ/sqm"
+      }
+    ]
+  },
+  {
+    "id": "soil_data",
+    "location": "tests/files/integration_tests/point/data/soil_data.csv",
+    "collection_date": "2023-01-01",
+    "collection_time": "09:00:00",
+    "X": "Longitude",
+    "Y": "Latitude",
+    "Z": "mid_depth",
+    "T": null,
+    "epsg": 4326,
+    "column_info": [{ "name": "Ca_Soln", "description": "Ca concentration" }]
+  }
+]

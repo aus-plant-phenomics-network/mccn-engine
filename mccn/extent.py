@@ -5,6 +5,8 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Self
 
 import pandas as pd
+from odc.geo.geobox import GeoBox
+from odc.geo.types import Shape2d
 
 if TYPE_CHECKING:
     from affine import Affine

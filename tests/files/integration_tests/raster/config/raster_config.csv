@@ -1,0 +1,2 @@
+id,location,collection_date,collection_time,epsg,band_info
+L2A_PVI,tests/files/integration_tests/raster/data/L2A_PVI.tif,2021-02-21,10:00:17,32633,"[{""name"": ""B04"", ""common_name"": ""red"", ""description"": ""Common name: red, Range: 0.6 to 0.7"", ""wavelength"": 0.6645}, {""name"": ""B03"", ""common_name"": ""green"", ""description"": ""Common name: green, Range: 0.5 to 0.6"", ""wavelength"": 0.56}, {""name"": ""B02"", ""common_name"": ""blue"", ""description"": ""Common name: blue, Range: 0.45 to 0.5"", ""wavelength"": 0.4966}]"

@@ -16,10 +16,12 @@ from pyproj import CRS, Transformer
 from rasterio.features import rasterize
 from stac_generator.csv.generator import read_csv
 
+from mccn._types import BBox_T
+
 if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
 
-    from mccn._types import BBox_T, InterpMethods, MergeMethods
+    from mccn._types import InterpMethods, MergeMethods
     from mccn.extent import TimeBox
 
 
@@ -299,7 +301,7 @@ def read_point_asset(
             gdf[T_name] = item.datetime
         # Rename columns
         column_map = {X_name: x_col, Y_name: y_col, T_name: t_col}
-        gdf.rename(columns=column_map)
+        gdf.rename(columns=column_map, inplace=True)
     except KeyError as e:
         raise StacExtensionError("Missing field in stac config:") from e
     return gdf

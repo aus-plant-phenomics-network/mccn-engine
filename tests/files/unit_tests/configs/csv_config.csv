@@ -1,0 +1,2 @@
+id,location,X,Y,epsg,column_info,collection_date,collection_time
+Grandview,example/csv/Grandview.csv,Longitude,Latitude,4326,"[{""name"": ""Ca_Soln"", ""description"": ""Ca concentration""}, {""name"": ""pH"", ""description"": ""soil pH""}]",2017-01-01,00:00:00

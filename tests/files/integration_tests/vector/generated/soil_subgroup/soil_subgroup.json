@@ -1,0 +1,358 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "soil_subgroup",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          138.9340045140001,
+          -35.11992967499998
+        ],
+        [
+          138.9340045140001,
+          -34.650759808999965
+        ],
+        [
+          138.47603383700005,
+          -34.650759808999965
+        ],
+        [
+          138.47603383700005,
+          -35.11992967499998
+        ],
+        [
+          138.9340045140001,
+          -35.11992967499998
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    138.47603383700005,
+    -35.11992967499998,
+    138.9340045140001,
+    -34.650759808999965
+  ],
+  "properties": {
+    "column_info": [
+      {
+        "name": "LANSLU",
+        "description": "Soil Landscape Map Unit (LANSLU code): Concatenation of Land System (LANDSYSTEM code) and Soil Landscape Unit (SLU code). Link item to join spatial data with other tables."
+      },
+      {
+        "name": "OBJECTID",
+        "description": "object id"
+      },
+      {
+        "name": "SOIL_SUBGR",
+        "description": "MOST COMMON SOIL TYPE in map unit (Legend category. See layer file for descriptions)"
+      },
+      {
+        "name": "SHAPE_Length",
+        "description": "Shape length"
+      },
+      {
+        "name": "SHAPE_Area",
+        "description": "Shape area"
+      },
+      {
+        "name": "A1",
+        "description": "Percentage of A1 soil (Highly calcareous sandy loam) in map unit"
+      },
+      {
+        "name": "A2",
+        "description": "Percentage of A2 soil (Calcareous loam on rock) in map unit"
+      },
+      {
+        "name": "A3",
+        "description": "Percentage of A3 soil (Moderately calcareous loam) in map unit"
+      },
+      {
+        "name": "A4",
+        "description": "Percentage of A4 soil (Calcareous loam) in map unit"
+      },
+      {
+        "name": "A5",
+        "description": "Percentage of A5 soil (Calcareous loam on clay) in map unit"
+      },
+      {
+        "name": "A6",
+        "description": "Percentage of A6 soil (Calcareous gradational clay loam) in map unit"
+      },
+      {
+        "name": "A7",
+        "description": "Percentage of A7 soil (Calcareous clay loam on marl) in map unit"
+      },
+      {
+        "name": "A8",
+        "description": "Percentage of A8 soil (Gypseous calcareous loam) in map unit"
+      },
+      {
+        "name": "B1",
+        "description": "Percentage of B1 soil (Shallow highly calcareous sandy loam on calcrete) in map unit"
+      },
+      {
+        "name": "B2",
+        "description": "Percentage of B2 soil (Shallow calcareous loam on calcrete) in map unit"
+      },
+      {
+        "name": "B3",
+        "description": "Percentage of B3 soil (Shallow sandy loam on calcrete) in map unit"
+      },
+      {
+        "name": "B4",
+        "description": "Percentage of B4 soil (Shallow red loam on limestone) in map unit"
+      },
+      {
+        "name": "B5",
+        "description": "Percentage of B5 soil (Shallow dark clay loam on limestone) in map unit"
+      },
+      {
+        "name": "B6",
+        "description": "Percentage of B6 soil (Shallow loam over red clay on calcrete) in map unit"
+      },
+      {
+        "name": "B7",
+        "description": "Percentage of B7 soil (Shallow sand over clay on calcrete) in map unit"
+      },
+      {
+        "name": "B8",
+        "description": "Percentage of B8 soil (Shallow sand on calcrete) in map unit"
+      },
+      {
+        "name": "B9",
+        "description": "Percentage of B9 soil (Shallow clay loam over brown or dark clay on calcrete) in map unit"
+      },
+      {
+        "name": "C1",
+        "description": "Percentage of C1 soil (Gradational sandy loam) in map unit"
+      },
+      {
+        "name": "C2",
+        "description": "Percentage of C2 soil (Gradational loam on rock) in map unit"
+      },
+      {
+        "name": "C3",
+        "description": "Percentage of C3 soil (Friable gradational clay loam) in map unit"
+      },
+      {
+        "name": "C4",
+        "description": "Percentage of C4 soil (Hard gradational clay loam) in map unit"
+      },
+      {
+        "name": "C5",
+        "description": "Percentage of C5 soil (Dark gradational clay loam) in map unit"
+      },
+      {
+        "name": "D1",
+        "description": "Percentage of D1 soil (Loam over clay on rock) in map unit"
+      },
+      {
+        "name": "D2",
+        "description": "Percentage of D2 soil (Loam over red clay) in map unit"
+      },
+      {
+        "name": "D3",
+        "description": "Percentage of D3 soil (Loam over poorly structured red clay) in map unit"
+      },
+      {
+        "name": "D4",
+        "description": "Percentage of D4 soil (Loam over pedaric red clay) in map unit"
+      },
+      {
+        "name": "D5",
+        "description": "Percentage of D5 soil (Hard loamy sand over red clay) in map unit"
+      },
+      {
+        "name": "D6",
+        "description": "Percentage of D6 soil (Ironstone gravelly sandy loam over red clay) in map unit"
+      },
+      {
+        "name": "D7",
+        "description": "Percentage of D7 soil (Loam over poorly structured clay on rock) in map unit"
+      },
+      {
+        "name": "E1",
+        "description": "Percentage of E1 soil (Black cracking clay) in map unit"
+      },
+      {
+        "name": "E2",
+        "description": "Percentage of E2 soil (Red cracking clay) in map unit"
+      },
+      {
+        "name": "E3",
+        "description": "Percentage of E3 soil (Brown or grey cracking clay) in map unit"
+      },
+      {
+        "name": "F1",
+        "description": "Percentage of F1 soil (Loam over brown or dark clay) in map unit"
+      },
+      {
+        "name": "F2",
+        "description": "Percentage of F2 soil (Sandy loam over poorly structured brown or dark clay) in map unit"
+      },
+      {
+        "name": "G1",
+        "description": "Percentage of G1 soil (Sand over sandy clay loam) in map unit"
+      },
+      {
+        "name": "G2",
+        "description": "Percentage of G2 soil (Bleached sand over sandy clay loam) in map unit"
+      },
+      {
+        "name": "G3",
+        "description": "Percentage of G3 soil (Thick sand over clay) in map unit"
+      },
+      {
+        "name": "G4",
+        "description": "Percentage of G4 soil (Sand over poorly structured clay) in map unit"
+      },
+      {
+        "name": "H1",
+        "description": "Percentage of H1 soil (Carbonate sand) in map unit"
+      },
+      {
+        "name": "H2",
+        "description": "Percentage of H2 soil (Siliceous sand) in map unit"
+      },
+      {
+        "name": "H3",
+        "description": "Percentage of H3 soil (Bleached siliceous sand) in map unit"
+      },
+      {
+        "name": "I1",
+        "description": "Percentage of I1 soil (Highly leached sand) in map unit"
+      },
+      {
+        "name": "I2",
+        "description": "Percentage of I2 soil (Wet highly leached sand) in map unit"
+      },
+      {
+        "name": "J1",
+        "description": "Percentage of J1 soil (Ironstone soil with alkaline lower subsoil) in map unit"
+      },
+      {
+        "name": "J2",
+        "description": "Percentage of J2 soil (Ironstone soil) in map unit"
+      },
+      {
+        "name": "J3",
+        "description": "Percentage of J3 soil (Shallow soil on ferricrete) in map unit"
+      },
+      {
+        "name": "K1",
+        "description": "Percentage of K1 soil (Acidic gradational loam on rock) in map unit"
+      },
+      {
+        "name": "K2",
+        "description": "Percentage of K2 soil (Acidic loam over clay on rock) in map unit"
+      },
+      {
+        "name": "K3",
+        "description": "Percentage of K3 soil (Acidic sandy loam over red clay on rock) in map unit"
+      },
+      {
+        "name": "K4",
+        "description": "Percentage of K4 soil (Acidic sandy loam over brown or grey clay on rock) in map unit"
+      },
+      {
+        "name": "K5",
+        "description": "Percentage of K5 soil (Acidic gradational sandy loam on rock) in map unit"
+      },
+      {
+        "name": "L1",
+        "description": "Percentage of L1 soil (Shallow soil on rock) in map unit"
+      },
+      {
+        "name": "M1",
+        "description": "Percentage of M1 soil (Deep sandy loam) in map unit"
+      },
+      {
+        "name": "M2",
+        "description": "Percentage of M2 soil (Deep friable gradational clay loam) in map unit"
+      },
+      {
+        "name": "M3",
+        "description": "Percentage of M3 soil (Deep gravelly soil) in map unit"
+      },
+      {
+        "name": "M4",
+        "description": "Percentage of M4 soil (Deep hard gradational sandy loam) in map unit"
+      },
+      {
+        "name": "N1",
+        "description": "Percentage of N1 soil (Peat) in map unit"
+      },
+      {
+        "name": "N2",
+        "description": "Percentage of N2 soil (Saline soil) in map unit"
+      },
+      {
+        "name": "N3",
+        "description": "Percentage of N3 soil (Wet soil (non to moderately saline) in map unit"
+      },
+      {
+        "name": "O1",
+        "description": "Percentage of O1 soil (Volcanic ash soil) in map unit"
+      },
+      {
+        "name": "RR",
+        "description": "Percentage of RR (Rock) in map unit"
+      },
+      {
+        "name": "WW",
+        "description": "Percentage of WW (Water) in map unit"
+      },
+      {
+        "name": "XX",
+        "description": "Percentage of map unit which is not applicable"
+      }
+    ],
+    "title": "soil subgroup data - DEWNR Soil and Land Program",
+    "description": "61 soils have been identified, representative of the range occurring across southern South Australia, based on an interpretation of Soil Landscape Map Units. These Soils (soil type) classes are also termed 'subgroup soils' in the reference text Hall et al. 2009, 'The Soils of Southern South Australia', where they are described in detail. Each of these soils has a two character alphanumeric code. The first character (letter) represents the relevant Soil GroupSELECT 1 FROM DUAL; the second character (number) represents a particular Soil within the Soil Group. Three additional miscellaneous classes (rock, water, not applicable) are also provided. Hence, 64 attribute (or 'analysis data') classes have been supplied, as percentage (areal extent) values of each possible soil type within each Soil Landscape Map Unit. Note: the sum of all percentage values for each map unit totals 100%. This analysis data is to be used for the creation of spatial data statistics. For map display purposes, the most commonly occurring Soil (SOIL_SUBGR legend category) is defined, however, it should be noted that this often accounts for less than 50% of a Soil Landscape Map Unit.",
+    "proj:epsg": 1168,
+    "proj:wkt2": "GEOGCRS[\"GCS_GDA2020\",DATUM[\"Geocentric_Datum_of_Australia_2020\",ELLIPSOID[\"GRS 1980\",6378137,298.257222101,LENGTHUNIT[\"metre\",1]],ID[\"EPSG\",1168]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"Degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"longitude\",east,ORDER[1],ANGLEUNIT[\"Degree\",0.0174532925199433]],AXIS[\"latitude\",north,ORDER[2],ANGLEUNIT[\"Degree\",0.0174532925199433]]]",
+    "datetime": "2016-06-08T23:46:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/soil_subgroup/soil_subgroup.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/vector/data/soil_subgroup.zip",
+      "type": "application/x-shapefile",
+      "description": "Raw vector data",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "vector_data"
+}

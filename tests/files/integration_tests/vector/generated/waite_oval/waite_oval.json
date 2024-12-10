@@ -1,0 +1,84 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "waite_oval",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          138.62868748123367,
+          -34.96914105537954
+        ],
+        [
+          138.6294879005062,
+          -34.96911524715655
+        ],
+        [
+          138.6294004102982,
+          -34.96855545871302
+        ],
+        [
+          138.62863776330823,
+          -34.96857677371414
+        ],
+        [
+          138.62868748123367,
+          -34.96914105537954
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    138.62863776330823,
+    -34.96914105537954,
+    138.6294879005062,
+    -34.96855545871302
+  ],
+  "properties": {
+    "title": "waite oval mask",
+    "description": "waite oval mask",
+    "proj:epsg": 4326,
+    "proj:wkt2": "GEOGCRS[\"WGS 84\",ENSEMBLE[\"World Geodetic System 1984 ensemble\",MEMBER[\"World Geodetic System 1984 (Transit)\"],MEMBER[\"World Geodetic System 1984 (G730)\"],MEMBER[\"World Geodetic System 1984 (G873)\"],MEMBER[\"World Geodetic System 1984 (G1150)\"],MEMBER[\"World Geodetic System 1984 (G1674)\"],MEMBER[\"World Geodetic System 1984 (G1762)\"],MEMBER[\"World Geodetic System 1984 (G2139)\"],MEMBER[\"World Geodetic System 1984 (G2296)\"],ELLIPSOID[\"WGS 84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1]],ENSEMBLEACCURACY[2.0]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"geodetic latitude (Lat)\",north,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"geodetic longitude (Lon)\",east,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433]],USAGE[SCOPE[\"Horizontal component of 3D system.\"],AREA[\"World.\"],BBOX[-90,-180,90,180]],ID[\"EPSG\",4326]]",
+    "datetime": "2023-12-31T23:46:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/waite_oval/waite_oval.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/vector/data/waite_oval.geojson",
+      "type": "application/geo+json",
+      "description": "Raw vector data",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "vector_data"
+}

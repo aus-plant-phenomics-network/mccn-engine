@@ -1,0 +1,91 @@
+{
+  "type": "Collection",
+  "id": "point_data",
+  "stac_version": "1.0.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/adelaide_airport/adelaide_airport.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/adelaide_salisbury_bowling_club/adelaide_salisbury_bowling_club.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/aston_coop/aston_coop.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/belair/belair.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/edinburg_raaf/edinburg_raaf.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/glen_osmond/glen_osmond.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/happy_valley_reservoir/happy_valley_reservoir.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/hope_valley_reservoir/hope_valley_reservoir.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/north_adelaide/north_adelaide.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/soil_data/soil_data.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          138.5196,
+          -35.0591,
+          150.5560285,
+          -24.33600118
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2022-12-31T22:48:00Z",
+          "2023-01-08T23:46:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

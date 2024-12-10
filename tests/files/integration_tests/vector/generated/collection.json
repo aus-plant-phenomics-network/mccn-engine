@@ -1,0 +1,61 @@
+{
+  "type": "Collection",
+  "id": "vector_data",
+  "stac_version": "1.0.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/lga/lga.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/soil_exposure/soil_exposure.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/soil_subgroup/soil_subgroup.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/waite_oval/waite_oval.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          129.00134010016257,
+          -35.73572103013485,
+          141.0029556131283,
+          -25.9961464901133
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2016-06-08T23:46:00Z",
+          "2023-12-31T23:46:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

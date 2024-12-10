@@ -1,0 +1,154 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json"
+  ],
+  "id": "L2A_PVI",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          15.110630736098942,
+          36.95292538275869
+        ],
+        [
+          15.110630736098942,
+          37.947537561322136
+        ],
+        [
+          13.876365195204773,
+          37.947537561322136
+        ],
+        [
+          13.876365195204773,
+          36.95292538275869
+        ],
+        [
+          15.110630736098942,
+          36.95292538275869
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    13.876365195204773,
+    36.95292538275869,
+    15.110630736098942,
+    37.947537561322136
+  ],
+  "properties": {
+    "proj:epsg": 32633,
+    "proj:shape": [
+      343,
+      343
+    ],
+    "proj:transform": [
+      320.0,
+      0.0,
+      399960.0,
+      0.0,
+      -320.0,
+      4200000.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "eo:bands": [
+      {
+        "name": "b04",
+        "common_name": "red",
+        "description": "Common name: red",
+        "center_wavelength": 0.6645
+      },
+      {
+        "name": "b03",
+        "common_name": "green",
+        "description": "Common name: green",
+        "center_wavelength": 0.56
+      },
+      {
+        "name": "b02",
+        "common_name": "blue",
+        "description": "Common name: blue",
+        "center_wavelength": 0.4966
+      }
+    ],
+    "eo:cloud_cover": 0.0,
+    "eo:snow_cover": 0.0,
+    "datetime": "2021-02-21T09:10:17Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/L2A_PVI/L2A_PVI.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/raster/data/L2A_PVI.tif",
+      "type": "image/tiff; application=geotiff",
+      "title": "Raster Data",
+      "raster:bands": [
+        {
+          "nodata": 0,
+          "data_type": "uint16"
+        },
+        {
+          "nodata": 0,
+          "data_type": "uint16"
+        },
+        {
+          "nodata": 0,
+          "data_type": "uint16"
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "b04",
+          "common_name": "red",
+          "description": "Common name: red",
+          "center_wavelength": 0.6645
+        },
+        {
+          "name": "b03",
+          "common_name": "green",
+          "description": "Common name: green",
+          "center_wavelength": 0.56
+        },
+        {
+          "name": "b02",
+          "common_name": "blue",
+          "description": "Common name: blue",
+          "center_wavelength": 0.4966
+        }
+      ],
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "raster_data"
+}

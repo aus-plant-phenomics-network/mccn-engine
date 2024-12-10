@@ -1,0 +1,46 @@
+{
+  "type": "Collection",
+  "id": "raster_data",
+  "stac_version": "1.0.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/L2A_PVI/L2A_PVI.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          13.876365195204773,
+          36.95292538275869,
+          15.110630736098942,
+          37.947537561322136
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2021-02-21T09:10:17Z",
+          "2021-02-21T09:10:17Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

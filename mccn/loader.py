@@ -46,7 +46,7 @@ def stac_load_point(
         # Only read items that are in geobox and have required columns
         if item_in_geobox(item, geobox):
             frame = read_point_asset(item, fields, asset_key, x_col, y_col, t_col)
-            if frame:  # Can be None if does not contain required column
+            if frame is not None:  # Can be None if does not contain required column
                 frames.append(frame)
     merged = merge_frames(frames, geobox, x_col, y_col, t_col, merge_method, tol)
     return point_data_to_xarray(merged, geobox, x_col, y_col, interp_method)
@@ -54,7 +54,7 @@ def stac_load_point(
 
 def stac_load_vector(
     items: Sequence[pystac.Item],
-    gbox: GeoBox,
+    geobox: GeoBox,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
 ) -> xr.Dataset:
     """
@@ -71,26 +71,26 @@ def stac_load_vector(
     # A temporary raster file is built in memory using attributes of the Geobox.
     with MemoryFile().open(
         driver="GTiff",
-        crs=gbox.crs,
-        transform=gbox.transform,
+        crs=geobox.crs,
+        transform=geobox.transform,
         dtype=rasterio.uint8,  # Results in uint8 dtype in xarray.DataArray
         count=len(items),
-        width=gbox.width,
-        height=gbox.height,
+        width=geobox.width,
+        height=geobox.height,
     ) as memfile:
         for index, item in enumerate(items):
             vector_filepath = get_item_href(item, asset_key)
             vector = gpd.read_file(vector_filepath)
             # Reproject polygons into the target CRS
-            vector = vector.to_crs(gbox.crs)
+            vector = vector.to_crs(geobox.crs)
             geom = [shapes for shapes in vector.geometry]
             # Rasterise polygons with 1 if centre of pixel inside polygon, 0 otherwise
             rasterized = features.rasterize(
                 geom,
-                out_shape=gbox.shape,
+                out_shape=geobox.shape,
                 fill=0,
                 out=None,
-                transform=gbox.transform,
+                transform=geobox.transform,
                 all_touched=False,
                 default_value=1,  # 1 for boolean mask
                 dtype=None,

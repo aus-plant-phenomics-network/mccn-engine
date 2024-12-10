@@ -1,0 +1,72 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "belair",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      138.6498,
+      -35.0076
+    ]
+  },
+  "bbox": [
+    138.6498,
+    -35.0076,
+    138.6498,
+    -35.0076
+  ],
+  "properties": {
+    "column_info": [
+      {
+        "name": "daily_rain",
+        "description": "Observed daily rain fall in mm"
+      }
+    ],
+    "X": "longitude",
+    "Y": "latitude",
+    "Z": "elevation",
+    "T": "YYYY-MM-DD",
+    "proj:epsg": 7843,
+    "proj:wkt2": "GEOGCRS[\"GDA2020\",DATUM[\"Geocentric Datum of Australia 2020\",ELLIPSOID[\"GRS 1980\",6378137,298.257222101,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],CS[ellipsoidal,3],AXIS[\"geodetic latitude (Lat)\",north,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"geodetic longitude (Lon)\",east,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"ellipsoidal height (h)\",up,ORDER[3],LENGTHUNIT[\"metre\",1]],USAGE[SCOPE[\"Geodesy, cadastre, engineering survey, topographic mapping.\"],AREA[\"Australia including Lord Howe Island, Macquarie Island, Ashmore and Cartier Islands, Christmas Island, Cocos (Keeling) Islands, Norfolk Island. All onshore and offshore.\"],BBOX[-60.55,93.41,-8.47,173.34]],ID[\"EPSG\",7843]]",
+    "datetime": "2023-01-03T23:46:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/belair/belair.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/point/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/point/data/belair.csv",
+      "type": "text/csv",
+      "description": "Raw csv data",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "point_data"
+}

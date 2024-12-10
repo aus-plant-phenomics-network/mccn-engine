@@ -1,0 +1,122 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.1.0/schema.json"
+  ],
+  "id": "soil_exposure",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          138.75451473400005,
+          -35.09553177999993
+        ],
+        [
+          138.75451473400005,
+          -34.65075983699995
+        ],
+        [
+          138.47603381400006,
+          -34.65075983699995
+        ],
+        [
+          138.47603381400006,
+          -35.09553177999993
+        ],
+        [
+          138.75451473400005,
+          -35.09553177999993
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    138.47603381400006,
+    -35.09553177999993,
+    138.75451473400005,
+    -34.65075983699995
+  ],
+  "properties": {
+    "column_info": [
+      {
+        "name": "LANSLU",
+        "description": "Soil Landscape Map Unit (LANSLU code): Concatenation of Land System (LANDSYSTEM code) and Soil Landscape Unit (SLU code). Link item to join spatial data with other tables."
+      },
+      {
+        "name": "OBJECTID",
+        "description": "object id"
+      },
+      {
+        "name": "EXPOSURE",
+        "description": "Degree of exposure (Legend category. See layer file for descriptions)."
+      },
+      {
+        "name": "Y1",
+        "description": "Percentage of map unit with low exposure. Attribute Class: Y1, Degree of exposure: Low, Relevant situations: Land other than above."
+      },
+      {
+        "name": "Y2",
+        "description": "Percentage of map unit with moderate exposure. Attribute Class: Y2, Degree of exposure: Moderate, Relevant situations: Plateaux or summit surfaces of higher elevation than the surrounding terrain; Hillslopes adjacent to extensive lower lying land (e.g. escarpments bordering plains); Upper slopes projecting above neighbouring hills; Moderate to high sandhills; Land within five km of the coast and with direct line of sight to the sea."
+      },
+      {
+        "name": "Y3",
+        "description": "Percentage of map unit with high exposure. Attribute Class: Y3, Degree of exposure: High, Relevant situations: Land within five km of the coast and with direct line of sight to the sea."
+      },
+      {
+        "name": "YX",
+        "description": "Percentage of map unit which is not applicable. Attribute Class: YX, Not Applicable"
+      },
+      {
+        "name": "SHAPE_Length",
+        "description": "Shape length"
+      },
+      {
+        "name": "SHAPE_Area",
+        "description": "Shape area"
+      }
+    ],
+    "title": "soil exposure data - DEWNR Soil and Land Program",
+    "description": "Exposure of land to wind, and to some extent to the sun, on west facing slopes can significantly reduce productivity. Assessment of exposure is highly subjective, and is designed to do no more than signal that it is a factor to consider in certain situations. Exposure is simply assessed for the purposes of this classification by judging whether or not the land is unprotected by nearby high ground. Three Exposure attribute classes are considered: Y1, Y2, Y3. Assessments are based on an interpretation of Soil landscape map units which are categorised into legend categories according to the proportion of the landscape with the highest degree of exposure, provided that it accounts for at least 30% of the area of the map unit.",
+    "proj:epsg": 7844,
+    "proj:wkt2": "GEOGCRS[\"GDA2020\",DATUM[\"Geocentric Datum of Australia 2020\",ELLIPSOID[\"GRS 1980\",6378137,298.257222101,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"geodetic latitude (Lat)\",north,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"geodetic longitude (Lon)\",east,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433]],USAGE[SCOPE[\"Geodesy, cadastre, engineering survey, topographic mapping.\"],AREA[\"Australia including Lord Howe Island, Macquarie Island, Ashmore and Cartier Islands, Christmas Island, Cocos (Keeling) Islands, Norfolk Island. All onshore and offshore.\"],BBOX[-60.55,93.41,-8.47,173.34]],ID[\"EPSG\",7844]]",
+    "datetime": "2016-06-08T23:46:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/soil_exposure/soil_exposure.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/stac-generator/tests/files/integration_tests/vector/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/vector/data/soil_exposure.geojson",
+      "type": "application/geo+json",
+      "description": "Raw vector data",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "vector_data"
+}
