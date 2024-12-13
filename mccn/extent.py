@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import datetime
 from functools import cached_property
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, cast
 
 import pandas as pd
+import pystac
 from odc.geo.geobox import GeoBox
 from odc.geo.types import Shape2d
+
+from mccn._types import BBox_T
 
 if TYPE_CHECKING:
     from affine import Affine
@@ -197,6 +200,19 @@ class GeoBoxBuilder:
             tol=self._tol,
         )
 
+    @classmethod
+    def from_collection(
+        cls, collection: pystac.Collection, shape: int | tuple[int, int]
+    ) -> GeoBox:
+        builder = GeoBoxBuilder(
+            crs=4326
+        )  # Note that collection bbox info is always 4326
+        bbox = collection.extent.spatial.bboxes[0]  # First bbox is the enclosing bbox
+        if isinstance(shape, int):
+            shape = (shape, shape)
+        builder = builder.set_bbox(bbox=cast(BBox_T, bbox)).set_shape(*shape)
+        return builder.build()
+
 
 # Similar to GeoBox but for time
 class TimeBox:
@@ -216,4 +232,10 @@ class TimeBox:
 
     @cached_property
     def coordinates(self) -> pd.DatetimeIndex:
-        return pd.date_range(self.start, self.end, self.shape, self.resolution, self.tz)
+        return pd.date_range(  # type: ignore[arg-type]
+            self.start,
+            self.end,
+            periods=self.shape,
+            freq=self.resolution,
+            tz=self.tz,
+        )

@@ -6,18 +6,17 @@ import geopandas as gpd
 import odc.stac
 import pystac
 import pystac_client
-import rasterio
-import rioxarray
 import xarray as xr
-from rasterio import MemoryFile, features
+from odc.geo.xr import xr_coords
 
 from mccn.utils import (
     ASSET_KEY,
     BBOX_TOL,
     get_item_href,
-    item_in_geobox,
-    merge_frames,
+    groupby_field,
+    groupby_id,
     point_data_to_xarray,
+    process_groupby,
     read_point_asset,
 )
 
@@ -26,7 +25,7 @@ if TYPE_CHECKING:
 
     from odc.geo.geobox import GeoBox
 
-    from mccn._types import InterpMethods, MergeMethods
+    from mccn._types import GroupbyOption, InterpMethods, MergeMethods
 
 
 def stac_load_point(
@@ -38,70 +37,51 @@ def stac_load_point(
     y_col: str = "y",
     t_col: str = "time",
     merge_method: MergeMethods = "mean",
-    interp_method: InterpMethods = "nearest",
+    interp_method: InterpMethods | None = "nearest",
     tol: float = BBOX_TOL,
 ) -> xr.Dataset:
     frames = []
     for item in items:
-        # Only read items that are in geobox and have required columns
-        if item_in_geobox(item, geobox):
-            frame = read_point_asset(item, fields, asset_key, x_col, y_col, t_col)
-            if frame is not None:  # Can be None if does not contain required column
-                frames.append(frame)
-    merged = merge_frames(frames, geobox, x_col, y_col, t_col, merge_method, tol)
-    return point_data_to_xarray(merged, geobox, x_col, y_col, interp_method)
+        frame = read_point_asset(item, fields, asset_key, t_col)
+        if frame is not None:  # Can be None if does not contain required column
+            frame = frame.to_crs(geobox.crs)
+            # Process groupby - i.e. average out over depth, duplicate entries, etc
+            merged = process_groupby(
+                frame, geobox, x_col, y_col, t_col, merge_method, tol
+            )
+            frames.append(
+                point_data_to_xarray(merged, geobox, x_col, y_col, t_col, interp_method)
+            )
+    return xr.merge(frames)
 
 
 def stac_load_vector(
     items: Sequence[pystac.Item],
     geobox: GeoBox,
-    asset_key: str | Mapping[str, str] = ASSET_KEY,
+    groupby: GroupbyOption = "id",
+    fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
+    x_col: str = "x",
+    y_col: str = "y",
+    asset_key: str = ASSET_KEY,
+    alias_renaming: dict[str, tuple[str, str]] | None = None,
 ) -> xr.Dataset:
-    """
-    Load several STAC :class: `~pystac.item.Item` objects (from the same or similar collections)
-    as an :class: `xarray.Dataset`.
-
-    This method takes STAC objects describing vector assets (shapefile, geojson) and rasterises
-    them using the provided Geobox parameter.
-    :param items: Iterable of STAC :class `~pystac.item.Item` to load.
-    :param gbox: Allows to specify exact region/resolution/projection using
-       :class:`~odc.geo.geobox.GeoBox` object
-    :return: Xarray datacube with rasterised vector layers.
-    """
-    # A temporary raster file is built in memory using attributes of the Geobox.
-    with MemoryFile().open(
-        driver="GTiff",
-        crs=geobox.crs,
-        transform=geobox.transform,
-        dtype=rasterio.uint8,  # Results in uint8 dtype in xarray.DataArray
-        count=len(items),
-        width=geobox.width,
-        height=geobox.height,
-    ) as memfile:
-        for index, item in enumerate(items):
-            vector_filepath = get_item_href(item, asset_key)
-            vector = gpd.read_file(vector_filepath)
-            # Reproject polygons into the target CRS
-            vector = vector.to_crs(geobox.crs)
-            geom = [shapes for shapes in vector.geometry]
-            # Rasterise polygons with 1 if centre of pixel inside polygon, 0 otherwise
-            rasterized = features.rasterize(
-                geom,
-                out_shape=geobox.shape,
-                fill=0,
-                out=None,
-                transform=geobox.transform,
-                all_touched=False,
-                default_value=1,  # 1 for boolean mask
-                dtype=None,
-            )
-            # Raster bands are 1-indexed
-            memfile.write(rasterized, index + 1)
-
-    # The temporary raster file can then be read into xarray like a normal raster file.
-    xx = rioxarray.open_rasterio(memfile.name)
-    # TODO: Label the layers in the datacube
-    return xx  # type: ignore[return-value]
+    data = {}
+    for item in items:
+        gdf = gpd.read_file(item.assets[asset_key].href)
+        gdf = gdf.to_crs(geobox.crs)
+        data[item.id] = gdf
+    coords = xr_coords(geobox, dims=[y_col, x_col])
+    if groupby == "id":
+        ds_data, ds_attrs = groupby_id(data, geobox, fields, x_col, y_col)
+    elif groupby == "field":
+        ds_data, ds_attrs = groupby_field(
+            data, geobox, fields, alias_renaming, x_col, y_col
+        )
+    else:
+        raise ValueError(
+            f"Invalid groupby option: {groupby}. Supported operations include `id`, `field`."
+        )
+    return xr.Dataset(ds_data, coords, ds_attrs)
 
 
 def stac_load_raster(

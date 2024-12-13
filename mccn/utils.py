@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Mapping, cast
+from typing import TYPE_CHECKING, Any, Mapping, cast
 from warnings import warn
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import pystac
 import xarray as xr
@@ -14,7 +13,7 @@ from odc.geo.xr import xr_coords
 from pandas.api.types import is_datetime64_any_dtype
 from pyproj import CRS, Transformer
 from rasterio.features import rasterize
-from stac_generator.csv.generator import read_csv
+from stac_generator.point.generator import read_csv
 
 from mccn._types import BBox_T
 
@@ -244,8 +243,6 @@ def read_point_asset(
     item: pystac.Item,
     fields: Sequence[str] | None = None,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
-    x_col: str = "x",
-    y_col: str = "y",
     t_col: str = "time",
 ) -> gpd.GeoDataFrame | None:
     """Read asset described in item STAC metadata.
@@ -264,10 +261,6 @@ def read_point_asset(
     :type fields: Sequence[str] | None, optional
     :param asset_key: key in assets of the source asset that the item describes, defaults to ASSET_KEY
     :type asset_key: str, optional
-    :param x_col: renamed x column for merging consistency, defaults to "x"
-    :type x_col: str, optional
-    :param y_col: renamed y column for merging consistency, defaults to "y"
-    :type y_col: str, optional
     :param t_col: renamed t column for merging consistency, defaults to "time"
     :type t_col: str, optional
     :raises StacExtensionError: if required metadata for processing asset csv is not provided in item properties
@@ -284,7 +277,7 @@ def read_point_asset(
         X_name, Y_name, T_name = (
             item.properties["X"],
             item.properties["Y"],
-            item.properties.get("T", t_col),
+            item.properties.get("T", None),
         )
 
         # Read csv
@@ -297,18 +290,20 @@ def read_point_asset(
             date_format=item.properties.get("date_format", "ISO8601"),
             columns=columns,
         )
-        if "T" not in item.properties:
+        # Rename T column for uniformity
+        if T_name is None:
+            T_name = t_col
             gdf[T_name] = item.datetime
-        # Rename columns
-        column_map = {X_name: x_col, Y_name: y_col, T_name: t_col}
-        gdf.rename(columns=column_map, inplace=True)
+        gdf.rename(columns={T_name: t_col}, inplace=True)
+        # Drop X and Y columns since we will repopulate them after changing crs
+        gdf.drop(columns=[X_name, Y_name], inplace=True)
     except KeyError as e:
         raise StacExtensionError("Missing field in stac config:") from e
     return gdf
 
 
-def merge_frames(
-    frames: Sequence[gpd.GeoDataFrame],
+def process_groupby(
+    frame: gpd.GeoDataFrame,
     geobox: GeoBox,
     x_col: str = "x",
     y_col: str = "y",
@@ -317,8 +312,9 @@ def merge_frames(
     tol: float = BBOX_TOL,
 ) -> gpd.GeoDataFrame:
     # Preprocess frames - query geobox
-    frames = [query_geobox(frame, geobox, tol) for frame in frames]
-    frame = pd.concat(frames)
+    frame = query_geobox(frame, geobox, tol)
+    frame[x_col] = frame.geometry.x
+    frame[y_col] = frame.geometry.y
 
     # Prepare aggregation method
     excluding_fields = set([x_col, y_col, t_col, "geometry"])
@@ -339,60 +335,117 @@ def point_data_to_xarray(
     geobox: GeoBox,
     x_col: str = "x",
     y_col: str = "y",
-    interp_method: InterpMethods = "nearest",
+    t_col: str = "time",
+    interp_method: InterpMethods | None = "nearest",
 ) -> xr.Dataset:
     ds = frame.to_xarray()
+    # Sometime to_xarray bugs out with datetime index so need explicit conversion
+    ds[t_col] = pd.DatetimeIndex(ds.coords[t_col].values)
+    if interp_method is None:
+        return ds
     coords_ = xr_coords(geobox, dims=(y_col, x_col))
     ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
     coords = {y_col: coords_[y_col], x_col: coords_[x_col]}
-    return cast(
-        xr.Dataset,
-        ds.interp(
-            coords=coords,
-            method=interp_method,
-        ),
+    return ds.interp(
+        coords=coords,
+        method=interp_method,
     )
 
 
 # Vector data Utilities
 
 
-def read_vector_asset(
-    item: pystac.Item,
-    fields: Sequence[str] | None = None,
-    asset_key: str | Mapping[str, str] = ASSET_KEY,
-    t_col: str = "time",
-) -> gpd.GeoDataFrame:
-    location = get_item_href(item, asset_key)
-    # TODO: update stac generator vector to contain field description
-    # columns = get_required_columns(item, fields)
-    # if not columns:
-    #     return None
-    # gdf = gpd.read_file(location, columns=columns)
-    gdf = gpd.read_file(location, columns=fields)
-    gdf[t_col] = item.datetime
-    return gdf
+def update_attr_legend(
+    attr_dict: dict[str, Any], layer_name: str, field: str, frame: gpd.GeoDataFrame
+) -> None:
+    if pd.api.types.is_string_dtype(frame[field]):
+        cat_map = {name: index for index, name in enumerate(frame[field].unique())}
+        attr_dict[layer_name] = cat_map
+        frame[field] = frame[field].map(cat_map)
 
 
-def rasterise_vectors(
-    frame: gpd.GeoDataFrame,
+def groupby_id(
+    data: dict[str, gpd.GeoDataFrame],
     geobox: GeoBox,
-    fields: Sequence[str] | None = None,
-) -> Mapping[str, np.ndarray]:
+    fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
+    x_col: str = "x",
+    y_col: str = "y",
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    # Load as pure mask
     if fields is None:
         return {
-            "shape": rasterize(
-                shapes=frame.geometry,
+            key: (
+                [y_col, x_col],
+                rasterize(
+                    value.geometry,
+                    geobox.shape,
+                    transform=geobox.transform,
+                    masked=True,
+                ),
+            )
+            for key, value in data.items()
+        }, {}
+    # Load as attribute per layer
+    # Prepare field for each layer
+    item_fields = {}
+    if isinstance(fields, dict):
+        if set(data.keys()).issubset(set(fields.keys())):
+            raise ValueError(
+                f"Vector Loader: when groupby id and field is provided as a dictionary, its key must be a superset of ids of all vector items in the collection. {set(data.keys()) - set(fields.keys())}"
+            )
+        item_fields = fields
+    else:
+        item_fields = {k: fields for k in data.keys()}
+
+    ds_data = {}
+    ds_attrs = {"legend": {}}
+    # Field per layer
+    for k, frame in data.items():
+        for field in item_fields[k]:
+            layer_name = f"{k}_{field}"
+            update_attr_legend(ds_attrs["legend"], layer_name, field, frame)
+            # Build legend mapping for categorical encoding of values
+            ds_data[layer_name] = (
+                [y_col, x_col],
+                rasterize(
+                    (
+                        (geom, value)
+                        for geom, value in zip(frame.geometry, frame[field])
+                    ),
+                    geobox.shape,
+                    transform=geobox.transform,
+                ),
+            )
+    return ds_data, ds_attrs
+
+
+def groupby_field(
+    data: dict[str, gpd.GeoDataFrame],
+    geobox: GeoBox,
+    fields: Sequence[str],
+    alias_renaming: dict[str, tuple[str, str]] | None = None,
+    x_col: str = "x",
+    y_col: str = "y",
+) -> xr.Dataset:
+    if fields is None:
+        raise ValueError("When groupby field, fields parameter must not be None")
+    # Rename columns based on alias map
+    if alias_renaming:
+        for field, (item_id, item_column) in alias_renaming:
+            data[item_id].rename(columns={item_column: field}, inplace=True)
+    if isinstance(fields, str):
+        fields = [fields]
+    gdf = pd.concat(data.values())
+    ds_data = {}
+    ds_attrs = {"legend": {}}
+    for field in fields:
+        update_attr_legend(ds_attrs["legend"], field, field, gdf)
+        ds_data[field] = (
+            [y_col, x_col],
+            rasterize(
+                ((geom, value) for geom, value in zip(gdf.geometry, gdf[field])),
                 out_shape=geobox.shape,
                 transform=geobox.transform,
-            )
-        }
-    return {
-        field: rasterize(
-            shapes=((geom, value) for geom, value in zip(frame.geometry, frame[field])),
-            out_shape=geobox.shape,
-            transform=geobox.transform,
+            ),
         )
-        for field in fields
-        if field in frame.columns
-    }
+    return ds_data, ds_attrs
