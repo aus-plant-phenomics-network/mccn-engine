@@ -5,7 +5,7 @@
 groups = ["default", "analysis", "jupyter", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:f8cbfa250ea3e42819f9c4325f00b0b19bbd52ef85df77d9ae9022e273dd989d"
+content_hash = "sha256:72afa3ced21b02a017cb684fa102472b94fd8bb20d467fa2e237686422a1b0af"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -2354,7 +2354,7 @@ files = [
 
 [[package]]
 name = "pystac-generator"
-version = "0.1.19"
+version = "0.1.20"
 requires_python = ">=3.11"
 summary = "A python package and CLI tool for generating STAC catalog from spatial data files"
 groups = ["default"]
@@ -2369,8 +2369,8 @@ dependencies = [
     "timezonefinder>=6.5.5",
 ]
 files = [
-    {file = "pystac_generator-0.1.19-py3-none-any.whl", hash = "sha256:bd2394069e627032e55927af6b47870571bc5c6be53c955c7baae9958549647e"},
-    {file = "pystac_generator-0.1.19.tar.gz", hash = "sha256:c8f950377cfeb8a138bd12195c3190da0903b7a32c7741342cbeb51c225ec686"},
+    {file = "pystac_generator-0.1.20-py3-none-any.whl", hash = "sha256:6fbb68f088ff7221be4ba4c9e394fada3755d77273ef6487bf1e156a407edbc9"},
+    {file = "pystac_generator-0.1.20.tar.gz", hash = "sha256:3452eaa9ceb5eba8419342976e56311889152c4b82b2c5005b073b4eea680d8f"},
 ]
 
 [[package]]
