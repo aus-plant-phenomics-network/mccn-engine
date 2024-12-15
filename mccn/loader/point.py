@@ -201,7 +201,6 @@ def stac_load_point(
     t_col: str = "time",
     merge_method: MergeMethods = "mean",
     interp_method: InterpMethods | None = "nearest",
-    tol: float = BBOX_TOL,
 ) -> xr.Dataset:
     frames = []
     for item in items:

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import datetime
-from functools import cached_property
 from typing import TYPE_CHECKING, Self, cast
 
-import pandas as pd
 import pystac
 from odc.geo.geobox import GeoBox
 from odc.geo.types import Shape2d
@@ -212,30 +209,3 @@ class GeoBoxBuilder:
             shape = (shape, shape)
         builder = builder.set_bbox(bbox=cast(BBox_T, bbox)).set_shape(*shape)
         return builder.build()
-
-
-# Similar to GeoBox but for time
-class TimeBox:
-    def __init__(
-        self,
-        start: str | datetime.datetime,
-        end: str | datetime.datetime,
-        shape: int | None = None,
-        resolution: str | datetime.timedelta | None = "D",
-        tz: datetime.tzinfo = datetime.UTC,
-    ) -> None:
-        self.start = start
-        self.end = end
-        self.shape = shape
-        self.resolution = resolution
-        self.tz = tz
-
-    @cached_property
-    def coordinates(self) -> pd.DatetimeIndex:
-        return pd.date_range(  # type: ignore[arg-type]
-            self.start,
-            self.end,
-            periods=self.shape,
-            freq=self.resolution,
-            tz=self.tz,
-        )
