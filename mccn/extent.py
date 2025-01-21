@@ -1,17 +1,22 @@
-from typing import Literal, Self
+from __future__ import annotations
 
-from affine import Affine
-from odc.geo.geobox import GeoBox, GeoboxAnchor
-from odc.geo.types import XY, Resolution, Shape2d
-from pyproj.crs.crs import CRS
+from typing import TYPE_CHECKING, Self, cast
 
-X_T = float
-Y_T = float
-BBox_T = tuple[float, float, float, float]
-CRS_T = str | int | CRS
-AnchorPos_T = Literal["center", "edge", "floating", "default"] | tuple[X_T, Y_T]
+import pystac
+from odc.geo.geobox import GeoBox
+from odc.geo.types import Shape2d
+
+from mccn._types import BBox_T
+
+if TYPE_CHECKING:
+    from affine import Affine
+    from odc.geo.geobox import GeoBox, GeoboxAnchor
+    from odc.geo.types import XY, Resolution, Shape2d
+
+    from mccn._types import CRS_T, AnchorPos_T, BBox_T
 
 
+# Placeholder - might be useful for extracting geobox from all items in a collection
 class GeoBoxBuilder:
     """Utility class to build odc.geo.GeoBox.
 
@@ -85,7 +90,7 @@ class GeoBoxBuilder:
     def __init__(
         self,
         crs: CRS_T,
-        tol: float = 0.01,
+        tol: float = 1e-3,
         anchor: AnchorPos_T = "default",
     ) -> None:
         self._crs = crs
@@ -152,7 +157,12 @@ class GeoBoxBuilder:
         :return: the current builder for method chaining
         :rtype: Self
         """
-        self._bbox = bbox
+        self._bbox = (
+            bbox[0],
+            bbox[1],
+            bbox[2],
+            bbox[3],
+        )
         return self
 
     def set_transformation(self, transform: Affine) -> Self:
@@ -186,3 +196,16 @@ class GeoBoxBuilder:
             anchor=self._anchor,
             tol=self._tol,
         )
+
+    @classmethod
+    def from_collection(
+        cls, collection: pystac.Collection, shape: int | tuple[int, int]
+    ) -> GeoBox:
+        builder = GeoBoxBuilder(
+            crs=4326
+        )  # Note that collection bbox info is always 4326
+        bbox = collection.extent.spatial.bboxes[0]  # First bbox is the enclosing bbox
+        if isinstance(shape, int):
+            shape = (shape, shape)
+        builder = builder.set_bbox(bbox=cast(BBox_T, bbox)).set_shape(*shape)
+        return builder.build()
