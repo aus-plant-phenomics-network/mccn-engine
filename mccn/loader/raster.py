@@ -91,6 +91,12 @@ def stac_load_raster(
     :return: raster data as xarray.Dataset
     :rtype: xr.Dataset
     """
+    # NOTE: odc stac load does not work well when throwing in items with different band information
+    # For instance, if item1 is RGB and item2 is DSM, the DSM layer will not be loaded
+    # A way to fix this is to separate items based on common bands. For the previous example,
+    # we can load DSM items and RGB items separately, then merge the resulting xarray ds together.
+    # This fix is applied in the code below, which partition items based on bands, load the rasters using
+    # odc stac load, then merge the resulting xarray datasets.
     band_map = partition_items_based_on_bands(items)
     if bands is not None:
         if isinstance(bands, str):
