@@ -92,6 +92,41 @@ class MCCN:
             )
         return GeoBoxBuilder.from_collection(collection, shape)
 
+    def load_raster(self) -> xr.Dataset:
+        return stac_load_raster(
+            self.collection_filter.raster,
+            self.geobox,
+            self.bands,
+            self.x_col,
+            self.y_col,
+            self.t_col,
+        )
+
+    def load_vector(self) -> xr.Dataset:
+        return stac_load_vector(
+            self.collection_filter.vector,
+            self.geobox,
+            self.groupby,
+            self.vector_fields,
+            self.x_col,
+            self.y_col,
+            self.asset_key,
+            self.alias_renaming,
+        )
+
+    def load_point(self) -> xr.Dataset:
+        return stac_load_point(
+            self.collection_filter.point,
+            self.geobox,
+            self.asset_key,
+            self.point_fields,
+            self.x_col,
+            self.y_col,
+            self.t_col,
+            self.merge_method,
+            self.interp_method,
+        )
+
     def load(self) -> xr.Dataset:
         items = []
         if self.collection_filter.raster:

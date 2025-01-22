@@ -127,7 +127,8 @@ def stac_load_vector(
     data = {}
     for item in items:
         location = get_item_href(item, asset_key)
-        gdf = gpd.read_file(location)
+        layer = item.properties.get("layer", None)
+        gdf = gpd.read_file(location, layer=layer)
         gdf = gdf.to_crs(geobox.crs)
         data[item.id] = gdf
     coords = xr_coords(geobox, dims=(y_col, x_col))

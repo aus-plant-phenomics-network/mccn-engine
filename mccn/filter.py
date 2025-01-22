@@ -82,7 +82,7 @@ class CollectionFilter:
             href = get_item_href(item, self.asset_key)
             if href.endswith("tif") or href.endswith("geotif"):
                 self._raster_items.append(item)
-            elif href.endswith("csv"):
+            elif href.endswith("csv") or href.endswith("txt"):
                 self._point_items.append(item)
             elif (
                 href.endswith("zip")
