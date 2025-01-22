@@ -117,9 +117,15 @@ def read_point_asset(
         if not columns:
             return None
         epsg = get_item_crs(item)
-        X_name, Y_name, T_name = (
+        (
+            X_name,
+            Y_name,
+            Z_name,
+            T_name,
+        ) = (
             item.properties["X"],
             item.properties["Y"],
+            item.properties.get("Z", None),
             item.properties.get("T", None),
         )
 
@@ -131,6 +137,7 @@ def read_point_asset(
             epsg=epsg,  # type: ignore[arg-type]
             T_coord=T_name,
             date_format=item.properties.get("date_format", "ISO8601"),
+            Z_coord=Z_name,
             columns=columns,
         )
         # Rename T column for uniformity
@@ -185,10 +192,7 @@ def point_data_to_xarray(
     coords_ = xr_coords(geobox, dims=(y_col, x_col))
     ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
     coords = {y_col: coords_[y_col], x_col: coords_[x_col]}
-    return ds.interp(
-        coords=coords,
-        method=interp_method,
-    )
+    return ds.interp(coords=coords, method=interp_method)
 
 
 def stac_load_point(
