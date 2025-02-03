@@ -32,6 +32,8 @@ class MCCN:
         x_col: str = "x",
         y_col: str = "y",
         t_col: str = "time",
+        z_col: str = "z",
+        use_z: bool = False,
         # Raster load config
         bands: Sequence[str] | None = None,
         # Vector load config
@@ -56,6 +58,8 @@ class MCCN:
         self.x_col = x_col
         self.y_col = y_col
         self.t_col = t_col
+        self.z_col = z_col
+        self.use_z = use_z
         # Raster load config
         self.bands = bands
         # Vector load config
@@ -116,15 +120,17 @@ class MCCN:
 
     def load_point(self) -> xr.Dataset:
         return stac_load_point(
-            self.collection_filter.point,
-            self.geobox,
-            self.asset_key,
-            self.point_fields,
-            self.x_col,
-            self.y_col,
-            self.t_col,
-            self.merge_method,
-            self.interp_method,
+            items=self.collection_filter.point,
+            geobox=self.geobox,
+            asset_key=self.asset_key,
+            fields=self.point_fields,
+            x_col=self.x_col,
+            y_col=self.y_col,
+            t_col=self.t_col,
+            z_col=self.z_col,
+            use_z=self.use_z,
+            merge_method=self.merge_method,
+            interp_method=self.interp_method,
         )
 
     def load(self) -> xr.Dataset:
@@ -156,15 +162,17 @@ class MCCN:
         if self.collection_filter.point:
             items.append(
                 stac_load_point(
-                    self.collection_filter.point,
-                    self.geobox,
-                    self.asset_key,
-                    self.point_fields,
-                    self.x_col,
-                    self.y_col,
-                    self.t_col,
-                    self.merge_method,
-                    self.interp_method,
+                    items=self.collection_filter.point,
+                    geobox=self.geobox,
+                    asset_key=self.asset_key,
+                    fields=self.point_fields,
+                    x_col=self.x_col,
+                    y_col=self.y_col,
+                    t_col=self.t_col,
+                    z_col=self.z_col,
+                    use_z=self.use_z,
+                    merge_method=self.merge_method,
+                    interp_method=self.interp_method,
                 )
             )
         return xr.merge(items)
