@@ -87,6 +87,7 @@ def read_point_asset(
     fields: Sequence[str] | None = None,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
     t_col: str = "time",
+    z_col: str = "z",
 ) -> gpd.GeoDataFrame | None:
     """Read asset described in item STAC metadata.
 
@@ -141,10 +142,15 @@ def read_point_asset(
             columns=columns,
         )
         # Rename T column for uniformity
+        rename_dict = {}
         if T_name is None:
             T_name = t_col
             gdf[T_name] = item.datetime
-        gdf.rename(columns={T_name: t_col}, inplace=True)
+        else:
+            rename_dict[T_name] = t_col
+        if Z_name:
+            rename_dict[Z_name] = z_col
+        gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs
         gdf.drop(columns=[X_name, Y_name], inplace=True)
     except KeyError as e:
@@ -157,6 +163,8 @@ def process_groupby(
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
+    z_col: str = "z",
+    use_z: bool = False,
     merge_method: MergeMethods = "mean",
 ) -> gpd.GeoDataFrame:
     frame[x_col] = frame.geometry.x
@@ -164,6 +172,8 @@ def process_groupby(
 
     # Prepare aggregation method
     excluding_fields = set([x_col, y_col, t_col, "geometry"])
+    if use_z and z_col:
+        excluding_fields.add(z_col)
     fields = [name for name in frame.columns if name not in excluding_fields]
     # field_map determines replacement strategy for each field when there is a conflict
     field_map = (
@@ -173,6 +183,8 @@ def process_groupby(
     )
 
     # Groupby + Aggregate
+    if use_z and z_col:
+        return frame.groupby([t_col, y_col, x_col, z_col]).agg(field_map)
     return frame.groupby([t_col, y_col, x_col]).agg(field_map)
 
 
@@ -203,6 +215,8 @@ def stac_load_point(
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
+    z_col: str = "z",
+    use_z: bool = False,
     merge_method: MergeMethods = "mean",
     interp_method: InterpMethods | None = "nearest",
 ) -> xr.Dataset:
@@ -212,7 +226,9 @@ def stac_load_point(
         if frame is not None:  # Can be None if does not contain required column
             frame = frame.to_crs(geobox.crs)
             # Process groupby - i.e. average out over depth, duplicate entries, etc
-            merged = process_groupby(frame, x_col, y_col, t_col, merge_method)
+            merged = process_groupby(
+                frame, x_col, y_col, t_col, z_col, use_z, merge_method
+            )
             frames.append(
                 point_data_to_xarray(merged, geobox, x_col, y_col, t_col, interp_method)
             )
