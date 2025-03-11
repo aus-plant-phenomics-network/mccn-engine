@@ -86,7 +86,7 @@ def groupby_field(
     data: Mapping[str, gpd.GeoDataFrame],
     geobox: GeoBox,
     fields: Sequence[str],
-    alias_renaming: Mapping[str, tuple[str, str]] | None = None,
+    alias_renaming: Mapping[str, dict[str, str]] | None = None,
     x_col: str = "x",
     y_col: str = "y",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -94,8 +94,8 @@ def groupby_field(
         raise ValueError("When groupby field, fields parameter must not be None")
     # Rename columns based on alias map
     if alias_renaming:
-        for field, (item_id, item_column) in alias_renaming.items():
-            data[item_id].rename(columns={item_column: field}, inplace=True)
+        for item_id, renaming_dict in alias_renaming.items():
+            data[item_id].rename(columns=renaming_dict, inplace=True)
     if isinstance(fields, str):
         fields = [fields]
     gdf = pd.concat(data.values())
@@ -122,7 +122,7 @@ def stac_load_vector(
     x_col: str = "x",
     y_col: str = "y",
     asset_key: str | Mapping[str, str] = ASSET_KEY,
-    alias_renaming: dict[str, tuple[str, str]] | None = None,
+    alias_renaming: dict[str, dict[str, str]] | None = None,
 ) -> xr.Dataset:
     data = {}
     for item in items:

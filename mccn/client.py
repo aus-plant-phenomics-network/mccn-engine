@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import pystac
 import pystac_client
@@ -39,11 +39,14 @@ class MCCN:
         # Vector load config
         groupby: GroupbyOption = "id",
         vector_fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
-        alias_renaming: dict[str, tuple[str, str]] | None = None,
+        alias_renaming: dict[str, dict[str, str]] | None = None,
         # Point load config
         point_fields: Sequence[str] | None = None,
         merge_method: MergeMethods = "mean",
         interp_method: InterpMethods | None = "nearest",
+        # Preprocessing config
+        field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
+        field_renaming: dict[str, str] | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.collection_id = collection_id
@@ -70,6 +73,9 @@ class MCCN:
         self.point_fields = point_fields
         self.merge_method = merge_method
         self.interp_method = interp_method
+        # Preprocessing
+        self.field_preprocessing = field_preprocessing
+        self.field_renaming = field_renaming
 
     def get_collection(
         self,
@@ -131,6 +137,9 @@ class MCCN:
             use_z=self.use_z,
             merge_method=self.merge_method,
             interp_method=self.interp_method,
+            alias_renaming=self.alias_renaming,
+            field_preprocessing=self.field_preprocessing,
+            field_renaming=self.field_renaming,
         )
 
     def load(self) -> xr.Dataset:
@@ -173,6 +182,9 @@ class MCCN:
                     use_z=self.use_z,
                     merge_method=self.merge_method,
                     interp_method=self.interp_method,
+                    alias_renaming=self.alias_renaming,
+                    field_preprocessing=self.field_preprocessing,
+                    field_renaming=self.field_renaming,
                 )
             )
         return xr.merge(items)

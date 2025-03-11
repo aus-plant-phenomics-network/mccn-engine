@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
-from stac_generator.point.generator import read_csv
+from stac_generator.core.point.generator import read_csv
 
 from mccn.loader.utils import (
     ASSET_KEY,
@@ -88,6 +88,9 @@ def read_point_asset(
     asset_key: str | Mapping[str, str] = ASSET_KEY,
     t_col: str = "time",
     z_col: str = "z",
+    alias_renaming: dict[str, dict[str, str]] | None = None,
+    field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
+    field_renaming: dict[str, str] | None = None,
 ) -> gpd.GeoDataFrame | None:
     """Read asset described in item STAC metadata.
 
@@ -107,6 +110,24 @@ def read_point_asset(
     :type asset_key: str, optional
     :param t_col: renamed t column for merging consistency, defaults to "time"
     :type t_col: str, optional
+    :param z_col: renamed z column for merging consistency, defaults to "z"
+    :type z_col: str, optional
+    :param alias_renaming: dictionary with key being the item id and value being a dict with key being the original name,
+    and value being the alias. When an asset is loaded into a dataframe, the original field will be renamed to the given alias.
+    Alias renaming is performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
+    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
+    elevation with field renaming.
+    :type alias_renaming: dict[str, dict[str, str]], optional
+    :param field_preprocessing: dictionary with key being the df's column and value being the transformation function. Alias renaming is
+    performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
+    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
+    elevation with field renaming.
+    :type field_preprocessing: dict[str, Callable[[Any], Any]], optional
+    :param field_renaming: dictionary with key being the df's column and value being the renamed value. Alias renaming is
+    performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
+    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
+    elevation with field renaming.
+    :type field_preprocessing: dict[str, str], optional
     :raises StacExtensionError: if required metadata for processing asset csv is not provided in item properties
     :return: geopandas dataframe or None if the fields requested are not present in dataframe
     :rtype: gpd.GeoDataFrame | None
@@ -153,6 +174,16 @@ def read_point_asset(
         gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs
         gdf.drop(columns=[X_name, Y_name], inplace=True)
+
+        # Rename, Transform, Rename
+        if alias_renaming and item.id in alias_renaming:
+            gdf.rename(columns=alias_renaming[item.id], inplace=True)
+        if field_preprocessing:
+            for key, fn in field_preprocessing.items():
+                if key in gdf.columns:
+                    gdf[key] = gdf[key].apply(fn)
+        if field_renaming:
+            gdf.rename(field_renaming, inplace=True)
     except KeyError as e:
         raise StacExtensionError("Missing field in stac config:") from e
     return gdf
@@ -219,10 +250,22 @@ def stac_load_point(
     use_z: bool = False,
     merge_method: MergeMethods = "mean",
     interp_method: InterpMethods | None = "nearest",
+    alias_renaming: dict[str, dict[str, str]] | None = None,
+    field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
+    field_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
     frames = []
     for item in items:
-        frame = read_point_asset(item, fields, asset_key, t_col)
+        frame = read_point_asset(
+            item=item,
+            fields=fields,
+            asset_key=asset_key,
+            t_col=t_col,
+            z_col=z_col,
+            alias_renaming=alias_renaming,
+            field_preprocessing=field_preprocessing,
+            field_renaming=field_renaming,
+        )
         if frame is not None:  # Can be None if does not contain required column
             frame = frame.to_crs(geobox.crs)
             # Process groupby - i.e. average out over depth, duplicate entries, etc
