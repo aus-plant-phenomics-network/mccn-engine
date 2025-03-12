@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import pystac
 import pystac_client
@@ -32,16 +32,21 @@ class MCCN:
         x_col: str = "x",
         y_col: str = "y",
         t_col: str = "time",
+        z_col: str = "z",
+        use_z: bool = False,
         # Raster load config
         bands: Sequence[str] | None = None,
         # Vector load config
         groupby: GroupbyOption = "id",
         vector_fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
-        alias_renaming: dict[str, tuple[str, str]] | None = None,
+        alias_renaming: dict[str, dict[str, str]] | None = None,
         # Point load config
         point_fields: Sequence[str] | None = None,
         merge_method: MergeMethods = "mean",
         interp_method: InterpMethods | None = "nearest",
+        # Preprocessing config
+        field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
+        field_renaming: dict[str, str] | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.collection_id = collection_id
@@ -56,6 +61,8 @@ class MCCN:
         self.x_col = x_col
         self.y_col = y_col
         self.t_col = t_col
+        self.z_col = z_col
+        self.use_z = use_z
         # Raster load config
         self.bands = bands
         # Vector load config
@@ -66,6 +73,9 @@ class MCCN:
         self.point_fields = point_fields
         self.merge_method = merge_method
         self.interp_method = interp_method
+        # Preprocessing
+        self.field_preprocessing = field_preprocessing
+        self.field_renaming = field_renaming
 
     def get_collection(
         self,
@@ -91,6 +101,46 @@ class MCCN:
                 "If geobox is not defined, shape must be provided to calculate geobox from collection"
             )
         return GeoBoxBuilder.from_collection(collection, shape)
+
+    def load_raster(self) -> xr.Dataset:
+        return stac_load_raster(
+            self.collection_filter.raster,
+            self.geobox,
+            self.bands,
+            self.x_col,
+            self.y_col,
+            self.t_col,
+        )
+
+    def load_vector(self) -> xr.Dataset:
+        return stac_load_vector(
+            self.collection_filter.vector,
+            self.geobox,
+            self.groupby,
+            self.vector_fields,
+            self.x_col,
+            self.y_col,
+            self.asset_key,
+            self.alias_renaming,
+        )
+
+    def load_point(self) -> xr.Dataset:
+        return stac_load_point(
+            items=self.collection_filter.point,
+            geobox=self.geobox,
+            asset_key=self.asset_key,
+            fields=self.point_fields,
+            x_col=self.x_col,
+            y_col=self.y_col,
+            t_col=self.t_col,
+            z_col=self.z_col,
+            use_z=self.use_z,
+            merge_method=self.merge_method,
+            interp_method=self.interp_method,
+            alias_renaming=self.alias_renaming,
+            field_preprocessing=self.field_preprocessing,
+            field_renaming=self.field_renaming,
+        )
 
     def load(self) -> xr.Dataset:
         items = []
@@ -121,15 +171,20 @@ class MCCN:
         if self.collection_filter.point:
             items.append(
                 stac_load_point(
-                    self.collection_filter.point,
-                    self.geobox,
-                    self.asset_key,
-                    self.point_fields,
-                    self.x_col,
-                    self.y_col,
-                    self.t_col,
-                    self.merge_method,
-                    self.interp_method,
+                    items=self.collection_filter.point,
+                    geobox=self.geobox,
+                    asset_key=self.asset_key,
+                    fields=self.point_fields,
+                    x_col=self.x_col,
+                    y_col=self.y_col,
+                    t_col=self.t_col,
+                    z_col=self.z_col,
+                    use_z=self.use_z,
+                    merge_method=self.merge_method,
+                    interp_method=self.interp_method,
+                    alias_renaming=self.alias_renaming,
+                    field_preprocessing=self.field_preprocessing,
+                    field_renaming=self.field_renaming,
                 )
             )
         return xr.merge(items)
