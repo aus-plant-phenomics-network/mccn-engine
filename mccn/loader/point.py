@@ -88,7 +88,6 @@ def read_point_asset(
     asset_key: str | Mapping[str, str] = ASSET_KEY,
     t_col: str = "time",
     z_col: str = "z",
-    alias_renaming: dict[str, dict[str, str]] | None = None,
     field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
     field_renaming: dict[str, str] | None = None,
 ) -> gpd.GeoDataFrame | None:
@@ -112,12 +111,6 @@ def read_point_asset(
     :type t_col: str, optional
     :param z_col: renamed z column for merging consistency, defaults to "z"
     :type z_col: str, optional
-    :param alias_renaming: dictionary with key being the item id and value being a dict with key being the original name,
-    and value being the alias. When an asset is loaded into a dataframe, the original field will be renamed to the given alias.
-    Alias renaming is performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
-    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
-    elevation with field renaming.
-    :type alias_renaming: dict[str, dict[str, str]], optional
     :param field_preprocessing: dictionary with key being the df's column and value being the transformation function. Alias renaming is
     performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
     assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
@@ -171,19 +164,19 @@ def read_point_asset(
             rename_dict[T_name] = t_col
         if Z_name:
             rename_dict[Z_name] = z_col
-        gdf.rename(columns=rename_dict, inplace=True)
-        # Drop X and Y columns since we will repopulate them after changing crs
-        gdf.drop(columns=[X_name, Y_name], inplace=True)
 
         # Rename, Transform, Rename
-        if alias_renaming and item.id in alias_renaming:
-            gdf.rename(columns=alias_renaming[item.id], inplace=True)
         if field_preprocessing:
             for key, fn in field_preprocessing.items():
                 if key in gdf.columns:
                     gdf[key] = gdf[key].apply(fn)
         if field_renaming:
-            gdf.rename(field_renaming, inplace=True)
+            gdf.rename(columns=field_renaming, inplace=True)
+
+        # Rename indices
+        gdf.rename(columns=rename_dict, inplace=True)
+        # Drop X and Y columns since we will repopulate them after changing crs
+        gdf.drop(columns=[X_name, Y_name], inplace=True)
     except KeyError as e:
         raise StacExtensionError("Missing field in stac config:") from e
     return gdf
@@ -250,7 +243,6 @@ def stac_load_point(
     use_z: bool = False,
     merge_method: MergeMethods = "mean",
     interp_method: InterpMethods | None = "nearest",
-    alias_renaming: dict[str, dict[str, str]] | None = None,
     field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
     field_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
@@ -262,7 +254,6 @@ def stac_load_point(
             asset_key=asset_key,
             t_col=t_col,
             z_col=z_col,
-            alias_renaming=alias_renaming,
             field_preprocessing=field_preprocessing,
             field_renaming=field_renaming,
         )
