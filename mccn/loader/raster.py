@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import collections
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import odc.stac
 import pystac
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 def partition_items_based_on_bands(
     items: Sequence[pystac.Item],
 ) -> dict[tuple[str, ...] | None, list[pystac.Item]]:
-    """Separate items into groups identified by the bands that items contain.
+    """Separate items into groups where item in each group contains the same set of bands.
 
-    Also raise a warning when no band information can be read from STAC metadata
+    Skip any item that does not contain band information field
 
     :param items: list of raster stac metadata represented as pystac.Item
     :type items: Sequence[pystac.Item]
@@ -37,6 +37,7 @@ def partition_items_based_on_bands(
             logger.warning(
                 f"Raster item: {item.id} does not have STAC band information. This could lead to unpredictable error when loading into xarray. For consistency, it's best to annotate the band information for the STAC metadata using EOExtension."
             )
+            continue
         bands = tuple(sorted([b.name for b in ext.bands])) if ext.bands else None
         result[bands].append(item)
     return result
@@ -70,6 +71,8 @@ def stac_load_raster(
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
+    field_preprocessing: dict[str, Callable] | None = None,
+    field_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
     """Loader raster data
 
