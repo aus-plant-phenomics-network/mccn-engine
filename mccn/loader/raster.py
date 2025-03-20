@@ -51,7 +51,7 @@ def _odc_load_wrapper(
     y_col: str = "y",
     t_col: str = "time",
     field_processing: dict[str, Callable] | None = None,
-    field_renaming: dict[str, str] | None = None,
+    band_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
     ds = odc.stac.load(items, bands, geobox=geobox)
     # NOTE: odc stac load uses odc.geo.xr.xr_coords to set dimension name
@@ -69,8 +69,8 @@ def _odc_load_wrapper(
             if k in ds.data_vars.keys():
                 ds[k] = xr.apply_ufunc(fn, ds[k])
     # Rename variable
-    if field_renaming and set(field_renaming.keys()) & set(ds.data_vars.keys()):
-        ds = ds.rename_vars(field_renaming)
+    if band_renaming and set(band_renaming.keys()) & set(ds.data_vars.keys()):
+        ds = ds.rename_vars(band_renaming)
     return ds
 
 
@@ -81,8 +81,8 @@ def stac_load_raster(
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
-    field_preprocessing: dict[str, Callable] | None = None,
-    field_renaming: dict[str, str] | None = None,
+    band_preprocessing: dict[str, Callable] | None = None,
+    band_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
     """Loader raster data
 
@@ -133,8 +133,8 @@ def stac_load_raster(
                 x_col,
                 y_col,
                 t_col,
-                field_processing=field_preprocessing,
-                field_renaming=field_renaming,
+                field_processing=band_preprocessing,
+                band_renaming=band_renaming,
             )
         )
     return xr.merge(ds, compat="equals")

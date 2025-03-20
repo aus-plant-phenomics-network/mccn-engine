@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING, Any, Callable
 
 import geopandas as gpd
@@ -10,7 +11,6 @@ from stac_generator.core.point.generator import read_csv
 
 from mccn.loader.utils import (
     ASSET_KEY,
-    BBOX_TOL,
     StacExtensionError,
     get_item_crs,
     get_item_href,
@@ -27,108 +27,62 @@ if TYPE_CHECKING:
 
 def get_required_columns(
     item: pystac.Item,
-    fields: Sequence[str] | None = None,
-) -> list[str]:
-    """Get the requested columns from `fields` that are available in item.
+    bands: Sequence[str] | None = None,
+    band_renaming: Mapping[str, str] | None = None,
+) -> list[str] | None:
+    """Get a list of fields to be read from a point/vector asset.
 
-    STAC Generator automatically generates `column_info` property (for csv point data)
-    which contains a list of fields/attributes in the source asset. This function determines
-    the subset of requested `fields` that is available in the source asset. This allows for
-    efficient data loading as only relevant columns are read into memory instead of the whole
-    data frame. This should work for both point and vector data type, as long as `column_info`
-    is present.
+    If column_info is not described in item properties, return None.
+    If bands is None, return all bands described in column_info
+    If band_renaming is not None, replace every band in bands with their band_renaming's mapping target.
+    Return bands in column_info that are also requested in bands keyword.
 
-    :param item: STAC item metadata
-    :type item: pystac.Item
-    :param fields: list of requested columns, some of which if not all may not be available
-    in the source asset, defaults to None
-    :type fields: Sequence[str] | None, optional
-    :raises StacExtensionError: when column_info field is not found in item properties
-    :return: subset of fields as list that can be read from source asset of item
-    :rtype: list[str]
+    Args:
+        item (pystac.Item): stac item
+        bands (Sequence[str] | None, optional): requested bands. Defaults to None.
+        band_renaming (Mapping[str, str] | None, optional): renaming map. Defaults to None.
+
+    Returns:
+        list[str] | None: bands to be read from the current item
     """
+    # No column info described - skip item
     if "column_info" not in item.properties:
-        raise StacExtensionError("No column info found in STAC metadata")
-    if not fields:
+        return None
+    # No requested bands - load all columns
+    if not bands:
         return [column["name"] for column in item.properties["column_info"]]
+    # If band_renaming is provided, also replace the requested band with the version that will be renamed
+    # i.e. if requested band is height_m, but we need to rename height_cm to height_m, the requested band will include
+    # just height_cm
+    requested_bands = copy.copy(set(bands))
+    if band_renaming:
+        for k, v in band_renaming.items():
+            if v in bands:
+                requested_bands.remove(v)
+                requested_bands.add(k)
     return [
         column["name"]
         for column in item.properties["column_info"]
-        if column["name"] in fields
+        if column["name"] in requested_bands
     ]
-
-
-def query_geobox(
-    frame: gpd.GeoDataFrame,
-    geobox: GeoBox,
-    tol: float = BBOX_TOL,
-) -> gpd.GeoDataFrame:
-    """Constrain geodataframe to region specified by `geobox` and convert to `geobox` crs
-
-    This method works on both point GeoDataFrame and vector GeoDataFrame.
-
-    :param frame: input dataframe
-    :type frame: gpd.GeoDataFrame
-    :param geobox: input geobox
-    :type geobox: GeoBox
-    :param tol: tolerance for geobox bounding box query, defaults to BBOX_TOL
-    :type tol: float, optional
-    :return: constrainted and crs transformed geodataframe
-    :rtype: gpd.GeoDataFrame
-    """
-    frame.to_crs(geobox.crs, inplace=True)
-    left_right = slice(float(geobox.boundingbox[0]), float(geobox.boundingbox[2] + tol))
-    bottom_top = slice(float(geobox.boundingbox[1]), float(geobox.boundingbox[3] + tol))
-    return frame.cx[left_right, bottom_top]
 
 
 def read_point_asset(
     item: pystac.Item,
-    fields: Sequence[str] | None = None,
+    bands: Sequence[str] | None = None,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
     t_col: str = "time",
     z_col: str = "z",
-    field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
-    field_renaming: dict[str, str] | None = None,
+    band_preprocessing: Mapping[str, Callable[[Any], Any]] | None = None,
+    band_renaming: Mapping[str, str] | None = None,
 ) -> gpd.GeoDataFrame | None:
-    """Read asset described in item STAC metadata.
-
-    This function looks for the asset in item assets under `asset_key` and raise an error if it does not have a csv
-    extension. The function then extract metadata required for processing point asset (the same metadata used in stac_generator).
-    This metadata should be found in item properties, and if not found, an error will be raised. The function then loads
-    the csv into a `GeoDataFrame` and rename the columns for longitude/X, latitude/Y, time/T (may not be present) with values
-    from `x_col`, `y_col`, `t_col`. Note that if there is no T column in the original dataframe, a time column will be appended based
-    on the `datetime` field of stac metadata. This ensures consistency with odc stac load for merging.
-
-    :param item: item STAC metadata as pystac.Item object
-    :type item: pystac.Item
-    :param fields: columns in dataframe to read in. If fields is None, read all columns. If a list of fields are provided, will read
-    the set of fields that are available in the dataframe. If no fields is available, return None. defaults to None
-    :type fields: Sequence[str] | None, optional
-    :param asset_key: key in assets of the source asset that the item describes, defaults to ASSET_KEY
-    :type asset_key: str, optional
-    :param t_col: renamed t column for merging consistency, defaults to "time"
-    :type t_col: str, optional
-    :param z_col: renamed z column for merging consistency, defaults to "z"
-    :type z_col: str, optional
-    :param field_preprocessing: dictionary with key being the df's column and value being the transformation function. Alias renaming is
-    performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
-    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
-    elevation with field renaming.
-    :type field_preprocessing: dict[str, Callable[[Any], Any]], optional
-    :param field_renaming: dictionary with key being the df's column and value being the renamed value. Alias renaming is
-    performed first, followed by field preprocessing then field renaming. An example use case will be to load in 2 elevation
-    assets - i.e ft and m, rename the ft version to elevation_ft with alias_renaming, convert to m with field_preprocessing, then rename back to
-    elevation with field renaming.
-    :type field_preprocessing: dict[str, str], optional
-    :raises StacExtensionError: if required metadata for processing asset csv is not provided in item properties
-    :return: geopandas dataframe or None if the fields requested are not present in dataframe
-    :rtype: gpd.GeoDataFrame | None
-    """
     try:
         # Process metadata
         location = get_item_href(item, asset_key)
-        columns = get_required_columns(item, fields)
+        columns = get_required_columns(item, bands)
+        # Columns can be None from either
+        # "column_info" not described in item's properties
+        # no column in "column_info" is in band - this asset do not contained the desired bands
         if not columns:
             return None
         epsg = get_item_crs(item)
@@ -165,20 +119,20 @@ def read_point_asset(
         if Z_name:
             rename_dict[Z_name] = z_col
 
-        # Rename, Transform, Rename
-        if field_preprocessing:
-            for key, fn in field_preprocessing.items():
+        # Transform, Rename
+        if band_preprocessing:
+            for key, fn in band_preprocessing.items():
                 if key in gdf.columns:
                     gdf[key] = gdf[key].apply(fn)
-        if field_renaming:
-            gdf.rename(columns=field_renaming, inplace=True)
+        if band_renaming:
+            gdf.rename(columns=band_renaming, inplace=True)
 
         # Rename indices
         gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs
         gdf.drop(columns=[X_name, Y_name], inplace=True)
     except KeyError as e:
-        raise StacExtensionError("Missing field in stac config:") from e
+        raise StacExtensionError("Missing band in stac config:") from e
     return gdf
 
 
@@ -195,21 +149,21 @@ def process_groupby(
     frame[y_col] = frame.geometry.y
 
     # Prepare aggregation method
-    excluding_fields = set([x_col, y_col, t_col, "geometry"])
+    excluding_bands = set([x_col, y_col, t_col, "geometry"])
     if use_z and z_col:
-        excluding_fields.add(z_col)
-    fields = [name for name in frame.columns if name not in excluding_fields]
-    # field_map determines replacement strategy for each field when there is a conflict
-    field_map = (
-        {field: merge_method[field] for field in fields if field in merge_method}
+        excluding_bands.add(z_col)
+    bands = [name for name in frame.columns if name not in excluding_bands]
+    # band_map determines replacement strategy for each band when there is a conflict
+    band_map = (
+        {band: merge_method[band] for band in bands if band in merge_method}
         if isinstance(merge_method, dict)
-        else {field: merge_method for field in fields}
+        else {band: merge_method for band in bands}
     )
 
     # Groupby + Aggregate
     if use_z and z_col:
-        return frame.groupby([t_col, y_col, x_col, z_col]).agg(field_map)
-    return frame.groupby([t_col, y_col, x_col]).agg(field_map)
+        return frame.groupby([t_col, y_col, x_col, z_col]).agg(band_map)
+    return frame.groupby([t_col, y_col, x_col]).agg(band_map)
 
 
 def point_data_to_xarray(
@@ -235,7 +189,7 @@ def stac_load_point(
     items: Sequence[pystac.Item],
     geobox: GeoBox,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
-    fields: Sequence[str] | None = None,
+    bands: Sequence[str] | None = None,
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
@@ -243,19 +197,19 @@ def stac_load_point(
     use_z: bool = False,
     merge_method: MergeMethods = "mean",
     interp_method: InterpMethods | None = "nearest",
-    field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
-    field_renaming: dict[str, str] | None = None,
+    band_preprocessing: Mapping[str, Callable[[Any], Any]] | None = None,
+    band_renaming: Mapping[str, str] | None = None,
 ) -> xr.Dataset:
     frames = []
     for item in items:
         frame = read_point_asset(
             item=item,
-            fields=fields,
+            bands=bands,
             asset_key=asset_key,
             t_col=t_col,
             z_col=z_col,
-            field_preprocessing=field_preprocessing,
-            field_renaming=field_renaming,
+            band_preprocessing=band_preprocessing,
+            band_renaming=band_renaming,
         )
         if frame is not None:  # Can be None if does not contain required column
             frame = frame.to_crs(geobox.crs)

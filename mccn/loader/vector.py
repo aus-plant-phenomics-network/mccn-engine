@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Mapping, cast
+from typing import TYPE_CHECKING, Any, Callable, Mapping, cast
 
 import geopandas as gpd
 import pandas as pd
@@ -112,6 +112,16 @@ def groupby_field(
             ),
         )
     return ds_data, ds_attrs
+
+
+def read_vector_file(
+    item: pystac.Item,
+    asset_key: str | Mapping[str, str] = ASSET_KEY,
+    bands: str | Sequence[str] | None = None,
+    band_preprocessing: dict[str, Callable] | None = None,
+    band_renaming: dict[str, str] | None = None,
+) -> gpd.GeoDataFrame:
+    pass
 
 
 def stac_load_vector(

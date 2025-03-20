@@ -45,8 +45,8 @@ class MCCN:
         merge_method: MergeMethods = "mean",
         interp_method: InterpMethods | None = "nearest",
         # Preprocessing config
-        field_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
-        field_renaming: dict[str, str] | None = None,
+        band_preprocessing: dict[str, Callable[[Any], Any]] | None = None,
+        band_renaming: dict[str, str] | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.collection_id = collection_id
@@ -74,8 +74,8 @@ class MCCN:
         self.merge_method = merge_method
         self.interp_method = interp_method
         # Preprocessing
-        self.field_preprocessing = field_preprocessing
-        self.field_renaming = field_renaming
+        self.band_preprocessing = band_preprocessing
+        self.band_renaming = band_renaming
 
     def get_collection(
         self,
@@ -138,8 +138,8 @@ class MCCN:
             merge_method=self.merge_method,
             interp_method=self.interp_method,
             alias_renaming=self.alias_renaming,
-            field_preprocessing=self.field_preprocessing,
-            field_renaming=self.field_renaming,
+            band_preprocessing=self.band_preprocessing,
+            band_renaming=self.band_renaming,
         )
 
     def load(self) -> xr.Dataset:
@@ -183,8 +183,8 @@ class MCCN:
                     merge_method=self.merge_method,
                     interp_method=self.interp_method,
                     alias_renaming=self.alias_renaming,
-                    field_preprocessing=self.field_preprocessing,
-                    field_renaming=self.field_renaming,
+                    band_preprocessing=self.band_preprocessing,
+                    band_renaming=self.band_renaming,
                 )
             )
         return xr.merge(items)
