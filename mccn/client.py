@@ -84,9 +84,13 @@ class MCCN:
     ) -> pystac.Collection:
         if endpoint.startswith("http"):
             res = pystac_client.Client.open(endpoint)
-        else:
-            res = pystac_client.Client.from_file(endpoint)
-        return res.get_collection(collection_id)
+            return res.get_collection(collection_id)
+        collection = pystac.Collection.from_file(endpoint)
+        if collection.id != collection_id:
+            raise ValueError(
+                f"Collection endpoint does not match requested id: {collection_id}"
+            )
+        return collection
 
     def get_geobox(
         self,
