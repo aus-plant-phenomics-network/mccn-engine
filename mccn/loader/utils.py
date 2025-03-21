@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import copy
 import json
-from typing import TYPE_CHECKING, Mapping
+from functools import lru_cache
+from typing import TYPE_CHECKING, Mapping, Sequence
 from warnings import warn
 
 from pyproj import CRS
+from pyproj.transformer import Transformer
+
+from mccn._types import BBox_T
 
 if TYPE_CHECKING:
     import pystac
+    from odc.geo.geobox import GeoBox
 
 
 class StacExtensionError(Exception): ...
@@ -16,30 +22,28 @@ class StacExtensionError(Exception): ...
 ASSET_KEY = "data"
 BBOX_TOL = 1e-10
 
-# Data format Agnostic Utilities
-
 
 def get_item_href(
     item: pystac.Item,
     asset_key: str | Mapping[str, str],
 ) -> str:
-    """Get the href of the source asset in item.
+    """Get the href of the primary asset.
 
-    Source asset is the source file which the stac item primarily describes. This
-    is to differentiate from other assets which might serve as summary for the source
-    asset. The source asset should be indexed by asset key, which can either be a string,
-    or a dictionary that maps item id to source asset key.
+    While the general STAC metadata allows for multiple asset per item, in MCCN, we
+    assume that there is only one primary asset whose metadata is described by the item.
+    This function loads the primary asset described by asset key.
 
-    :param item: stac item
-    :type item: pystac.Item
-    :param asset_key: if provided as a string, will be the key of the source asset in item.Assets.
-    if provided as a dictionary, must contain an entry for the current item with item.id as key and
-    asset key as value.
-    :type asset_key: str | Mapping[str, str]
-    :raises KeyError: if asset_key is provided as a dictionary but does not contain item.id
-    :raises TypeError: if asset_key is neither a string or a dictionary
-    :return: the source asset href
-    :rtype: str
+    Args:
+        item (pystac.Item): item
+        asset_key (str | Mapping[str, str]): if str, the identifier of the primary asset. If dict, the key
+        is the item's id and value is the identifier of the primary asset associated with item id.
+
+    Raises:
+        KeyError: asset key dict does not contain the current item's id
+        TypeError: invalid type for asset_key. Expects str or dict
+
+    Returns:
+        str: the primary asset's href
     """
     if isinstance(asset_key, str):
         return item.assets[asset_key].href
@@ -58,14 +62,15 @@ def get_item_crs(item: pystac.Item) -> CRS:
     This will first look for CRS information encoded as proj extension, in the following order:
     `proj:code, proj:wkt2, proj:projjson, proj:epsg`
 
-    If no proj extension fields is found, will attempt to look for the field `epsg` in properties.
+    Args:
+        item (pystac.Item): stac item
 
-    :param item: stac item metadata
-    :type item: pystac.Item
-    :raises StacExtensionError: if proj:projjson is provided but with an invalid format
-    :raises StacExtensionError: if there is no crs field in the metadata
-    :return: CRS information
-    :rtype: CRS
+    Raises:
+        StacExtensionError: Invalid format for proj:projjson
+        StacExtensionError: no crs description available
+
+    Returns:
+        CRS: crs of the current item
     """
     if "proj:code" in item.properties:
         return CRS(item.properties.get("proj:code"))
@@ -85,3 +90,67 @@ def get_item_crs(item: pystac.Item) -> CRS:
         return CRS(int(item.properties.get("epsg")))  # type: ignore[arg-type]
     else:
         raise StacExtensionError("Missing CRS information in item properties")
+
+
+def get_required_columns(
+    item: pystac.Item,
+    bands: Sequence[str] | None = None,
+    band_renaming: Mapping[str, str] | None = None,
+) -> list[str]:
+    """Get a list of fields to be read from a point/vector asset.
+
+    If column_info is not described in item properties, return empty list.
+    If bands is None, return all bands described in column_info
+    If band_renaming is not None, replace every band in bands with their band_renaming's mapping target.
+    Return bands in column_info that are also requested in bands keyword.
+
+    Args:
+        item (pystac.Item): stac item
+        bands (Sequence[str] | None, optional): requested bands. Defaults to None.
+        band_renaming (Mapping[str, str] | None, optional): renaming map. Defaults to None.
+
+    Returns:
+        list[str]: bands to be read from the current item
+    """
+    # No column info described - return empty list
+    if "column_info" not in item.properties:
+        return []
+    # No requested bands - load all columns
+    if not bands:
+        return [column["name"] for column in item.properties["column_info"]]
+    # If band_renaming is provided, also replace the requested band with the version that will be renamed
+    # i.e. if requested band is height_m, but we need to rename height_cm to height_m, the requested band will include
+    # just height_cm
+    requested_bands = copy.copy(set(bands))
+    if band_renaming:
+        for k, v in band_renaming.items():
+            if v in bands:
+                requested_bands.add(k)
+    return [
+        column["name"]
+        for column in item.properties["column_info"]
+        if column["name"] in requested_bands
+    ]
+
+
+@lru_cache(maxsize=None)
+def get_crs_transformer(src: CRS, dst: CRS) -> Transformer:
+    """Cached method for getting pyproj.Transformer object
+
+    Args:
+        src (CRS): source crs
+        dst (CRS): destition crs
+
+    Returns:
+        Transformer: transformer object
+    """
+    return Transformer.from_crs(src, dst, always_xy=True)
+
+
+@lru_cache(maxsize=None)
+def bbox_from_geobox(geobox: GeoBox, crs: CRS) -> BBox_T:
+    transformer = get_crs_transformer(geobox.crs, crs)
+    bbox = list(geobox.boundingbox)
+    left, bottom = transformer.transform(bbox[0], bbox[1])
+    right, top = transformer.transform(bbox[2], bbox[3])
+    return left, bottom, right, top

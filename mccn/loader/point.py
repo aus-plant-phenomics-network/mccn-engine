@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from typing import TYPE_CHECKING, Any, Callable
 
 import geopandas as gpd
@@ -14,6 +13,7 @@ from mccn.loader.utils import (
     StacExtensionError,
     get_item_crs,
     get_item_href,
+    get_required_columns,
 )
 
 if TYPE_CHECKING:
@@ -23,48 +23,6 @@ if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
 
     from mccn._types import InterpMethods, MergeMethods
-
-
-def get_required_columns(
-    item: pystac.Item,
-    bands: Sequence[str] | None = None,
-    band_renaming: Mapping[str, str] | None = None,
-) -> list[str] | None:
-    """Get a list of fields to be read from a point/vector asset.
-
-    If column_info is not described in item properties, return None.
-    If bands is None, return all bands described in column_info
-    If band_renaming is not None, replace every band in bands with their band_renaming's mapping target.
-    Return bands in column_info that are also requested in bands keyword.
-
-    Args:
-        item (pystac.Item): stac item
-        bands (Sequence[str] | None, optional): requested bands. Defaults to None.
-        band_renaming (Mapping[str, str] | None, optional): renaming map. Defaults to None.
-
-    Returns:
-        list[str] | None: bands to be read from the current item
-    """
-    # No column info described - skip item
-    if "column_info" not in item.properties:
-        return None
-    # No requested bands - load all columns
-    if not bands:
-        return [column["name"] for column in item.properties["column_info"]]
-    # If band_renaming is provided, also replace the requested band with the version that will be renamed
-    # i.e. if requested band is height_m, but we need to rename height_cm to height_m, the requested band will include
-    # just height_cm
-    requested_bands = copy.copy(set(bands))
-    if band_renaming:
-        for k, v in band_renaming.items():
-            if v in bands:
-                requested_bands.remove(v)
-                requested_bands.add(k)
-    return [
-        column["name"]
-        for column in item.properties["column_info"]
-        if column["name"] in requested_bands
-    ]
 
 
 def read_point_asset(
@@ -79,7 +37,7 @@ def read_point_asset(
     try:
         # Process metadata
         location = get_item_href(item, asset_key)
-        columns = get_required_columns(item, bands)
+        columns = get_required_columns(item, bands, band_renaming)
         # Columns can be None from either
         # "column_info" not described in item's properties
         # no column in "column_info" is in band - this asset do not contained the desired bands

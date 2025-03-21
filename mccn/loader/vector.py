@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Callable, Mapping, cast
 
@@ -9,13 +10,20 @@ import xarray as xr
 from odc.geo.xr import xr_coords
 from rasterio.features import rasterize
 
-from mccn.loader.utils import ASSET_KEY, get_item_href
+from mccn.loader.utils import (
+    ASSET_KEY,
+    bbox_from_geobox,
+    get_item_crs,
+    get_item_href,
+    get_required_columns,
+)
 
 if TYPE_CHECKING:
     import pystac
     from odc.geo.geobox import GeoBox
 
-    from mccn._types import GroupbyOption
+JOIN_VECTOR_KEY = "join_attribute_vector"
+JOIN_FILE_KEY = "join_field"
 
 
 def update_attr_legend(
@@ -86,18 +94,11 @@ def groupby_field(
     data: Mapping[str, gpd.GeoDataFrame],
     geobox: GeoBox,
     fields: Sequence[str],
-    alias_renaming: Mapping[str, dict[str, str]] | None = None,
     x_col: str = "x",
     y_col: str = "y",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if fields is None:
         raise ValueError("When groupby field, fields parameter must not be None")
-    # Rename columns based on alias map
-    if alias_renaming:
-        for item_id, renaming_dict in alias_renaming.items():
-            data[item_id].rename(columns=renaming_dict, inplace=True)
-    if isinstance(fields, str):
-        fields = [fields]
     gdf = pd.concat(data.values())
     ds_data = {}
     ds_attrs: dict[str, Any] = {"legend": {}}
@@ -116,40 +117,61 @@ def groupby_field(
 
 def read_vector_file(
     item: pystac.Item,
+    geobox: GeoBox,
     asset_key: str | Mapping[str, str] = ASSET_KEY,
-    bands: str | Sequence[str] | None = None,
+    bands: Sequence[str] | None = None,
     band_preprocessing: dict[str, Callable] | None = None,
     band_renaming: dict[str, str] | None = None,
-) -> gpd.GeoDataFrame:
-    pass
+) -> gpd.GeoDataFrame | None:
+    location = get_item_href(item, asset_key)
+    layer = item.properties.get("layer", None)
+
+    # Prepare requested bands
+    # If vector file has join file - will also be requesting the join key
+    requested_bands = copy.copy(set(bands)) if bands is not None else None
+    if JOIN_VECTOR_KEY in item.properties and item.properties[JOIN_FILE_KEY]:
+        if requested_bands is None:
+            requested_bands = {item.properties[JOIN_FILE_KEY]}
+        else:
+            requested_bands.add(item.properties[JOIN_FILE_KEY])
+
+    columns = get_required_columns(item, bands, band_renaming)
+    # Specific bands requested and no matching column found -> filter out the items
+    if not columns and bands:
+        return None
+    crs = get_item_crs(item)
+    bbox = bbox_from_geobox(geobox, crs)
+    gdf = gpd.read_file(location, layer=layer, bbox=bbox, columns=columns)
+    gdf = gdf.to_crs(geobox.crs)
+    # Apply transformation to each band
+    if band_preprocessing:
+        for band, transform in band_preprocessing.items():
+            if band in gdf.columns:
+                gdf[band] = gdf[band].apply(transform)
+    # Rename bands
+    if band_renaming:
+        gdf.rename(columns=band_renaming, inplace=True)
+    return gdf
 
 
 def stac_load_vector(
     items: Sequence[pystac.Item],
     geobox: GeoBox,
-    groupby: GroupbyOption = "id",
-    fields: Sequence[str] | dict[str, Sequence[str]] | None = None,
+    bands: Sequence[str] | None = None,
     x_col: str = "x",
     y_col: str = "y",
     asset_key: str | Mapping[str, str] = ASSET_KEY,
-    alias_renaming: dict[str, dict[str, str]] | None = None,
+    band_preprocessing: dict[str, Callable] | None = None,
+    band_renaming: dict[str, str] | None = None,
 ) -> xr.Dataset:
     data = {}
     for item in items:
-        location = get_item_href(item, asset_key)
-        layer = item.properties.get("layer", None)
-        gdf = gpd.read_file(location, layer=layer)
-        gdf = gdf.to_crs(geobox.crs)
-        data[item.id] = gdf
+        data[item.id] = read_vector_file(
+            item, geobox, asset_key, bands, band_preprocessing, band_renaming
+        )
     coords = xr_coords(geobox, dims=(y_col, x_col))
-    if groupby == "id":
-        ds_data, ds_attrs = groupby_id(data, geobox, fields, x_col, y_col)
-    elif groupby == "field":
-        ds_data, ds_attrs = groupby_field(
-            data, geobox, cast(Sequence[str], fields), alias_renaming, x_col, y_col
-        )
-    else:
-        raise ValueError(
-            f"Invalid groupby option: {groupby}. Supported operations include `id`, `field`."
-        )
+
+    ds_data, ds_attrs = groupby_field(
+        data, geobox, cast(Sequence[str], bands), x_col, y_col
+    )
     return xr.Dataset(ds_data, coords, ds_attrs)

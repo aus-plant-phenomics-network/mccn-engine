@@ -5,31 +5,10 @@ from typing import cast
 
 import pystac
 from odc.geo.geobox import GeoBox
-from pyproj import Transformer
 from pyproj.crs.crs import CRS
 
 from mccn._types import BBox_T
-from mccn.loader.utils import ASSET_KEY, get_item_href
-
-
-def convert_bbox_to_target_crs(bbox: BBox_T, src: CRS, target: CRS) -> BBox_T:
-    """Convert bbox from one crs to another
-
-    :param bbox: bounding box
-    :type bbox: tuple[float, float, float, float]
-    :param src: crs of the bounding box
-    :type src: CRS
-    :param target: target crs
-    :type target: CRS
-    :return: the bounding box in target CRS
-    :rtype: tuple[float, float, float, float]
-    """
-    if src == target:
-        return bbox
-    transformer = Transformer.from_crs(src, target, always_xy=True)
-    left, bottom = transformer.transform(bbox[0], bbox[1])
-    right, top = transformer.transform(bbox[2], bbox[3])
-    return left, bottom, right, top
+from mccn.loader.utils import ASSET_KEY, bbox_from_geobox, get_item_href
 
 
 # TODO: filter based on fields and band information
@@ -41,9 +20,7 @@ class CollectionFilter:
         asset_key: str | Mapping[str, str] = ASSET_KEY,
     ) -> None:
         self.collection = collection
-        self.geo_bbox = convert_bbox_to_target_crs(
-            cast(BBox_T, geobox.boundingbox), cast(CRS, geobox.crs), CRS(4326)
-        )
+        self.geo_bbox = bbox_from_geobox(geobox, CRS(4326))
         self.asset_key = asset_key
         self._raster_items: list[pystac.Item] = []
         self._vector_items: list[pystac.Item] = []
