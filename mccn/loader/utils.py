@@ -16,9 +16,6 @@ if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
 
 
-class StacExtensionError(Exception): ...
-
-
 ASSET_KEY = "data"
 BBOX_TOL = 1e-10
 
@@ -54,42 +51,6 @@ def get_item_href(
     raise TypeError(
         f"Invalid type for asset key: {type(asset_key)}. Accepts either a string or a mapping"
     )
-
-
-def get_item_crs(item: pystac.Item) -> CRS:
-    """Extract CRS information from item properties.
-
-    This will first look for CRS information encoded as proj extension, in the following order:
-    `proj:code, proj:wkt2, proj:projjson, proj:epsg`
-
-    Args:
-        item (pystac.Item): stac item
-
-    Raises:
-        StacExtensionError: Invalid format for proj:projjson
-        StacExtensionError: no crs description available
-
-    Returns:
-        CRS: crs of the current item
-    """
-    if "proj:code" in item.properties:
-        return CRS(item.properties.get("proj:code"))
-    elif "proj:wkt2" in item.properties:
-        return CRS(item.properties.get("proj:wkt2"))
-    elif "proj:projjson" in item.properties:
-        try:
-            return CRS(json.loads(item.properties.get("proj:projjson")))  # type: ignore[arg-type]
-        except json.JSONDecodeError as e:
-            raise StacExtensionError("Invalid projjson encoding in STAC config") from e
-    elif "proj:epsg" in item.properties:
-        warn(
-            "proj:epsg is deprecated in favor of proj:code. Please consider using proj:code, or if possible, the full wkt2 instead"
-        )
-        return CRS(int(item.properties.get("proj:epsg")))  # type: ignore[arg-type]
-    elif "epsg" in item.properties:
-        return CRS(int(item.properties.get("epsg")))  # type: ignore[arg-type]
-    else:
-        raise StacExtensionError("Missing CRS information in item properties")
 
 
 def get_required_columns(

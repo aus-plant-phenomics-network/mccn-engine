@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
-from typing import cast
+from dataclasses import dataclass
+from typing import Callable, Sequence, cast
 
 import pystac
 from odc.geo.geobox import GeoBox
@@ -40,17 +42,6 @@ class CollectionFilter:
         return self._point_items
 
     @staticmethod
-    def item_in_bbox(item: pystac.Item, bbox: BBox_T) -> bool:
-        ibox = cast(BBox_T, item.bbox)
-        if (
-            ibox[0] > bbox[2]
-            or bbox[0] > ibox[2]
-            or ibox[1] > bbox[3]
-            or bbox[1] > ibox[3]
-        ):
-            return False
-        return True
-
     def classify(self) -> None:
         items = self.collection.get_items(recursive=True)
         for item in items:
