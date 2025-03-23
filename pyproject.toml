@@ -1,6 +1,6 @@
 [project]
 name = "mccn-engine"
-version = "0.1.1"
+version = "0.1.2"
 description = "mccn engine"
 authors = [
     {name = "Joseph", email = "joseph.sclauzero@adelaide.edu.au"},
