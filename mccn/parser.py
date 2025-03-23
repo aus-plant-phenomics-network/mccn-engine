@@ -1,18 +1,14 @@
 import abc
 import datetime
 from dataclasses import dataclass
-from typing import Callable, Sequence, cast
+from typing import Callable, Mapping, Sequence, cast
 
 import pandas as pd
 import pystac
 from odc.geo.geobox import GeoBox
-from stac_generator.parser import (
-    ConfigParser,
-    ParsedConfig,
-    ParsedPointConfig,
-    ParsedRasterConfig,
-    ParsedVectorConfig,
-)
+from stac_generator import StacGeneratorFactory
+from stac_generator.core import PointConfig, RasterConfig, SourceConfig, VectorConfig
+from stac_generator.core.base import SourceConfig
 
 from mccn._types import BBox_T
 
@@ -43,12 +39,22 @@ def date_filter(
     return item
 
 
-def get_item_bands(config: ParsedConfig) -> list[str]:
-    if isinstance(config, ParsedRasterConfig):
-        return [band["name"] for band in config.band_info]
-    if isinstance(config, ParsedPointConfig):
-        if config.column_info:
-            return [band["name"] for band in config.column_info]
-    if isinstance(config, ParsedVectorConfig):
+def band_filter(
+    item: pystac.Item | None,
+    bands_to_load: list[str],
+    bands: Sequence[str] | None = None,
+    band_mapping: Mapping[str, str] | None = None,
+) -> pystac.Item | None:
+    if not item:
+        return None
+    config = StacGeneratorFactory.extract_item_config(item)
+
+    def filter_point(config: PointConfig):
+        item_bands = [band["name"] for band in config.column_info]
+    
+    def filter_vector(config: VectorConfig): 
+
+    def filter_raster(config: RasterConfig):
         
-    return []
+
+    return None
