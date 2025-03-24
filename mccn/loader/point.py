@@ -1,181 +1,211 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, Mapping
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
+from stac_generator.core import PointConfig
 from stac_generator.core.point.generator import read_csv
 
+from mccn.loader.base import CubeConfig, FilterConfig, Loader, ProcessConfig
 from mccn.loader.utils import (
-    ASSET_KEY,
-    StacExtensionError,
     get_item_crs,
-    get_item_href,
-    get_required_columns,
 )
+from mccn.parser import ParsedItem
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
-
-    import pystac
-    from odc.geo.geobox import GeoBox
-
     from mccn._types import InterpMethods, MergeMethods
 
 
-def read_point_asset(
-    item: pystac.Item,
-    bands: Sequence[str] | None = None,
-    asset_key: str | Mapping[str, str] = ASSET_KEY,
-    t_col: str = "time",
-    z_col: str = "z",
-    band_preprocessing: Mapping[str, Callable[[Any], Any]] | None = None,
-    band_renaming: Mapping[str, str] | None = None,
-) -> gpd.GeoDataFrame | None:
-    try:
-        # Process metadata
-        location = get_item_href(item, asset_key)
-        columns = get_required_columns(item, bands, band_renaming)
-        # Columns can be None from either
-        # "column_info" not described in item's properties
-        # no column in "column_info" is in band - this asset do not contained the desired bands
-        if not columns:
-            return None
-        epsg = get_item_crs(item)
-        (
-            X_name,
-            Y_name,
-            Z_name,
-            T_name,
-        ) = (
-            item.properties["X"],
-            item.properties["Y"],
-            item.properties.get("Z", None),
-            item.properties.get("T", None),
+@dataclass
+class PointLoadConfig:
+    interp: InterpMethods = "nearest"
+    agg_method: MergeMethods = "mean"
+
+
+class PointLoader(Loader):
+    def __init__(
+        self,
+        items: list[ParsedItem],
+        filter_config: FilterConfig,
+        cube_config: CubeConfig | None = None,
+        process_config: ProcessConfig | None = None,
+        load_config: PointLoadConfig | None = None,
+        **kwargs,
+    ):
+        self.load_config = load_config if load_config else PointLoadConfig()
+        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
+
+    def load(self):
+        frames = []
+        for item in self.items:
+            frames.append(self.load_item(item))
+        return xr.merge(frames)
+
+    def load_item(self, item: ParsedItem) -> xr.Dataset:
+        # Load item to gdf
+        frame = self.load_asset(
+            item=item,
+            cube_config=self.cube_config,
+            process_config=self.process_config,
+        )
+        # Convert to geobox crs
+        frame = frame.to_crs(self.filter_config.geobox.crs)
+        # Process groupby - i.e. average out over depth, duplicate entries, etc
+        merged = self.groupby(
+            frame=frame,
+            cube_config=self.cube_config,
+            load_config=self.load_config,
+        )
+        return self.to_xarray(
+            merged,
+            self.filter_config,
+            self.cube_config,
+            self.load_config,
         )
 
+    @staticmethod
+    def load_asset(
+        item: ParsedItem,
+        cube_config: CubeConfig,
+        process_config: ProcessConfig,
+    ) -> gpd.GeoDataFrame:
+        if not isinstance(item.config, PointConfig):
+            raise ValueError(f"Expects item to be of Point type. id: {item.item.id}")
+        config = item.config
+        location = item.location
+        columns = item.load_bands
+        crs = get_item_crs(item.item)
         # Read csv
         gdf = read_csv(
             src_path=location,
-            X_coord=X_name,
-            Y_coord=Y_name,
-            epsg=epsg,  # type: ignore[arg-type]
-            T_coord=T_name,
-            date_format=item.properties.get("date_format", "ISO8601"),
-            Z_coord=Z_name,
+            X_coord=config.X,
+            Y_coord=config.Y,
+            epsg=crs.to_epsg(),
+            T_coord=config.T,
+            date_format=config.date_format,
+            Z_coord=config.Z,
             columns=columns,
         )
-        # Rename T column for uniformity
+        # Prepare rename dict for indices
         rename_dict = {}
-        if T_name is None:
-            T_name = t_col
-            gdf[T_name] = item.datetime
-        else:
-            rename_dict[T_name] = t_col
-        if Z_name:
-            rename_dict[Z_name] = z_col
-
-        # Transform, Rename
-        if band_preprocessing:
-            for key, fn in band_preprocessing.items():
+        if config.T:
+            rename_dict[config.T] = cube_config.t_coord
+        else:  # If point data does not contain date - set datecol using item datetime
+            gdf[cube_config.t_coord] = item.item.datetime
+        if config.Z:
+            rename_dict[config.Z] = cube_config.z_coord
+        # Transform
+        if process_config.process_bands:
+            for key, fn in process_config.process_bands.items():
                 if key in gdf.columns:
                     gdf[key] = gdf[key].apply(fn)
-        if band_renaming:
-            gdf.rename(columns=band_renaming, inplace=True)
-
+        # Rename bands
+        if process_config.rename_bands:
+            gdf.rename(columns=process_config.rename_bands, inplace=True)
         # Rename indices
         gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs
-        gdf.drop(columns=[X_name, Y_name], inplace=True)
-    except KeyError as e:
-        raise StacExtensionError("Missing band in stac config:") from e
-    return gdf
+        gdf.drop(columns=[config.X, config.Y], inplace=True)
+        return gdf
 
+    @staticmethod
+    def groupby(
+        frame: gpd.GeoDataFrame,
+        cube_config: CubeConfig,
+        load_config: PointLoadConfig,
+    ) -> gpd.GeoDataFrame:
+        frame[cube_config.x_coord] = frame.geometry.x
+        frame[cube_config.y_coord] = frame.geometry.y
 
-def process_groupby(
-    frame: gpd.GeoDataFrame,
-    x_col: str = "x",
-    y_col: str = "y",
-    t_col: str = "time",
-    z_col: str = "z",
-    use_z: bool = False,
-    merge_method: MergeMethods = "mean",
-) -> gpd.GeoDataFrame:
-    frame[x_col] = frame.geometry.x
-    frame[y_col] = frame.geometry.y
-
-    # Prepare aggregation method
-    excluding_bands = set([x_col, y_col, t_col, "geometry"])
-    if use_z and z_col:
-        excluding_bands.add(z_col)
-    bands = [name for name in frame.columns if name not in excluding_bands]
-    # band_map determines replacement strategy for each band when there is a conflict
-    band_map = (
-        {band: merge_method[band] for band in bands if band in merge_method}
-        if isinstance(merge_method, dict)
-        else {band: merge_method for band in bands}
-    )
-
-    # Groupby + Aggregate
-    if use_z and z_col:
-        return frame.groupby([t_col, y_col, x_col, z_col]).agg(band_map)
-    return frame.groupby([t_col, y_col, x_col]).agg(band_map)
-
-
-def point_data_to_xarray(
-    frame: pd.DataFrame,
-    geobox: GeoBox,
-    x_col: str = "x",
-    y_col: str = "y",
-    t_col: str = "time",
-    interp_method: InterpMethods | None = "nearest",
-) -> xr.Dataset:
-    ds: xr.Dataset = frame.to_xarray()
-    # Sometime to_xarray bugs out with datetime index so need explicit conversion
-    ds[t_col] = pd.DatetimeIndex(ds.coords[t_col].values)
-    if interp_method is None:
-        return ds
-    coords_ = xr_coords(geobox, dims=(y_col, x_col))
-    ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
-    coords = {y_col: coords_[y_col], x_col: coords_[x_col]}
-    return ds.interp(coords=coords, method=interp_method)
-
-
-def stac_load_point(
-    items: Sequence[pystac.Item],
-    geobox: GeoBox,
-    asset_key: str | Mapping[str, str] = ASSET_KEY,
-    bands: Sequence[str] | None = None,
-    x_col: str = "x",
-    y_col: str = "y",
-    t_col: str = "time",
-    z_col: str = "z",
-    use_z: bool = False,
-    merge_method: MergeMethods = "mean",
-    interp_method: InterpMethods | None = "nearest",
-    band_preprocessing: Mapping[str, Callable[[Any], Any]] | None = None,
-    band_renaming: Mapping[str, str] | None = None,
-) -> xr.Dataset:
-    frames = []
-    for item in items:
-        frame = read_point_asset(
-            item=item,
-            bands=bands,
-            asset_key=asset_key,
-            t_col=t_col,
-            z_col=z_col,
-            band_preprocessing=band_preprocessing,
-            band_renaming=band_renaming,
+        # Prepare aggregation method
+        excluding_bands = set(
+            [cube_config.x_coord, cube_config.y_coord, cube_config.t_coord, "geometry"]
         )
-        if frame is not None:  # Can be None if does not contain required column
-            frame = frame.to_crs(geobox.crs)
-            # Process groupby - i.e. average out over depth, duplicate entries, etc
-            merged = process_groupby(
-                frame, x_col, y_col, t_col, z_col, use_z, merge_method
-            )
-            frames.append(
-                point_data_to_xarray(merged, geobox, x_col, y_col, t_col, interp_method)
-            )
-    return xr.merge(frames)
+        if cube_config.use_z:
+            if cube_config.z_coord not in frame.columns:
+                raise ValueError("No altitude column found but use_z expected")
+            excluding_bands.add(cube_config.z_coord)
+
+        bands = [name for name in frame.columns if name not in excluding_bands]
+
+        # band_map determines replacement strategy for each band when there is a conflict
+        band_map = (
+            {
+                band: load_config.agg_method[band]
+                for band in bands
+                if band in load_config.agg_method
+            }
+            if isinstance(load_config.agg_method, dict)
+            else {band: load_config.agg_method for band in bands}
+        )
+
+        # Groupby + Aggregate
+        if cube_config.use_z:
+            return frame.groupby(
+                [
+                    cube_config.t_coord,
+                    cube_config.y_coord,
+                    cube_config.x_coord,
+                    cube_config.z_coord,
+                ]
+            ).agg(band_map)
+        return frame.groupby(
+            [cube_config.t_coord, cube_config.y_coord, cube_config.x_coord]
+        ).agg(band_map)
+
+    @staticmethod
+    def to_xarray(
+        frame: pd.DataFrame,
+        filter_config: FilterConfig,
+        cube_config: CubeConfig,
+        load_config: PointLoadConfig,
+    ) -> xr.Dataset:
+        ds: xr.Dataset = frame.to_xarray()
+        # Sometime to_xarray bugs out with datetime index so need explicit conversion
+        ds[cube_config.t_coord] = pd.DatetimeIndex(
+            ds.coords[cube_config.t_coord].values
+        )
+        if load_config.interp is None:
+            return ds
+
+        coords_ = xr_coords(
+            filter_config.geobox, dims=(cube_config.y_coord, cube_config.x_coord)
+        )
+
+        ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
+        coords = {
+            cube_config.y_coord: coords_[cube_config.y_coord],
+            cube_config.x_coord: coords_[cube_config.x_coordl],
+        }
+        return ds.interp(coords=coords, method=load_config.interp)
+
+
+import odc.stac
+from numpy.typing import DTypeLike
+
+
+@dataclass
+class RasterLoadConfig:
+    resampling: str | Mapping[str, str] | None = None
+    chunks: Mapping[str, int | Literal["auto"]] | None = None
+    pool: ThreadPoolExecutor | int | None = None
+    dtype: DTypeLike | Mapping[str, DTypeLike] = None
+
+
+class RasterLoader(Loader):
+    def __init__(
+        self,
+        items: list[ParsedItem],
+        filter_config: FilterConfig,
+        cube_config: CubeConfig | None = None,
+        process_config: ProcessConfig | None = None,
+        load_config: RasterLoadConfig | None = None,
+        **kwargs,
+    ):
+        self.load_config = load_config if load_config else RasterLoadConfig()
+        super().__init__(items, filter_config, cube_config, process_config, **kwargs)

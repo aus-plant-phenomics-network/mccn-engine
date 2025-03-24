@@ -6,7 +6,7 @@ authors = [
     {name = "Joseph", email = "joseph.sclauzero@adelaide.edu.au"},
 ]
 dependencies = [
-    "odc-stac==0.3.10",
+    "odc-stac>=0.3.10",
     "pystac-generator>=0.3.13",
     "matplotlib>=3.10.1",
     "pystac-client>=0.8.6",
