@@ -1,69 +1,140 @@
 import datetime
-from typing import Mapping, Sequence, cast
+from dataclasses import Field, dataclass
+from typing import cast
 
 import pandas as pd
 import pystac
-from odc.geo.geobox import GeoBox
+from pyproj import CRS
 from stac_generator import StacGeneratorFactory
 from stac_generator.core import PointConfig, RasterConfig, SourceConfig, VectorConfig
 
 from mccn._types import BBox_T
-from mccn.loader.utils import bbox_from_geobox
+from mccn.loader.utils import get_item_crs
 
 
+@dataclass(kw_only=True)
 class ParsedItem:
-    def __init__(
-        self,
-        location: str,
-        bbox: BBox_T,
-        start: datetime.datetime,
-        end: datetime.datetime,
-        bands: set[str],
-        aux_bands: set[str],
-        config: SourceConfig,
-        item: pystac.Item,
-    ) -> None:
-        self.location = location
-        self.bbox = bbox
-        self.start = start
-        self.end = end
-        self.bands = bands
-        self.aux_bands = aux_bands
-        self.config = config
-        self.item = item
-        # By default - load all visible bands and aux bands
-        self.load_bands = bands
-        self.load_aux_bands = aux_bands
+    location: str
+    bbox: BBox_T
+    start: datetime.datetime
+    end: datetime.datetime
+    config: SourceConfig
+    item: pystac.Item
+    bands: set[str]
+    load_bands: set[str] = Field(default_factory=set)
 
-    @classmethod
-    def from_item(cls, item: pystac.Item) -> "ParsedItem":
-        config = StacGeneratorFactory.extract_item_config(item)
-        location = config.location
-        bbox = cast(BBox_T, item.bbox)
-        start = pd.Timestamp(item.properties.get("start_datetime", item.datetime))
-        end = pd.Timestamp(item.properties.get("end_datetime", item.datetime))
-        bands = set()
-        aux_bands = set()
 
-        if isinstance(config, PointConfig | VectorConfig):
-            for field in config.column_info:
-                bands.add(field["name"])
-        if isinstance(config, VectorConfig) and config.join_column_info:
-            for field in config.join_column_info:
-                aux_bands.add(field["name"])
-        if isinstance(config, RasterConfig):
-            for band in config.band_info:
-                bands.add(band["name"])
-        return ParsedItem(
-            location=location,
-            bbox=bbox,
-            start=start,
-            end=end,
-            bands=bands,
-            aux_bands=aux_bands,
-            config=config,
-            item=item,
-        )
+@dataclass(kw_only=True)
+class ParsedPoint(ParsedItem):
+    crs: CRS
+
+
+@dataclass(kw_only=True)
+class ParsedVector(ParsedItem):
+    aux_bands: set[str] = Field(default_factory=set)
+    load_aux_bands: set[str] = Field(default_factory=set)
+
+
+@dataclass(kw_only=True)
+class ParsedRaster(ParsedItem):
+    alias: set[str] = Field(default_factory=set)
+
+
+def _parse_vector(
+    config: VectorConfig,
+    location: str,
+    bbox: BBox_T,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    item: pystac.Item,
+) -> ParsedVector:
+    bands = set([band["name"] for band in config.column_info])
+    aux_bands = set([band["name"] for band in config.join_column_info])
+    return ParsedVector(
+        location=location,
+        bbox=bbox,
+        start=start,
+        end=end,
+        config=config,
+        item=item,
+        bands=bands,
+        load_bands=bands,
+        aux_bands=aux_bands,
+        load_aux_bands=aux_bands,
+    )
+
+
+def _parse_raster(
+    config: RasterConfig,
+    location: str,
+    bbox: BBox_T,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    item: pystac.Item,
+) -> ParsedRaster:
+    bands = set([band["name"] for band in config.band_info])
+    alias = set(
+        [
+            band["common_name"]
+            for band in config.band_info
+            if band.get("common_name", None)
+        ]
+    )
+    return ParsedRaster(
+        location=location,
+        bbox=bbox,
+        start=start,
+        end=end,
+        config=config,
+        item=item,
+        bands=bands,
+        load_bands=bands,
+        alias=alias,
+    )
+
+
+def _parse_point(
+    config: PointConfig,
+    location: str,
+    bbox: BBox_T,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    item: pystac.Item,
+) -> ParsedPoint:
+    bands = set([band["name"] for band in config.column_info])
+    crs = get_item_crs(item)
+    return ParsedPoint(
+        location=location,
+        bbox=bbox,
+        start=start,
+        end=end,
+        config=config,
+        item=item,
+        bands=bands,
+        load_bands=bands,
+        crs=crs,
+    )
+
+
+def parse_item(item: pystac.Item) -> ParsedItem:
+    config = StacGeneratorFactory.extract_item_config(item)
+    location = config.location
+    bbox = cast(BBox_T, item.bbox)
+    start = (
+        pd.Timestamp(item.properties["start_datetime"])
+        if "start_datetime" in item.properties
+        else item.datetime
+    )
+    end = (
+        pd.Timestamp(item.properties["end_datetime"])
+        if "end_datetime" in item.properties
+        else item.datetime
+    )
+    if isinstance(config, PointConfig):
+        return _parse_point(config, location, bbox, start, end, item)
+    if isinstance(config, VectorConfig):
+        return _parse_vector(config, location, bbox, start, end, item)
+    return _parse_raster(config, location, bbox, start, end, item)
 
 
 def bbox_filter(item: ParsedItem | None, bbox: BBox_T | None) -> ParsedItem | None:
@@ -89,56 +160,7 @@ def date_filter(
     return item
 
 
-def band_filter(
-    item: ParsedItem | None,
-    bands: Sequence[str] | None = None,
-) -> ParsedItem | None:
-    if item and bands:
-        load_bands = set([band for band in bands if band in item.bands])
-        load_aux_bands = set([band for band in bands if band in item.aux_bands])
-        if not (load_bands or load_aux_bands):
-            return None
-        item.load_bands = load_bands
-        item.load_aux_bands = load_aux_bands
-    return item
-
-
-def filter_collection(
-    collection: pystac.Collection,
-    geobox: GeoBox | None = None,
-    start_dt: datetime.datetime | None = None,
-    end_dt: datetime.datetime | None = None,
-    bands: Sequence[str] | None = None,
-    band_mapping: Mapping[str, str] | None = None,
-) -> list[ParsedItem]:
-    parsed_items = [ParsedItem.from_item(item) for item in collection.get_all_items()]
-    bbox = bbox_from_geobox(geobox) if geobox else None
-    result = []
-    for item in parsed_items:
-        item = bbox_filter(item, bbox)
-        item = date_filter(item, start_dt, end_dt)
-        item = band_filter(item, bands, band_mapping)
-        if item:
-            result.append(item)
-    return result
-
-
-def process_band_and_band_mapping(
-    bands: Sequence[str] | None, band_rename: Mapping[str, str]
-) -> tuple[set[str] | None, set[str] | None, Mapping[str, str]]:
-    if not bands:
-        return None, None, band_rename
-    # Avoid cyclic renaming
-    for v in band_rename.values():
-        if v in band_rename:
-            raise ValueError(
-                f"Chained renaming is not allowed - mapped value: {v} is a mapped key"
-            )
-    # Ensure that renamed bands must be loaded
-    for k, v in band_rename.items():
-        if v not in bands:
-            raise ValueError(f"Mapped band from {k} to {v} must be loaded")
-    filter_bands = set(bands).copy()
-    for k in band_rename:
-        filter_bands.add(k)
-    return filter_bands, set(bands), band_rename
+# def band_filter(item: ParsedItem | None, bands: Sequence[str] | None)->ParsedItem | None:
+#     if item and bands:
+#         if isinstance(item, ParsedRaster):
+#     return item

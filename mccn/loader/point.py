@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, Mapping
+from typing import TYPE_CHECKING
 
 import geopandas as gpd
 import pandas as pd
@@ -11,7 +10,7 @@ from odc.geo.xr import xr_coords
 from stac_generator.core import PointConfig
 from stac_generator.core.point.generator import read_csv
 
-from mccn.loader.base import CubeConfig, FilterConfig, Loader, ProcessConfig
+from mccn.loader.base import CubeConfig, FilterConfig, Loader
 from mccn.loader.utils import (
     get_item_crs,
 )
@@ -33,12 +32,11 @@ class PointLoader(Loader):
         items: list[ParsedItem],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
-        process_config: ProcessConfig | None = None,
         load_config: PointLoadConfig | None = None,
         **kwargs,
     ):
         self.load_config = load_config if load_config else PointLoadConfig()
-        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
+        super().__init__(items, filter_config, cube_config, **kwargs)
 
     def load(self):
         frames = []
@@ -51,7 +49,6 @@ class PointLoader(Loader):
         frame = self.load_asset(
             item=item,
             cube_config=self.cube_config,
-            process_config=self.process_config,
         )
         # Convert to geobox crs
         frame = frame.to_crs(self.filter_config.geobox.crs)
@@ -72,7 +69,6 @@ class PointLoader(Loader):
     def load_asset(
         item: ParsedItem,
         cube_config: CubeConfig,
-        process_config: ProcessConfig,
     ) -> gpd.GeoDataFrame:
         if not isinstance(item.config, PointConfig):
             raise ValueError(f"Expects item to be of Point type. id: {item.item.id}")
@@ -99,14 +95,6 @@ class PointLoader(Loader):
             gdf[cube_config.t_coord] = item.item.datetime
         if config.Z:
             rename_dict[config.Z] = cube_config.z_coord
-        # Transform
-        if process_config.process_bands:
-            for key, fn in process_config.process_bands.items():
-                if key in gdf.columns:
-                    gdf[key] = gdf[key].apply(fn)
-        # Rename bands
-        if process_config.rename_bands:
-            gdf.rename(columns=process_config.rename_bands, inplace=True)
         # Rename indices
         gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs
@@ -180,32 +168,6 @@ class PointLoader(Loader):
         ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
         coords = {
             cube_config.y_coord: coords_[cube_config.y_coord],
-            cube_config.x_coord: coords_[cube_config.x_coordl],
+            cube_config.x_coord: coords_[cube_config.x_coord],
         }
         return ds.interp(coords=coords, method=load_config.interp)
-
-
-import odc.stac
-from numpy.typing import DTypeLike
-
-
-@dataclass
-class RasterLoadConfig:
-    resampling: str | Mapping[str, str] | None = None
-    chunks: Mapping[str, int | Literal["auto"]] | None = None
-    pool: ThreadPoolExecutor | int | None = None
-    dtype: DTypeLike | Mapping[str, DTypeLike] = None
-
-
-class RasterLoader(Loader):
-    def __init__(
-        self,
-        items: list[ParsedItem],
-        filter_config: FilterConfig,
-        cube_config: CubeConfig | None = None,
-        process_config: ProcessConfig | None = None,
-        load_config: RasterLoadConfig | None = None,
-        **kwargs,
-    ):
-        self.load_config = load_config if load_config else RasterLoadConfig()
-        super().__init__(items, filter_config, cube_config, process_config, **kwargs)

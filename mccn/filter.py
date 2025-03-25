@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import datetime
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import Callable, Sequence, cast
 
 import pystac
 from odc.geo.geobox import GeoBox
 from pyproj.crs.crs import CRS
 
-from mccn._types import BBox_T
 from mccn.loader.utils import ASSET_KEY, bbox_from_geobox, get_item_href
 
 
