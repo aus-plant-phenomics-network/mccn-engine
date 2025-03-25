@@ -1,7 +1,7 @@
 import abc
 import datetime
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 
 from odc.geo.geobox import GeoBox
 
@@ -10,19 +10,19 @@ from mccn.parser import ParsedItem
 if TYPE_CHECKING:
     import xarray as xr
 
+T = TypeVar("T", bound=ParsedItem)
+
 
 @dataclass
 class FilterConfig:
     geobox: GeoBox
     start_ts: datetime.datetime | None = None
     end_ts: datetime.datetime | None = None
-    filter_bands: set[str] | None = None
+    bands: set[str] | None = None
 
 
 @dataclass
 class CubeConfig:
-    load_bands: set[str] | None = None
-    """Bands to be loaded to the datacube"""
     x_coord: str = "lon"
     """Name of the x coordinate in the datacube"""
     y_coord: str = "lat"
@@ -35,10 +35,10 @@ class CubeConfig:
     """Whether to use the altitude coordinate as an axis"""
 
 
-class Loader(abc.ABC):
+class Loader(abc.ABC, Generic[T]):
     def __init__(
         self,
-        items: list[ParsedItem],
+        items: Sequence[T],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
         **kwargs: Any,

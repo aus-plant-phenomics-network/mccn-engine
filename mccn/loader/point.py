@@ -1,20 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
-from stac_generator.core import PointConfig
 from stac_generator.core.point.generator import read_csv
 
 from mccn.loader.base import CubeConfig, FilterConfig, Loader
-from mccn.loader.utils import (
-    get_item_crs,
-)
-from mccn.parser import ParsedItem
+from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
     from mccn._types import InterpMethods, MergeMethods
@@ -22,29 +18,29 @@ if TYPE_CHECKING:
 
 @dataclass
 class PointLoadConfig:
-    interp: InterpMethods = "nearest"
+    interp: InterpMethods | None = None
     agg_method: MergeMethods = "mean"
 
 
-class PointLoader(Loader):
+class PointLoader(Loader[ParsedPoint]):
     def __init__(
         self,
-        items: list[ParsedItem],
+        items: Sequence[ParsedPoint],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
         load_config: PointLoadConfig | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.load_config = load_config if load_config else PointLoadConfig()
         super().__init__(items, filter_config, cube_config, **kwargs)
 
-    def load(self):
+    def load(self) -> xr.Dataset:
         frames = []
         for item in self.items:
             frames.append(self.load_item(item))
         return xr.merge(frames)
 
-    def load_item(self, item: ParsedItem) -> xr.Dataset:
+    def load_item(self, item: ParsedPoint) -> xr.Dataset:
         # Load item to gdf
         frame = self.load_asset(
             item=item,
@@ -67,21 +63,19 @@ class PointLoader(Loader):
 
     @staticmethod
     def load_asset(
-        item: ParsedItem,
+        item: ParsedPoint,
         cube_config: CubeConfig,
     ) -> gpd.GeoDataFrame:
-        if not isinstance(item.config, PointConfig):
-            raise ValueError(f"Expects item to be of Point type. id: {item.item.id}")
         config = item.config
         location = item.location
         columns = item.load_bands
-        crs = get_item_crs(item.item)
+        crs = item.crs
         # Read csv
         gdf = read_csv(
             src_path=location,
             X_coord=config.X,
             Y_coord=config.Y,
-            epsg=crs.to_epsg(),
+            epsg=cast(int, crs.to_epsg()),
             T_coord=config.T,
             date_format=config.date_format,
             Z_coord=config.Z,
