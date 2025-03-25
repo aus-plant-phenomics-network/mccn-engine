@@ -6,23 +6,23 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/conversion/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/conversion/stac/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "item",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/conversion/stac/north/north.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/conversion/stac/north/north.json",
       "type": "application/geo+json"
     },
     {
       "rel": "item",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/conversion/stac/south/south.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/conversion/stac/south/south.json",
       "type": "application/geo+json"
     },
     {
       "rel": "self",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/conversion/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/conversion/stac/collection.json",
       "type": "application/json"
     }
   ],

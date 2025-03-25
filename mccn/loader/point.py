@@ -53,6 +53,7 @@ class PointLoader(Loader[ParsedPoint]):
         # Process groupby - i.e. average out over depth, duplicate entries, etc
         merged = self.groupby(
             frame=frame,
+            item=item,
             cube_config=self.cube_config,
             load_config=self.load_config,
         )
@@ -110,6 +111,7 @@ class PointLoader(Loader[ParsedPoint]):
     @staticmethod
     def groupby(
         frame: gpd.GeoDataFrame,
+        item: ParsedPoint,
         cube_config: CubeConfig,
         load_config: PointLoadConfig,
     ) -> gpd.GeoDataFrame:
@@ -148,9 +150,12 @@ class PointLoader(Loader[ParsedPoint]):
                     cube_config.z_coord,
                 ]
             ).agg(band_map)
-        return frame.groupby(
+        grouped = frame.groupby(
             [cube_config.t_coord, cube_config.y_coord, cube_config.x_coord]
         ).agg(band_map)
+        if item.config.Z:
+            grouped.drop(columns=[cube_config.z_coord], inplace=True)
+        return grouped
 
     @staticmethod
     def to_xarray(

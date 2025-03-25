@@ -4,7 +4,7 @@ import collections
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Literal, Mapping
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
 
 import odc.stac
 import pystac
@@ -38,10 +38,11 @@ class RasterLoader(Loader):
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
         load_config: RasterLoadConfig | None = None,
-        **kwargs,
-    ):
+        process_config: ProcessConfig | None = None,
+        **kwargs: Any,
+    ) -> None:
         self.load_config = load_config if load_config else RasterLoadConfig()
-        super().__init__(items, filter_config, cube_config, **kwargs)
+        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
     @staticmethod
     def groupby_bands(items: list[ParsedItem]) -> dict[set[str], list[pystac.Item]]:
