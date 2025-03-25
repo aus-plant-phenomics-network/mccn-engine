@@ -9,7 +9,7 @@ import xarray as xr
 from odc.geo.xr import xr_coords
 from stac_generator.core.point.generator import read_csv
 
-from mccn.loader.base import CubeConfig, FilterConfig, Loader
+from mccn.loader.base import CubeConfig, FilterConfig, Loader, ProcessConfig
 from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class PointLoadConfig:
-    interp: InterpMethods | None = None
+    interp: InterpMethods = "nearest"
     agg_method: MergeMethods = "mean"
 
 
@@ -28,11 +28,12 @@ class PointLoader(Loader[ParsedPoint]):
         items: Sequence[ParsedPoint],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
+        process_config: ProcessConfig | None = None,
         load_config: PointLoadConfig | None = None,
         **kwargs: Any,
     ) -> None:
         self.load_config = load_config if load_config else PointLoadConfig()
-        super().__init__(items, filter_config, cube_config, **kwargs)
+        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
     def load(self) -> xr.Dataset:
         frames = []
@@ -45,6 +46,7 @@ class PointLoader(Loader[ParsedPoint]):
         frame = self.load_asset(
             item=item,
             cube_config=self.cube_config,
+            process_config=self.process_config,
         )
         # Convert to geobox crs
         frame = frame.to_crs(self.filter_config.geobox.crs)
@@ -65,6 +67,7 @@ class PointLoader(Loader[ParsedPoint]):
     def load_asset(
         item: ParsedPoint,
         cube_config: CubeConfig,
+        process_config: ProcessConfig,
     ) -> gpd.GeoDataFrame:
         config = item.config
         location = item.location
@@ -89,6 +92,15 @@ class PointLoader(Loader[ParsedPoint]):
             gdf[cube_config.t_coord] = item.item.datetime
         if config.Z:
             rename_dict[config.Z] = cube_config.z_coord
+        # Transform
+        if process_config.process_bands:
+            for key, fn in process_config.process_bands.items():
+                if key in gdf.columns:
+                    gdf[key] = gdf[key].apply(fn)
+        # Rename bands
+        if process_config.rename_bands:
+            gdf.rename(columns=process_config.rename_bands, inplace=True)
+
         # Rename indices
         gdf.rename(columns=rename_dict, inplace=True)
         # Drop X and Y columns since we will repopulate them after changing crs

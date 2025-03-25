@@ -1,0 +1,31 @@
+[
+    {
+        "id": "north",
+        "location": "tests/files/unit_tests/point/standard/north.csv",
+        "X": "lon",
+        "Y": "lat",
+        "epsg": 4326,
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00",
+        "column_info": [
+            {
+                "name": "temperature"
+            }
+        ]
+    },
+    {
+        "id": "south",
+        "location": "tests/files/unit_tests/point/conversion/south_F.csv",
+        "X": "lon",
+        "Y": "lat",
+        "epsg": 4326,
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00",
+        "column_info": [
+            {
+                "name": "temperature_F",
+                "description": "temperature degree in F"
+            }
+        ]
+    }
+]

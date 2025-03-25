@@ -37,12 +37,11 @@ class RasterLoader(Loader):
         items: list[ParsedItem],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
-        process_config: ProcessConfig | None = None,
         load_config: RasterLoadConfig | None = None,
         **kwargs,
     ):
         self.load_config = load_config if load_config else RasterLoadConfig()
-        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
+        super().__init__(items, filter_config, cube_config, **kwargs)
 
     @staticmethod
     def groupby_bands(items: list[ParsedItem]) -> dict[set[str], list[pystac.Item]]:
@@ -63,8 +62,6 @@ class RasterLoader(Loader):
                     x_col=self.cube_config.x_coord,
                     y_col=self.cube_config.y_coord,
                     z_col=self.cube_config.z_coord,
-                    process_bands=self.process_config.process_bands,
-                    rename_bands=self.process_config.rename_bands,
                 )
             )
         return xr.merge(ds, compat="equals")

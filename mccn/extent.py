@@ -199,10 +199,14 @@ class GeoBoxBuilder:
 
     @classmethod
     def from_collection(
-        cls, collection: pystac.Collection, shape: int | tuple[int, int]
+        cls,
+        collection: pystac.Collection,
+        shape: int | tuple[int, int],
+        anchor: AnchorPos_T = "default",
     ) -> GeoBox:
         builder = GeoBoxBuilder(
-            crs=4326
+            crs=4326,
+            anchor=anchor,
         )  # Note that collection bbox info is always 4326
         bbox = collection.extent.spatial.bboxes[0]  # First bbox is the enclosing bbox
         if isinstance(shape, int):

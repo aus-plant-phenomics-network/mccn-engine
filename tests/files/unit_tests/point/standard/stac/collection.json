@@ -1,0 +1,51 @@
+{
+  "type": "Collection",
+  "id": "collection",
+  "stac_version": "1.1.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/standard/stac/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/standard/stac/north/north.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/standard/stac/south/south.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/standard/stac/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          144.637731,
+          -37.910602,
+          144.644937,
+          -37.903054
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2024-12-31T14:20:00Z",
+          "2024-12-31T14:20:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}
