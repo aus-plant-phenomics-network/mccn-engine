@@ -39,16 +39,18 @@ def get_crs_transformer(src: CRS, dst: CRS) -> Transformer:
 
 
 @lru_cache(maxsize=None)
-def bbox_from_geobox(geobox: GeoBox, crs: CRS = 4326) -> BBox_T:
+def bbox_from_geobox(geobox: GeoBox, crs: CRS | str | int = 4326) -> BBox_T:
     """Generate a bbox from a geobox
 
     Args:
         geobox (GeoBox): source geobox which might have a different crs
-        crs (CRS, optional): target crs. Defaults to 4326.
+        crs (CRS | str | int, optional): target crs. Defaults to 4326.
 
     Returns:
         BBox_T: bounds of the geobox in crs
     """
+    if isinstance(crs, str | int):
+        crs = CRS.from_epsg(crs)
     transformer = get_crs_transformer(geobox.crs, crs)
     bbox = list(geobox.boundingbox)
     left, bottom = transformer.transform(bbox[0], bbox[1])

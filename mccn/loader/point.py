@@ -9,11 +9,17 @@ import xarray as xr
 from odc.geo.xr import xr_coords
 from stac_generator.core.point.generator import read_csv
 
-from mccn.loader.base import CubeConfig, FilterConfig, Loader, ProcessConfig
+from mccn.loader.base import Loader
 from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
-    from mccn._types import InterpMethods, MergeMethods
+    from mccn._types import (
+        CubeConfig,
+        FilterConfig,
+        InterpMethods,
+        MergeMethods,
+        ProcessConfig,
+    )
 
 
 @dataclass
@@ -42,12 +48,34 @@ class PointLoader(Loader[ParsedPoint]):
         return xr.merge(frames)
 
     def load_item(self, item: ParsedPoint) -> xr.Dataset:
-        # Load item to gdf
-        frame = self.load_asset(
-            item=item,
-            cube_config=self.cube_config,
-            process_config=self.process_config,
+        # Read csv
+        frame = read_csv(
+            src_path=item.location,
+            X_coord=item.config.X,
+            Y_coord=item.config.Y,
+            epsg=cast(int, item.crs.to_epsg()),
+            T_coord=item.config.T,
+            date_format=item.config.date_format,
+            Z_coord=item.config.Z,
+            columns=item.load_bands,
         )
+        # Prepare rename dict
+        rename_dict = {}
+        if item.config.T:
+            rename_dict[item.config.T] = self.cube_config.t_coord
+        else:  # If point data does not contain date - set datecol using item datetime
+            frame[self.cube_config.t_coord] = item.item.datetime
+        if item.config.Z:
+            rename_dict[item.config.Z] = self.cube_config.z_coord
+
+        # Apply transformation
+        frame = self.apply_process(frame, self.process_config)
+
+        # Rename indices
+        frame.rename(columns=rename_dict, inplace=True)
+        # Drop X and Y columns since we will repopulate them after changing crs
+        frame.drop(columns=[item.config.X, item.config.Y], inplace=True)
+
         # Convert to geobox crs
         frame = frame.to_crs(self.filter_config.geobox.crs)
         # Process groupby - i.e. average out over depth, duplicate entries, etc
@@ -63,50 +91,6 @@ class PointLoader(Loader[ParsedPoint]):
             self.cube_config,
             self.load_config,
         )
-
-    @staticmethod
-    def load_asset(
-        item: ParsedPoint,
-        cube_config: CubeConfig,
-        process_config: ProcessConfig,
-    ) -> gpd.GeoDataFrame:
-        config = item.config
-        location = item.location
-        columns = item.load_bands
-        crs = item.crs
-        # Read csv
-        gdf = read_csv(
-            src_path=location,
-            X_coord=config.X,
-            Y_coord=config.Y,
-            epsg=cast(int, crs.to_epsg()),
-            T_coord=config.T,
-            date_format=config.date_format,
-            Z_coord=config.Z,
-            columns=columns,
-        )
-        # Prepare rename dict for indices
-        rename_dict = {}
-        if config.T:
-            rename_dict[config.T] = cube_config.t_coord
-        else:  # If point data does not contain date - set datecol using item datetime
-            gdf[cube_config.t_coord] = item.item.datetime
-        if config.Z:
-            rename_dict[config.Z] = cube_config.z_coord
-        # Transform
-        if process_config.process_bands:
-            for key, fn in process_config.process_bands.items():
-                if key in gdf.columns:
-                    gdf[key] = gdf[key].apply(fn)
-        # Rename bands
-        if process_config.rename_bands:
-            gdf.rename(columns=process_config.rename_bands, inplace=True)
-
-        # Rename indices
-        gdf.rename(columns=rename_dict, inplace=True)
-        # Drop X and Y columns since we will repopulate them after changing crs
-        gdf.drop(columns=[config.X, config.Y], inplace=True)
-        return gdf
 
     @staticmethod
     def groupby(

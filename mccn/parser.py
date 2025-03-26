@@ -1,46 +1,19 @@
 import datetime
-from dataclasses import dataclass, field
 from typing import Sequence, cast
 
 import pandas as pd
 import pystac
-from pyproj import CRS
 from stac_generator import StacGeneratorFactory
-from stac_generator.core import PointConfig, RasterConfig, SourceConfig, VectorConfig
+from stac_generator.core import PointConfig, RasterConfig, VectorConfig
 
-from mccn._types import BBox_T
+from mccn._types import (
+    BBox_T,
+    ParsedItem,
+    ParsedPoint,
+    ParsedRaster,
+    ParsedVector,
+)
 from mccn.loader.utils import get_item_crs
-
-
-@dataclass(kw_only=True)
-class ParsedItem:
-    location: str
-    bbox: BBox_T
-    start: datetime.datetime
-    end: datetime.datetime
-    config: SourceConfig
-    item: pystac.Item
-    bands: set[str]
-    load_bands: set[str] = field(default_factory=set)
-
-
-@dataclass(kw_only=True)
-class ParsedPoint(ParsedItem):
-    crs: CRS
-    config: PointConfig
-
-
-@dataclass(kw_only=True)
-class ParsedVector(ParsedItem):
-    aux_bands: set[str] = field(default_factory=set)
-    load_aux_bands: set[str] = field(default_factory=set)
-    config: VectorConfig
-
-
-@dataclass(kw_only=True)
-class ParsedRaster(ParsedItem):
-    alias: set[str] = field(default_factory=set)
-    config: RasterConfig
 
 
 def _parse_vector(
@@ -51,6 +24,7 @@ def _parse_vector(
     end: datetime.datetime,
     item: pystac.Item,
 ) -> ParsedVector:
+    crs = get_item_crs(item)
     bands = set([band["name"] for band in config.column_info])
     aux_bands = (
         set([band["name"] for band in config.join_column_info])
@@ -68,6 +42,7 @@ def _parse_vector(
         load_bands=bands,
         aux_bands=aux_bands,
         load_aux_bands=aux_bands,
+        crs=crs,
     )
 
 
@@ -180,14 +155,22 @@ def band_filter(
 ) -> ParsedItem | None:
     if item and bands:
         item.load_bands = set([band for band in bands if band in item.bands])
+        # If vector - check if bands to be loaded are from joined_file - i.e. aux_bands
         if isinstance(item, ParsedVector):
             item.load_aux_bands = set(
                 [band for band in bands if band in item.aux_bands]
             )
+        # If raster - check if bands to be loaded are an alias
         if isinstance(item, ParsedRaster):
             alias = set([band for band in bands if band in item.alias])
             item.load_bands.update(alias)
-        if item.load_bands or (hasattr(item, "load_aux_bands") and item.load_aux_bands):
-            return item
-        return None
+        # If both load_band and load_aux_bands empty - return None
+        if not item.load_bands and not (
+            hasattr(item, "load_aux_bands") and item.load_aux_bands
+        ):
+            return None
+    # If item is a vector - ensure that join attribute and join column are loaded
+    if isinstance(item, ParsedVector) and item.load_aux_bands:
+        item.load_aux_bands.add(cast(str, item.config.join_field))
+        item.load_bands.add(cast(str, item.config.join_attribute_vector))
     return item

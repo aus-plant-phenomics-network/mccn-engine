@@ -85,12 +85,14 @@ test:  												## Run the tests
 check-all: lint test coverage                   ## Run all linting, tests, and coverage checks
 
 
-.PHONY: test-fixture 
-test-fixture: 
+.PHONY: test-fixture
+test-fixture:
 	@$(PDM) run stac_generator serialise tests/files/unit_tests/point/standard/config.json --id collection --dst tests/files/unit_tests/point/standard/stac
 	@$(PDM) run stac_generator serialise tests/files/unit_tests/point/conversion/config.json --id collection --dst tests/files/unit_tests/point/conversion/stac
+	@$(PDM) run stac_generator serialise tests/files/unit_tests/point/nodate/config.json --id collection --dst tests/files/unit_tests/point/nodate/stac
+	@$(PDM) run stac_generator serialise tests/files/unit_tests/raster/realestate/config.json --id collection --dst tests/files/unit_tests/raster/realestate/stac
 
-.PHONY: clean-fixture 
-clean-fixture: 
+.PHONY: clean-fixture
+clean-fixture:
 	rm -rf tests/files/unit_tests/point/standard/stac
 	rm -rf tests/files/unit_tests/point/conversion/stac

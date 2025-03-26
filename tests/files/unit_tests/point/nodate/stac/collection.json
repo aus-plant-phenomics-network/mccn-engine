@@ -6,23 +6,18 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/standard/stac/collection.json",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "item",
-      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/standard/stac/north/north.json",
-      "type": "application/geo+json"
-    },
-    {
-      "rel": "item",
-      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/standard/stac/south/south.json",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/south/south.json",
       "type": "application/geo+json"
     },
     {
       "rel": "self",
-      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/standard/stac/collection.json",
+      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/collection.json",
       "type": "application/json"
     }
   ],
@@ -31,10 +26,10 @@
     "spatial": {
       "bbox": [
         [
-          144.637731,
-          -37.910602,
+          144.640258,
+          -37.910605,
           144.644937,
-          -37.903054
+          -37.909133
         ]
       ]
     },

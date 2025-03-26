@@ -1,48 +1,17 @@
 from __future__ import annotations
 
 import abc
-import datetime
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Generic, Mapping, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar, overload
 
-from odc.geo.geobox import GeoBox
+import pandas as pd
+import xarray as xr
 
-from mccn.parser import ParsedItem
+from mccn._types import CubeConfig, ParsedItem, ProcessConfig
 
 if TYPE_CHECKING:
-    import xarray as xr
+    from mccn._types import FilterConfig
 
 T = TypeVar("T", bound=ParsedItem)
-
-
-@dataclass
-class FilterConfig:
-    geobox: GeoBox
-    start_ts: datetime.datetime | None = None
-    end_ts: datetime.datetime | None = None
-    bands: set[str] | None = None
-
-
-@dataclass
-class CubeConfig:
-    x_coord: str = "lon"
-    """Name of the x coordinate in the datacube"""
-    y_coord: str = "lat"
-    """Name of the y coordinate in the datacube"""
-    t_coord: str = "time"
-    """Name of the time coordinate in the datacube"""
-    z_coord: str = "alt"
-    """Name of the altitude coordinate in the datacube"""
-    use_z: bool = False
-    """Whether to use the altitude coordinate as an axis"""
-
-
-@dataclass
-class ProcessConfig:
-    rename_bands: Mapping[str, str] | None = None
-    """Mapping between original to renamed bands"""
-    process_bands: Mapping[str, Callable] | None = None
-    """Mapping between band name and transformation to be applied to the band"""
 
 
 class Loader(abc.ABC, Generic[T]):
@@ -62,3 +31,42 @@ class Loader(abc.ABC, Generic[T]):
     @abc.abstractmethod
     def load(self) -> xr.Dataset:
         raise NotADirectoryError
+
+    @overload
+    @staticmethod
+    def apply_process(
+        data: pd.DataFrame, process_config: ProcessConfig
+    ) -> pd.DataFrame: ...
+
+    @overload
+    @staticmethod
+    def apply_process(
+        data: xr.Dataset, process_config: ProcessConfig
+    ) -> xr.Dataset: ...
+
+    @staticmethod
+    def apply_process(
+        data: pd.DataFrame | xr.Dataset, process_config: ProcessConfig
+    ) -> pd.DataFrame | xr.Dataset:
+        if isinstance(data, pd.DataFrame):
+            # Transform
+            if process_config.process_bands:
+                for key, fn in process_config.process_bands.items():
+                    if key in data.columns:
+                        data[key] = data[key].apply(fn)
+            # Rename bands
+            if process_config.rename_bands:
+                data.rename(columns=process_config.rename_bands, inplace=True)
+            return data
+        if isinstance(data, xr.Dataset):
+            # Process variable
+            if process_config.process_bands:
+                for k, fn in process_config.process_bands.items():
+                    if k in data.data_vars.keys():
+                        data[k] = xr.apply_ufunc(fn, data[k])
+            # Rename variable
+            if process_config.rename_bands and set(
+                process_config.rename_bands.keys()
+            ) & set(data.data_vars.keys()):
+                data = data.rename_vars(process_config.rename_bands)
+            return data

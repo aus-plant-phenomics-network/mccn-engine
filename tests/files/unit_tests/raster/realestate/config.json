@@ -1,0 +1,41 @@
+[
+    {
+        "id": "sunbury",
+        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/SunburyPriceUSD.tif",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "band_info": [
+            {
+                "name": "price_usd",
+                "description": "price in USD",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": "tullamarine",
+        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/TullamarinePrice.tif",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "band_info": [
+            {
+                "name": "price",
+                "description": "price in AUD",
+                "common_name": "red"
+            }
+        ]
+    },
+    {
+        "id": "wyndham",
+        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/WyndhamPrice.tif",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "band_info": [
+            {
+                "name": "price",
+                "description": "price in AUD",
+                "common_name": "red"
+            }
+        ]
+    }
+]
