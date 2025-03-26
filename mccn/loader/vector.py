@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import copy
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Callable, Mapping, cast
+from typing import TYPE_CHECKING, Any, Mapping
 
 import geopandas as gpd
 import pandas as pd
@@ -13,17 +12,11 @@ from rasterio.features import rasterize
 from mccn._types import ParsedVector
 from mccn.loader.base import Loader
 from mccn.loader.utils import (
-    ASSET_KEY,
     bbox_from_geobox,
-    get_item_crs,
 )
 
 if TYPE_CHECKING:
-    import pystac
     from odc.geo.geobox import GeoBox
-
-JOIN_VECTOR_KEY = "join_attribute_vector"
-JOIN_FILE_KEY = "join_field"
 
 
 def update_attr_legend(
@@ -59,7 +52,7 @@ def groupby_field(
 
 
 class VectorLoader(Loader[ParsedVector]):
-    def load(self):
+    def load(self) -> xr.Dataset:
         data = {}
         bands = set()
         for item in self.items:
@@ -73,7 +66,7 @@ class VectorLoader(Loader[ParsedVector]):
         ds_data, ds_attrs = groupby_field(
             data,
             self.filter_config.geobox,
-            bands,
+            list(bands),
             self.cube_config.x_coord,
             self.cube_config.y_coord,
         )

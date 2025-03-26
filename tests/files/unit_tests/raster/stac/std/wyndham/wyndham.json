@@ -6,50 +6,49 @@
     "https://stac-extensions.github.io/eo/v1.1.0/schema.json",
     "https://stac-extensions.github.io/raster/v1.1.0/schema.json"
   ],
-  "id": "tullamarine",
+  "id": "wyndham",
   "geometry": {
     "type": "Polygon",
     "coordinates": [
       [
         [
-          144.977973985,
-          -37.708600834
+          144.827467022,
+          -38.004199505
         ],
         [
-          144.977973985,
-          -37.540100834
+          144.827467022,
+          -37.780999505
         ],
         [
-          144.759973985,
-          -37.540100834
+          144.444067022,
+          -37.780999505
         ],
         [
-          144.759973985,
-          -37.708600834
+          144.444067022,
+          -38.004199505
         ],
         [
-          144.977973985,
-          -37.708600834
+          144.827467022,
+          -38.004199505
         ]
       ]
     ]
   },
   "bbox": [
-    144.759973985,
-    -37.708600834,
-    144.977973985,
-    -37.540100834
+    144.444067022,
+    -38.004199505,
+    144.827467022,
+    -37.780999505
   ],
   "properties": {
     "stac_generator": {
-      "id": "tullamarine",
+      "id": "wyndham",
       "collection_date": "2025-01-01",
       "collection_time": "00:00:00",
-      "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/TullamarinePrice.tif",
+      "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/WyndhamPrice.tif",
       "band_info": [
         {
           "name": "price",
-          "common_name": "red",
           "description": "price in AUD"
         }
       ]
@@ -58,16 +57,16 @@
     "end_datetime": "2024-12-31T14:20:00Z",
     "proj:code": "EPSG:7844",
     "proj:shape": [
-      337,
-      436
+      248,
+      426
     ],
     "proj:transform": [
-      0.0005000000000000407,
+      0.0008999999999999874,
       0.0,
-      144.759973985,
+      144.444067022,
       0.0,
-      -0.0005000000000000049,
-      -37.540100834,
+      -0.0009000000000000226,
+      -37.780999505,
       0.0,
       0.0,
       1.0
@@ -77,31 +76,31 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "collection",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "self",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/tullamarine/tullamarine.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/wyndham/wyndham.json",
       "type": "application/json"
     },
     {
       "rel": "parent",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     }
   ],
   "assets": {
     "data": {
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/TullamarinePrice.tif",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/WyndhamPrice.tif",
       "type": "image/tiff; application=geotiff",
       "title": "Raster Data",
       "raster:bands": [
@@ -112,7 +111,6 @@
       "eo:bands": [
         {
           "name": "price",
-          "common_name": "red",
           "description": "price in AUD"
         }
       ],

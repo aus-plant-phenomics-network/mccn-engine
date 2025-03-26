@@ -1,40 +1,37 @@
 [
     {
         "id": "sunbury",
-        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/SunburyPriceUSD.tif",
+        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/SunburyPriceUSD.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [
             {
                 "name": "price_usd",
-                "description": "price in USD",
-                "common_name": "blue"
+                "description": "price in USD"
             }
         ]
     },
     {
         "id": "tullamarine",
-        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/TullamarinePrice.tif",
+        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/TullamarinePrice.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [
             {
                 "name": "price",
-                "description": "price in AUD",
-                "common_name": "red"
+                "description": "price in AUD"
             }
         ]
     },
     {
         "id": "wyndham",
-        "location": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/WyndhamPrice.tif",
+        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/WyndhamPrice.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [
             {
                 "name": "price",
-                "description": "price in AUD",
-                "common_name": "red"
+                "description": "price in AUD"
             }
         ]
     }

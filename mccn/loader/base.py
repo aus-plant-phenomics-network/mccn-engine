@@ -35,14 +35,14 @@ class Loader(abc.ABC, Generic[T]):
     @overload
     @staticmethod
     def apply_process(
-        data: pd.DataFrame, process_config: ProcessConfig
-    ) -> pd.DataFrame: ...
+        data: xr.Dataset, process_config: ProcessConfig
+    ) -> xr.Dataset: ...
 
     @overload
     @staticmethod
     def apply_process(
-        data: xr.Dataset, process_config: ProcessConfig
-    ) -> xr.Dataset: ...
+        data: pd.DataFrame, process_config: ProcessConfig
+    ) -> pd.DataFrame: ...
 
     @staticmethod
     def apply_process(
@@ -70,3 +70,4 @@ class Loader(abc.ABC, Generic[T]):
             ) & set(data.data_vars.keys()):
                 data = data.rename_vars(process_config.rename_bands)
             return data
+        raise ValueError(f"Expeting data to be a dataframe or a dataset: {type(data)}")

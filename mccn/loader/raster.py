@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Literal, Mapping
 import odc.stac
 import xarray as xr
 
+from mccn._types import ParsedRaster
 from mccn.loader.base import Loader
-from mccn.parser import ParsedRaster
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -9,8 +9,8 @@ import xarray as xr
 from odc.geo.xr import xr_coords
 from stac_generator.core.point.generator import read_csv
 
+from mccn._types import ParsedPoint
 from mccn.loader.base import Loader
-from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
     from mccn._types import (
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class PointLoadConfig:
-    interp: InterpMethods = "nearest"
+    interp: InterpMethods | None = "nearest"
     agg_method: MergeMethods = "mean"
 
 
@@ -57,7 +57,7 @@ class PointLoader(Loader[ParsedPoint]):
             T_coord=item.config.T,
             date_format=item.config.date_format,
             Z_coord=item.config.Z,
-            columns=item.load_bands,
+            columns=list(item.load_bands),
         )
         # Prepare rename dict
         rename_dict = {}
@@ -153,6 +153,7 @@ class PointLoader(Loader[ParsedPoint]):
         ds[cube_config.t_coord] = pd.DatetimeIndex(
             ds.coords[cube_config.t_coord].values
         )
+        # For debugging purpose
         if load_config.interp is None:
             return ds
 

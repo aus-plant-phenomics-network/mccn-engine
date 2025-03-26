@@ -4,90 +4,94 @@
   "stac_extensions": [
     "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
   ],
-  "id": "south",
+  "id": "silo_1",
   "geometry": {
-    "type": "Polygon",
+    "type": "MultiPoint",
     "coordinates": [
       [
-        [
-          144.644937,
-          -37.910605
-        ],
-        [
-          144.644937,
-          -37.909133
-        ],
-        [
-          144.640258,
-          -37.909133
-        ],
-        [
-          144.640258,
-          -37.910605
-        ],
-        [
-          144.644937,
-          -37.910605
-        ]
+        138.6844,
+        -34.8564
+      ],
+      [
+        139.6844,
+        -33.8564
+      ],
+      [
+        140.6844,
+        -32.8564
+      ],
+      [
+        141.6844,
+        -31.8564
+      ],
+      [
+        142.6844,
+        -30.8564
       ]
     ]
   },
   "bbox": [
-    144.640258,
-    -37.910605,
-    144.644937,
-    -37.909133
+    138.6844,
+    -34.8564,
+    142.6844,
+    -30.8564
   ],
   "properties": {
     "stac_generator": {
       "column_info": [
         {
-          "name": "temperature_F",
-          "description": "temperature degree in F"
+          "name": "t_max",
+          "description": "maximum daily temperature"
+        },
+        {
+          "name": "t_min",
+          "description": "minimum daily temperature"
         }
       ],
-      "id": "south",
-      "collection_date": "2025-01-01",
+      "id": "silo_1",
+      "collection_date": "2025-03-26",
       "collection_time": "00:00:00",
-      "location": "tests/files/unit_tests/point/nodate/south_F.csv",
+      "location": "tests/files/unit_tests/point/silo_data_1.csv",
       "X": "lon",
       "Y": "lat",
+      "Z": "elevation",
+      "T": "date",
       "epsg": 4326
     },
-    "start_datetime": "2024-12-31T14:20:00Z",
-    "end_datetime": "2024-12-31T14:20:00Z",
+    "start_datetime": "2025-02-28T13:30:00Z",
+    "end_datetime": "2025-03-04T13:30:00Z",
     "proj:code": "EPSG:4326",
     "proj:wkt2": "GEOGCRS[\"WGS 84\",ENSEMBLE[\"World Geodetic System 1984 ensemble\",MEMBER[\"World Geodetic System 1984 (Transit)\"],MEMBER[\"World Geodetic System 1984 (G730)\"],MEMBER[\"World Geodetic System 1984 (G873)\"],MEMBER[\"World Geodetic System 1984 (G1150)\"],MEMBER[\"World Geodetic System 1984 (G1674)\"],MEMBER[\"World Geodetic System 1984 (G1762)\"],MEMBER[\"World Geodetic System 1984 (G2139)\"],MEMBER[\"World Geodetic System 1984 (G2296)\"],ELLIPSOID[\"WGS 84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1]],ENSEMBLEACCURACY[2.0]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"geodetic latitude (Lat)\",north,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"geodetic longitude (Lon)\",east,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433]],USAGE[SCOPE[\"Horizontal component of 3D system.\"],AREA[\"World.\"],BBOX[-90,-180,90,180]],ID[\"EPSG\",4326]]",
-    "datetime": "2024-12-31T14:20:00Z"
+    "datetime": "2025-03-25T14:46:00Z"
   },
   "links": [
     {
       "rel": "root",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "collection",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "self",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/south/south.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/silo_1/silo_1.json",
       "type": "application/json"
     },
     {
       "rel": "parent",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/point/nodate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     }
   ],
   "assets": {
     "data": {
-      "href": "tests/files/unit_tests/point/nodate/south_F.csv",
+      "href": "tests/files/unit_tests/point/silo_data_1.csv",
       "type": "text/csv",
       "description": "Raw csv data",
       "roles": [

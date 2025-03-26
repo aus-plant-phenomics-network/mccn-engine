@@ -1,0 +1,56 @@
+{
+  "type": "Collection",
+  "id": "collection",
+  "stac_version": "1.1.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/silo_1/silo_1.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/silo_2/silo_2.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/silo_3/silo_3.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/point/stac/std/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          138.6056,
+          -34.9697,
+          142.6844,
+          -30.8564
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2025-03-25T14:46:00Z",
+          "2025-03-25T14:46:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

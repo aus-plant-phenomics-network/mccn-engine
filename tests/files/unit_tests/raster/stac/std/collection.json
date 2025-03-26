@@ -6,28 +6,28 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/collection.json",
       "type": "application/json",
       "title": "Auto-generated."
     },
     {
       "rel": "item",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/sunbury/sunbury.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/sunbury/sunbury.json",
       "type": "application/geo+json"
     },
     {
       "rel": "item",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/tullamarine/tullamarine.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/tullamarine/tullamarine.json",
       "type": "application/geo+json"
     },
     {
       "rel": "item",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/wyndham/wyndham.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/wyndham/wyndham.json",
       "type": "application/geo+json"
     },
     {
       "rel": "self",
-      "href": "/home/harry/CodingProject/mccn-engine/tests/files/unit_tests/raster/realestate/stac/collection.json",
+      "href": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/stac/std/collection.json",
       "type": "application/json"
     }
   ],
