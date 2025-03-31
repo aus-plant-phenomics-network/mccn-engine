@@ -1,7 +1,7 @@
 [
     {
         "id": "silo_1",
-        "location": "tests/files/unit_tests/point/silo_data_1.csv",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Point/silo_data_1.csv",
         "collection_date": "2025-03-26",
         "collection_time": "00:00",
         "X": "lon",
@@ -22,7 +22,7 @@
     },
     {
         "id": "silo_2",
-        "location": "tests/files/unit_tests/point/silo_data_2.csv",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Point/silo_data_2.csv",
         "collection_date": "2025-03-26",
         "collection_time": "00:00",
         "X": "lon",
@@ -43,7 +43,7 @@
     },
     {
         "id": "silo_3",
-        "location": "tests/files/unit_tests/point/silo_data_3.csv",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Point/silo_data_3.csv",
         "collection_date": "2025-03-26",
         "collection_time": "00:00",
         "X": "lon",

@@ -172,5 +172,7 @@ def band_filter(
     # If item is a vector - ensure that join attribute and join column are loaded
     if isinstance(item, ParsedVector) and item.load_aux_bands:
         item.load_aux_bands.add(cast(str, item.config.join_field))
+        if item.config.join_T_column:
+            item.load_aux_bands.add(item.config.join_T_column)
         item.load_bands.add(cast(str, item.config.join_attribute_vector))
     return item

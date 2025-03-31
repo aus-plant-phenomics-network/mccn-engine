@@ -1,0 +1,78 @@
+[
+    {
+        "id": "C1_2017",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/C1_2017_wheat.txt",
+        "collection_date": "2017-01-01",
+        "collection_time": "00:00",
+        "epsg": 4326,
+        "Y": "latitude",
+        "X": "longitude",
+        "Z": "elevation_m",
+        "column_info": [
+            {
+                "name": "moisture"
+            },
+            {
+                "name": "yield_t_ha",
+                "description": "yield tonnage per hectare"
+            }
+        ]
+    },
+    {
+        "id": "C2_2016",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/C2_2016_wheat_lancer.txt",
+        "collection_date": "2016-01-01",
+        "collection_time": "00:00",
+        "epsg": 4326,
+        "Y": "Latitude",
+        "X": "Longitude",
+        "Z": "elevation",
+        "column_info": [
+            {
+                "name": "moisture"
+            },
+            {
+                "name": "yield_t_ha",
+                "description": "yield tonnage per hectare"
+            }
+        ]
+    },
+    {
+        "id": "C2_2017",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/C2_2017_chickpea.txt",
+        "collection_date": "2017-01-01",
+        "collection_time": "00:00",
+        "epsg": 4326,
+        "Y": "latitude",
+        "X": "longitude",
+        "Z": "elevation_m",
+        "column_info": [
+            {
+                "name": "moisture"
+            },
+            {
+                "name": "yield_t_ha",
+                "description": "yield tonnage per hectare"
+            }
+        ]
+    },
+    {
+        "id": "C3_2016",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/C3_2016_fieldpea.txt",
+        "collection_date": "2016-01-01",
+        "collection_time": "00:00",
+        "epsg": 4326,
+        "Y": "latitude",
+        "X": "longitude",
+        "Z": "elevation_m",
+        "column_info": [
+            {
+                "name": "moisture"
+            },
+            {
+                "name": "yield_t_ha",
+                "description": "yield tonnage per hectare"
+            }
+        ]
+    }
+]

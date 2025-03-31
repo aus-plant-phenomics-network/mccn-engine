@@ -1,0 +1,54 @@
+[
+    {
+        "id": "Campey_ECa_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_ECa_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "eca",
+                "description": "Krigged_ECa data"
+            }
+        ]
+    },
+    {
+        "id": "Campey_Gamma_K_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_Gamma_K_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "gamma_k",
+                "description": "Krigged_Gamma_K data"
+            }
+        ]
+    },
+    {
+        "id": "Llara_ECa_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_ECa_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "eca",
+                "description": "Krigged_ECa data"
+            }
+        ]
+    },
+    {
+        "id": "Llara_Gamma_K_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_Gamma_K_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "gamma_k",
+                "description": "Krigged_Gamma_K data"
+            }
+        ]
+    }
+]

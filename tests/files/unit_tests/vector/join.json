@@ -1,0 +1,67 @@
+[
+    {
+        "id": "werribee_distance",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/Werribee.geojson",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "join_file": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/distance.csv",
+        "join_field": "Area",
+        "join_attribute_vector": "Suburb_Name",
+        "join_column_info": [
+            {
+                "name": "Distance",
+                "description": "Driving Distance to CBD in km"
+            },
+            {
+                "name": "Public_Transport",
+                "description": "Time taken to reach CBD by public transport in minutes"
+            },
+            {
+                "name": "Drive",
+                "description": "Time taken to reach CBD by driving in minutes"
+            },
+            {
+                "name": "Growth",
+                "description": "Average 5 year growth in percentage in 2025"
+            },
+            {
+                "name": "Yield",
+                "description": "Average rental yield in 2025"
+            }
+        ]
+    },
+    {
+        "id": "werribee_price",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/Werribee.geojson",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "column_info": [
+            {
+                "name": "Suburb_Name",
+                "description": "Suburb_Name"
+            }
+        ],
+        "join_file": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/price.csv",
+        "join_field": "Area",
+        "join_attribute_vector": "Suburb_Name",
+        "join_T_column": "Date",
+        "join_column_info": [
+            {
+                "name": "Area",
+                "description": "Area code - SA2"
+            },
+            {
+                "name": "Sell_Price",
+                "description": "Median Sales Price in 2025"
+            },
+            {
+                "name": "Rent_Price",
+                "description": "Median Rental Price in 2025"
+            },
+            {
+                "name": "Sell/Rent",
+                "description": "Ratio of Sales Price (in $1000) over Rental Price (in $)"
+            }
+        ]
+    }
+]

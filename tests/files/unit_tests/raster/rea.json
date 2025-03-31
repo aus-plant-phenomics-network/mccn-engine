@@ -1,7 +1,7 @@
 [
     {
         "id": "sunbury",
-        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/SunburyPriceUSD.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Raster/SunburyPriceUSD.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [
@@ -13,7 +13,7 @@
     },
     {
         "id": "tullamarine",
-        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/TullamarinePrice.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Raster/TullamarinePrice.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [
@@ -25,7 +25,7 @@
     },
     {
         "id": "wyndham",
-        "location": "/home/harry/WorkProjects/mccn-engine/tests/files/unit_tests/raster/WyndhamPrice.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Raster/WyndhamPrice.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00:00",
         "band_info": [

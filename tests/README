@@ -1,0 +1,36 @@
+## Test criteria 
+
+### Vector 
+
+- load multi-layered file (using the `layer` keyword)
+    - expects files to be loaded correctly 
+    - tests/files/unit_tests/vector/attribute.json 
+
+- load as attribute (bands from column_info)
+    - expects described bands to be loaded
+    - tests/files/unit_tests/vector/attribute.json 
+    
+- load as mask (column_info is empty)
+    - expects a layered with item id loaded as mask 
+    - tests/files/unit_tests/vector/mask.json 
+
+- load mask + attribute (some items have empty column_info, some have described column_info)
+    - expects described bands and mask band (layer with item id)
+    - tests/files/unit_tests/vector/mask_attribute.json 
+
+- rename non numeric fields 
+    - non numeric fields is encoded, with encoding stored as dc attribute 
+    - tests/files/unit_tests/vector/attribute.json 
+
+- combine similarly named attributes 
+    - different items that share the same attribute are combined into one single layer 
+    - tests/files/unit_tests/vector/attribute.json 
+
+- join vector with csv - join attribute vector described in column_info
+- join vector with csv - join attribute vector not described in column_info
+- join vector with csv - join field described in join_column_info
+- join vector with csv - join field not described in join_column_info
+- join vector with csv - with join_T_column 
+- join vector with csv - without join_T_column 
+
+- band processing and renaming 

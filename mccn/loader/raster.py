@@ -3,6 +3,7 @@ from __future__ import annotations
 import collections
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, Mapping
 
 import odc.stac
@@ -59,28 +60,49 @@ class RasterLoader(Loader[ParsedRaster]):
         band_map = self.groupby_bands(self.items)
         ds = []
         for band_info, band_items in band_map.items():
-            item_ds = _odc_load_wrapper(
-                band_items,
-                self.filter_config.geobox,
-                bands=band_info,
-                x_col=self.cube_config.x_coord,
-                y_col=self.cube_config.y_coord,
-                t_col=self.cube_config.t_coord,
-            )
+            try:
+                item_ds = _odc_load_wrapper(
+                    band_items,
+                    self.filter_config.geobox,
+                    bands=band_info,
+                    x_col=self.cube_config.x_coord,
+                    y_col=self.cube_config.y_coord,
+                    t_col=self.cube_config.t_coord,
+                    resampling=self.load_config.resampling,
+                    chunks=self.load_config.chunks,
+                    pool=self.load_config.pool,
+                    dtype=self.load_config.dtype,
+                )
+            except Exception as e:
+                raise RuntimeError(
+                    f"Fail to load items: {[item.id for item in band_items]} with bands: {band_info}"
+                ) from e
             item_ds = self.apply_process(item_ds, self.process_config)
             ds.append(item_ds)
         return xr.merge(ds, compat="equals")
 
 
 def _odc_load_wrapper(
-    items: Sequence[pystac.Item],
+    items: tuple[pystac.Item, ...],
     geobox: GeoBox | None,
-    bands: str | Sequence[str] | None = None,
+    bands: str | tuple[str] | None = None,
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
+    resampling: str | Mapping[str, str] | None = None,
+    chunks: Mapping[str, int | Literal["auto"]] | None = None,
+    pool: ThreadPoolExecutor | int | None = None,
+    dtype: DTypeLike | Mapping[str, DTypeLike] = None,
 ) -> xr.Dataset:
-    ds = odc.stac.load(items, bands, geobox=geobox)
+    ds = odc.stac.load(
+        items,
+        bands,
+        geobox=geobox,
+        resampling=resampling,
+        chunks=chunks,
+        pool=pool,
+        dtype=dtype,
+    )
     # NOTE: odc stac load uses odc.geo.xr.xr_coords to set dimension name
     # it either uses latitude/longitude or y/x depending on the underlying crs
     # so there is no proper way to know which one it uses aside from trying

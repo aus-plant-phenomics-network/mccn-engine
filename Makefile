@@ -10,6 +10,9 @@ ENV_PREFIX		=  .venv/bin/
 VENV_EXISTS		=	$(shell python3 -c "if __import__('pathlib').Path('.venv/bin/activate').exists(): print('yes')")
 PDM_OPTS 		?=
 PDM 			?= 	pdm $(PDM_OPTS)
+NECTAR_PATH		= 	https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data
+SERVER_PATH		= 	http://203.101.230.81:8082
+TEST_PATH 		= 	tests/files/unit_tests
 
 .EXPORT_ALL_VARIABLES:
 
@@ -87,9 +90,24 @@ check-all: lint test coverage                   ## Run all linting, tests, and c
 
 .PHONY: point-fixtures
 point-fixtures: 
-	@$(PDM) run stac_generator serialise tests/files/unit_tests/point/configs/std_config.json --id collection --dst tests/files/unit_tests/point/stac/std
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_std.json --id silo_std --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_proc_bands.json --id silo_proc_bands --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/soil.json --id soil --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/campey_point.json --id campey_point --dst $(SERVER_PATH)
 
 
 .PHONY: raster-fixtures
 raster-fixtures: 
-	@$(PDM) run stac_generator serialise tests/files/unit_tests/raster/configs/std_config.json --id collection --dst tests/files/unit_tests/raster/stac/std
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/rea.json --id rea --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/ozbarley_raster.json --id ozbarley_raster --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/llara_campey_raster.json --id llara_campey_raster --dst $(SERVER_PATH)
+
+.PHONY: vector-fixtures 
+vector-fixtures:
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/attribute.json --id attribute --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask.json --id mask --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask_attribute.json --id mask_attribute --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/join.json --id join --dst $(SERVER_PATH)
+
+.PHONY: fixtures 
+fixtures: point-fixtures raster-fixtures

@@ -1,0 +1,144 @@
+[
+    {
+        "id": "OZBarley1_241010_DSM.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley1_241010_DSM.tif",
+        "collection_date": "2024-10-10",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "dsm"
+            }
+        ]
+    },
+    {
+        "id": "OZBarley2_241010_DSM.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley2_241010_DSM.tif",
+        "collection_date": "2024-10-10",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "dsm"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley1_240806.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley1_240806.tif",
+        "collection_date": "2024-08-06",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley2_240806.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley2_240806.tif",
+        "collection_date": "2024-08-06",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley1_240906.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley1_240906.tif",
+        "collection_date": "2024-09-06",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley2_240906.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley2_240906.tif",
+        "collection_date": "2024-09-06",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley1_241010.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley1_241010.tif",
+        "collection_date": "2024-10-10",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    },
+    {
+        "id": " OZBarley2_241010.tif",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/OZBarley/OZBarley2_241010.tif",
+        "collection_date": "2024-10-10",
+        "collection_time": "10:00",
+        "band_info": [
+            {
+                "name": "r",
+                "common_name": "red"
+            },
+            {
+                "name": "g",
+                "common_name": "green"
+            },
+            {
+                "name": "b",
+                "common_name": "blue"
+            }
+        ]
+    }
+]

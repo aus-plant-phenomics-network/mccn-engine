@@ -1,0 +1,16 @@
+[
+    {
+        "id": "SA2_Sunbury",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/SA2.zip",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "layer": "Sunbury"
+    },
+    {
+        "id": "SA2_Werribee",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/documentation/quickstart/SA2.zip",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00:00",
+        "layer": "Werribee"
+    }
+]

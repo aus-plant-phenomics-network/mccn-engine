@@ -73,10 +73,10 @@ def get_item_crs(item: pystac.Item) -> CRS:
     :return: CRS information
     :rtype: CRS
     """
-    if "proj:code" in item.properties:
-        return CRS(item.properties.get("proj:code"))
-    elif "proj:wkt2" in item.properties:
+    if "proj:wkt2" in item.properties:
         return CRS(item.properties.get("proj:wkt2"))
+    elif "proj:code" in item.properties:
+        return CRS(item.properties.get("proj:code"))
     elif "proj:projjson" in item.properties:
         try:
             return CRS(json.loads(item.properties.get("proj:projjson")))  # type: ignore[arg-type]

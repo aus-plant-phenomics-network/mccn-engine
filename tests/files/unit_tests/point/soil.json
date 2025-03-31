@@ -1,0 +1,30 @@
+{
+    "id": "soil",
+    "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/Point/soil_epsg_32756.csv",
+    "collection_date": "2025-03-26",
+    "collection_time": "00:00",
+    "X": "Eastings_UTM",
+    "Y": "Northings_UTM",
+    "Z": "mid_depth",
+    "epsg": 32756,
+    "column_info": [
+        {
+            "name": "Ca_Soln",
+            "description": "Calcium Solution Concentration"
+        },
+        {
+            "name": "Na_Soln",
+            "description": "Sodium Solution Concentration"
+        },
+        {
+            "name": "S",
+            "description": "Sulfur"
+        },
+        {
+            "name": "pH"
+        },
+        {
+            "name": "EC"
+        }
+    ]
+}
