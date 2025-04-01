@@ -59,19 +59,23 @@ def bbox_from_geobox(geobox: GeoBox, crs: CRS | str | int = 4326) -> BBox_T:
 
 
 def get_item_crs(item: pystac.Item) -> CRS:
-    """Extract CRS information from item properties.
+    """Extract CRS information from a STAC Item.
 
-    This will first look for CRS information encoded as proj extension, in the following order:
-    `proj:code, proj:wkt2, proj:projjson, proj:epsg`
+    For the best result, item should be generated using the
+    projection extension (stac_generator does this by default).
+    This method will look up proj:wkt2 (wkt2 string - the best option), proj:code,
+    proj:projjson, proj:epsg, then epsg. An error is raised if none of the key
+    is found.
 
-    If no proj extension fields is found, will attempt to look for the field `epsg` in properties.
+    Args:
+        item (pystac.Item): STAC Item with proj extension applied to properties
 
-    :param item: stac item metadata
-    :type item: pystac.Item
-    :raises StacExtensionError: if proj:projjson is provided but with an invalid format
-    :raises StacExtensionError: if there is no crs field in the metadata
-    :return: CRS information
-    :rtype: CRS
+    Raises:
+        StacExtensionError: ill-formatted proj:projjson
+        StacExtensionError: no suitable proj key is found in item's properties
+
+    Returns:
+        CRS: CRS of item
     """
     if "proj:wkt2" in item.properties:
         return CRS(item.properties.get("proj:wkt2"))

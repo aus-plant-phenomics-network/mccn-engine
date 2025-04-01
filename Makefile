@@ -89,7 +89,7 @@ check-all: lint test coverage                   ## Run all linting, tests, and c
 
 
 .PHONY: point-fixtures
-point-fixtures: 
+point-fixtures:
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_std.json --id silo_std --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_proc_bands.json --id silo_proc_bands --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/soil.json --id soil --dst $(SERVER_PATH)
@@ -97,17 +97,17 @@ point-fixtures:
 
 
 .PHONY: raster-fixtures
-raster-fixtures: 
+raster-fixtures:
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/rea.json --id rea --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/ozbarley_raster.json --id ozbarley_raster --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/llara_campey_raster.json --id llara_campey_raster --dst $(SERVER_PATH)
 
-.PHONY: vector-fixtures 
+.PHONY: vector-fixtures
 vector-fixtures:
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/attribute.json --id attribute --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask.json --id mask --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask_attribute.json --id mask_attribute --dst $(SERVER_PATH)
 	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/join.json --id join --dst $(SERVER_PATH)
 
-.PHONY: fixtures 
+.PHONY: fixtures
 fixtures: point-fixtures raster-fixtures

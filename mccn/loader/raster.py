@@ -3,7 +3,6 @@ from __future__ import annotations
 import collections
 import logging
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, Mapping
 
 import odc.stac
@@ -28,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RasterLoadConfig:
-    resampling: str | Mapping[str, str] | None = None
-    chunks: Mapping[str, int | Literal["auto"]] | None = None
+    resampling: str | dict[str, str] | None = None
+    chunks: dict[str, int | Literal["auto"]] | None = None
     pool: ThreadPoolExecutor | int | None = None
     dtype: DTypeLike | Mapping[str, DTypeLike] = None
 
@@ -83,17 +82,36 @@ class RasterLoader(Loader[ParsedRaster]):
 
 
 def _odc_load_wrapper(
-    items: tuple[pystac.Item, ...],
+    items: Sequence[pystac.Item],
     geobox: GeoBox | None,
-    bands: str | tuple[str] | None = None,
+    bands: str | Sequence[str] | None = None,
     x_col: str = "x",
     y_col: str = "y",
     t_col: str = "time",
-    resampling: str | Mapping[str, str] | None = None,
-    chunks: Mapping[str, int | Literal["auto"]] | None = None,
+    resampling: str | dict[str, str] | None = None,
+    chunks: dict[str, int | Literal["auto"]] | None = None,
     pool: ThreadPoolExecutor | int | None = None,
     dtype: DTypeLike | Mapping[str, DTypeLike] = None,
 ) -> xr.Dataset:
+    """Wrapper for odc.stac.load
+
+    Also perform cube axis renaming for consistency
+
+    Args:
+        items (Sequence[pystac.Item]): _description_
+        geobox (GeoBox | None): _description_
+        bands (str | Sequence[str] | None, optional): _description_. Defaults to None.
+        x_col (str, optional): _description_. Defaults to "x".
+        y_col (str, optional): _description_. Defaults to "y".
+        t_col (str, optional): _description_. Defaults to "time".
+        resampling (str | Mapping[str, str] | None, optional): _description_. Defaults to None.
+        chunks (Mapping[str, int  |  Literal[&quot;auto&quot;]] | None, optional): _description_. Defaults to None.
+        pool (ThreadPoolExecutor | int | None, optional): _description_. Defaults to None.
+        dtype (DTypeLike | Mapping[str, DTypeLike], optional): _description_. Defaults to None.
+
+    Returns:
+        xr.Dataset: _description_
+    """
     ds = odc.stac.load(
         items,
         bands,
