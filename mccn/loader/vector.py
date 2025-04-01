@@ -86,7 +86,7 @@ def _groupby_mask_field(
         v["KEY"] = idx
         attrs_dict[idx] = k
     gdf = pd.concat(data.values())
-    dates = sorted(gdf[t_col].unique())
+    dates = pd.Series(sorted(gdf[t_col].unique()))
     raster = []
     for date in dates:
         raster.append(
@@ -113,7 +113,7 @@ def _groupby_mask_field(
         coords=coords,
         attrs={"MASKS": attrs_dict},
     )
-    ds[t_col] = dates
+    ds[t_col] = dates.values
     return ds
 
 
@@ -132,7 +132,7 @@ def _groupby_mask_id(
 ) -> xr.Dataset:
     dss = []
     for key, value in data.items():
-        dates = sorted(value[t_col].unique())
+        dates = pd.Series(sorted(value[t_col].unique()))
         raster = []
         for date in dates:
             raster.append(
@@ -149,7 +149,7 @@ def _groupby_mask_id(
             )
         ds_data = np.stack(raster, axis=0)
         ds = xr.Dataset({key: ([t_col, y_col, x_col], ds_data)}, coords=coords)
-        ds[t_col] = dates
+        ds[t_col] = dates.values
         dss.append(ds)
     return xr.merge(dss)
 
@@ -271,7 +271,7 @@ def groupby_field(
     gdf = pd.concat(data.values())
     ds_data = {}
     ds_attrs: dict[str, Any] = {}
-    dates = sorted(gdf[t_col].unique())  # Date attributes
+    dates = pd.Series(sorted(gdf[t_col].unique()))  # Date attributes
     for field in fields:
         update_attr_legend(ds_attrs, field, gdf)
         raster = []
@@ -297,8 +297,66 @@ def groupby_field(
 
         ds_data[field] = ([t_col, y_col, x_col], np.stack(raster, axis=0))
     ds = xr.Dataset(ds_data, attrs=ds_attrs, coords=coords)
-    ds[t_col] = dates
+    ds[t_col] = dates.values
     return ds
+
+
+def read_vector_asset(
+    item: ParsedVector, geobox: GeoBox, t_coord: str = "time"
+) -> gpd.GeoDataFrame:
+    """Load a single vector item
+
+    Load vector asset. If a join asset is provided, will load the
+    join asset and perform a join operation on common column (Inner Join)
+
+    Args:
+        item (ParsedVector): parsed vector item
+        geobox (GeoBox): target geobox
+        t_coord (str): name of the time dimension if valid
+
+    Returns:
+        gpd.GeoDataFrame: vector geodataframe
+    """
+    date_col = None
+    # Prepare geobox for filtering
+    bbox = bbox_from_geobox(geobox, item.crs)
+    # Load main item
+    gdf = gpd.read_file(
+        item.location,
+        bbox=bbox,
+        columns=list(item.load_bands),
+        layer=item.config.layer,
+    )
+    # Load aux df
+    if item.load_aux_bands:
+        if item.config.join_T_column and item.config.join_file:
+            date_col = item.config.join_T_column
+            aux_df = pd.read_csv(
+                item.config.join_file,
+                usecols=list(item.load_aux_bands),
+                parse_dates=[item.config.join_T_column],
+                date_format=cast(str, item.config.date_format),
+            )
+        else:
+            aux_df = pd.read_csv(
+                cast(str, item.config.join_file),
+                usecols=list(item.load_aux_bands),
+            )
+        # Join dfs
+        gdf = pd.merge(
+            gdf,
+            aux_df,
+            left_on=item.config.join_attribute_vector,
+            right_on=item.config.join_field,
+        )
+    # Convert CRS
+    gdf.to_crs(geobox.crs, inplace=True)
+    # Process date
+    if not date_col:
+        gdf[t_coord] = item.item.datetime
+    else:
+        gdf.rename(columns={date_col: t_coord}, inplace=True)
+    return gdf
 
 
 class VectorLoader(Loader[ParsedVector]):
@@ -335,7 +393,7 @@ class VectorLoader(Loader[ParsedVector]):
         self.load_config = load_config if load_config else VectorLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
-    def load(self) -> xr.Dataset:
+    def _load(self) -> xr.Dataset:
         data = {}  # Mapping of item id to geodataframe
         bands = set()  # All bands available in vector collection
         mask_only = set()  # Set of items to be loaded as mask only
@@ -349,7 +407,12 @@ class VectorLoader(Loader[ParsedVector]):
             # Remove date column - not a variable
             if item.config.join_T_column:
                 bands.remove(item.config.join_T_column)
-            data[item.item.id] = self.load_item(item)
+            data[item.item.id] = self.apply_process(
+                read_vector_asset(
+                    item, self.filter_config.geobox, self.cube_config.t_coord
+                ),
+                self.process_config,
+            )
 
         # Load attribute cube
         attr_data = groupby_field(
@@ -384,58 +447,3 @@ class VectorLoader(Loader[ParsedVector]):
 
         # Combine attribute + mask
         return xr.merge([attr_data, mask_data], combine_attrs="no_conflicts")
-
-    def load_item(self, item: ParsedVector) -> gpd.GeoDataFrame:
-        """Load a single vector item
-
-        Load vector asset. If a join asset is provided, will load the
-        join asset and perform a join operation on common column (Inner Join)
-
-        Args:
-            item (ParsedVector): parsed vector item
-
-        Returns:
-            gpd.GeoDataFrame: vector geodataframe
-        """
-        date_col = None
-        # Prepare geobox for filtering
-        bbox = bbox_from_geobox(self.filter_config.geobox, item.crs)
-        # Load main item
-        gdf = gpd.read_file(
-            item.location,
-            bbox=bbox,
-            columns=list(item.load_bands),
-            layer=item.config.layer,
-        )
-        # Load aux df
-        if item.load_aux_bands:
-            if item.config.join_T_column and item.config.join_file:
-                date_col = item.config.join_T_column
-                aux_df = pd.read_csv(
-                    item.config.join_file,
-                    usecols=list(item.load_aux_bands),
-                    parse_dates=[item.config.join_T_column],
-                    date_format=cast(str, item.config.date_format),
-                )
-            else:
-                aux_df = pd.read_csv(
-                    cast(str, item.config.join_file),
-                    usecols=list(item.load_aux_bands),
-                )
-            # Join dfs
-            gdf = pd.merge(
-                gdf,
-                aux_df,
-                left_on=item.config.join_attribute_vector,
-                right_on=item.config.join_field,
-            )
-        # Convert CRS
-        gdf.to_crs(self.filter_config.geobox.crs, inplace=True)
-        # Process date
-        if not date_col:
-            gdf[self.cube_config.t_coord] = item.item.datetime
-        else:
-            gdf.rename(columns={date_col: self.cube_config.t_coord}, inplace=True)
-
-        # Process
-        return self.apply_process(gdf, self.process_config)

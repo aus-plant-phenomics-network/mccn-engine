@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RasterLoadConfig:
+    """Load config for raster asset. Parameters come from odc.stac.load"""
+
     resampling: str | dict[str, str] | None = None
     chunks: dict[str, int | Literal["auto"]] | None = None
     pool: ThreadPoolExecutor | int | None = None
@@ -34,6 +36,11 @@ class RasterLoadConfig:
 
 
 class RasterLoader(Loader[ParsedRaster]):
+    """Loader for raster asset
+
+    Is an adapter for odc.stac.load
+    """
+
     def __init__(
         self,
         items: Sequence[ParsedRaster],
@@ -46,21 +53,12 @@ class RasterLoader(Loader[ParsedRaster]):
         self.load_config = load_config if load_config else RasterLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
-    @staticmethod
-    def groupby_bands(
-        items: Sequence[ParsedRaster],
-    ) -> dict[tuple[str, ...], list[pystac.Item]]:
-        result = collections.defaultdict(list)
-        for item in items:
-            result[tuple(sorted(item.load_bands))].append(item.item)
-        return result
-
-    def load(self) -> xr.Dataset:
-        band_map = self.groupby_bands(self.items)
+    def _load(self) -> xr.Dataset:
+        band_map = groupby_bands(self.items)
         ds = []
         for band_info, band_items in band_map.items():
             try:
-                item_ds = _odc_load_wrapper(
+                item_ds = read_raster_asset(
                     band_items,
                     self.filter_config.geobox,
                     bands=band_info,
@@ -78,10 +76,29 @@ class RasterLoader(Loader[ParsedRaster]):
                 ) from e
             item_ds = self.apply_process(item_ds, self.process_config)
             ds.append(item_ds)
-        return xr.merge(ds, compat="equals")
+        return xr.merge(ds)
 
 
-def _odc_load_wrapper(
+def groupby_bands(
+    items: Sequence[ParsedRaster],
+) -> dict[tuple[str, ...], list[pystac.Item]]:
+    """Partition items into groups based on bands that will be loaded to dc
+
+    Items that have the same bands will be put under the same group - i.e loaded together
+
+    Args:
+        items (Sequence[ParsedRaster]): ParsedRaster item
+
+    Returns:
+        dict[tuple[str, ...], list[pystac.Item]]: mapping between bands and items
+    """
+    result = collections.defaultdict(list)
+    for item in items:
+        result[tuple(sorted(item.load_bands))].append(item.item)
+    return result
+
+
+def read_raster_asset(
     items: Sequence[pystac.Item],
     geobox: GeoBox | None,
     bands: str | Sequence[str] | None = None,
@@ -98,19 +115,19 @@ def _odc_load_wrapper(
     Also perform cube axis renaming for consistency
 
     Args:
-        items (Sequence[pystac.Item]): _description_
-        geobox (GeoBox | None): _description_
-        bands (str | Sequence[str] | None, optional): _description_. Defaults to None.
-        x_col (str, optional): _description_. Defaults to "x".
-        y_col (str, optional): _description_. Defaults to "y".
-        t_col (str, optional): _description_. Defaults to "time".
-        resampling (str | Mapping[str, str] | None, optional): _description_. Defaults to None.
-        chunks (Mapping[str, int  |  Literal[&quot;auto&quot;]] | None, optional): _description_. Defaults to None.
-        pool (ThreadPoolExecutor | int | None, optional): _description_. Defaults to None.
-        dtype (DTypeLike | Mapping[str, DTypeLike], optional): _description_. Defaults to None.
+        items (Sequence[pystac.Item]): sequence of items to be loaded
+        geobox (GeoBox | None): target geobox
+        bands (str | Sequence[str] | None, optional): bands to load. Defaults to None.
+        x_col (str, optional): name of x dimension of cube. Defaults to "x".
+        y_col (str, optional): name of y dimension of cube. Defaults to "y".
+        t_col (str, optional): name of time dimension of cube. Defaults to "time".
+        resampling (str | Mapping[str, str] | None, optional): resampling method from odc.stac.load . Defaults to None.
+        chunks (Mapping[str, int  |  Literal[&quot;auto&quot;]] | None, optional): chunk parameter from odc.stac.load . Defaults to None.
+        pool (ThreadPoolExecutor | int | None, optional): pool paramter from odc.stac.load. Defaults to None.
+        dtype (DTypeLike | Mapping[str, DTypeLike], optional): dtype from odc.stac.load. Defaults to None.
 
     Returns:
-        xr.Dataset: _description_
+        xr.Dataset: loaded dataset
     """
     ds = odc.stac.load(
         items,

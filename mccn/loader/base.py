@@ -6,7 +6,6 @@ from typing import (
     Any,
     Generic,
     Hashable,
-    Mapping,
     Sequence,
     TypeVar,
     overload,
@@ -35,6 +34,9 @@ class Loader(abc.ABC, Generic[T]):
     ) -> None:
         """Base STAC Item loader class
 
+        Produces an xarray Dataset with layer (variables) of dimension (time, y, x) or (time, y, x, z) if a valid altitude
+        dimension is found. Loader is further divided into Point, Vector and Raster for each data type.
+
         Config parameters:
         - filter_config: item filter parameters - date time, bands, geobox
         - cube_config: cube dimension parameters - name of x, y, z, t coordinates, whether to use z axis
@@ -56,20 +58,40 @@ class Loader(abc.ABC, Generic[T]):
         self.process_config = process_config if process_config else ProcessConfig()
 
     @property
-    def coords(self) -> Mapping[Hashable, xr.DataArray]:
+    def coords(self) -> dict[Hashable, xr.DataArray]:
         """Coordinates of the datacube in y, x coordinates.
 
         Returns:
-            Mapping[Hashable, xr.DataArray]: coordinate dict
+            dict[Hashable, xr.DataArray]: coordinate dict
         """
         return xr_coords(
             self.filter_config.geobox,
             dims=(self.cube_config.y_coord, self.cube_config.x_coord),
         )
 
-    @abc.abstractmethod
     def load(self) -> xr.Dataset:
+        ds = self._load()
+        return self.apply_filter(
+            ds,
+            self.filter_config,
+            self.cube_config,
+        )
+
+    @abc.abstractmethod
+    def _load(self) -> xr.Dataset:
         raise NotImplementedError
+
+    @staticmethod
+    def apply_filter(
+        data: xr.Dataset,
+        filter_config: FilterConfig,
+        cube_config: CubeConfig,
+    ) -> xr.Dataset:
+        # Filter based on dates and geobox
+        data = data.sel(
+            {cube_config.t_coord: slice(filter_config.start_ts, filter_config.end_ts)}
+        )
+        return data
 
     @overload
     @staticmethod
