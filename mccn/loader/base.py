@@ -71,11 +71,13 @@ class Loader(abc.ABC, Generic[T]):
 
     def load(self) -> xr.Dataset:
         ds = self._load()
-        return self.apply_filter(
-            ds,
-            self.filter_config,
-            self.cube_config,
-        )
+        if ds:
+            return self.apply_filter(
+                ds,
+                self.filter_config,
+                self.cube_config,
+            )
+        return ds
 
     @abc.abstractmethod
     def _load(self) -> xr.Dataset:

@@ -63,7 +63,7 @@ class PointLoader(Loader[ParsedPoint]):
         self.load_config = load_config if load_config else PointLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
-    def load(self) -> xr.Dataset:
+    def _load(self) -> xr.Dataset:
         frames = []
         for item in self.items:
             frames.append(self.load_item(item))
