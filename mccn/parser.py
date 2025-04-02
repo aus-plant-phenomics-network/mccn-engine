@@ -24,6 +24,14 @@ def _parse_vector(
     end: datetime.datetime,
     item: pystac.Item,
 ) -> ParsedVector:
+    """
+    Parse vector Item
+
+    Set the following
+        crs - based on stac item projection
+        bands - attributes described by column_info
+        aux_bands - attributes of the external asset that joins with vector file - i.e. join_column_info
+    """
     crs = get_item_crs(item)
     bands = set([band["name"] for band in config.column_info])
     aux_bands = (
@@ -54,6 +62,13 @@ def _parse_raster(
     end: datetime.datetime,
     item: pystac.Item,
 ) -> ParsedRaster:
+    """
+    Parse Raster Item
+
+    Set the following:
+        bands - bands described in band_info
+        alias - eo:bands' common names
+    """
     bands = set([band["name"] for band in config.band_info])
     alias = set(
         [
@@ -83,6 +98,13 @@ def _parse_point(
     end: datetime.datetime,
     item: pystac.Item,
 ) -> ParsedPoint:
+    """
+    Parse point Item
+
+    Set the following
+        crs - based on stac item projection
+        bands - attributes described by column_info
+    """
     bands = set([band["name"] for band in config.column_info])
     crs = get_item_crs(item)
     return ParsedPoint(
@@ -99,6 +121,21 @@ def _parse_point(
 
 
 def parse_item(item: pystac.Item) -> ParsedItem:
+    """Parse a pystac.Item to a matching ParsedItem
+
+    A ParsedItem contains attributes acquired from STAC metadata
+    and stac_generator config that makes it easier to load asset
+    into the data cube
+
+    Args:
+        item (pystac.Item): Intial pystac Item
+
+    Raises:
+        ValueError: no stac_generator config found or config is not acceptable
+
+    Returns:
+        ParsedItem: one of ParsedVector, ParsedRaster, and ParsedPoint
+    """
     config = StacGeneratorFactory.extract_item_config(item)
     location = config.location
     bbox = cast(BBox_T, item.bbox)
@@ -128,6 +165,18 @@ def parse_item(item: pystac.Item) -> ParsedItem:
 
 
 def bbox_filter(item: ParsedItem | None, bbox: BBox_T | None) -> ParsedItem | None:
+    """Filter item based on bounding box
+
+    If item is None or if item is outside of the bounding box, returns None
+    Otherwise return the item
+
+    Args:
+        item (ParsedItem | None): parsed Item, nullable
+        bbox (BBox_T | None): target bbox
+
+    Returns:
+        ParsedItem | None: filter result
+    """
     if item and bbox:
         if (
             item.bbox[0] > bbox[2]
@@ -144,6 +193,19 @@ def date_filter(
     start_dt: datetime.datetime | None,
     end_dt: datetime.datetime | None,
 ) -> ParsedItem | None:
+    """Filter item by date
+
+    If item is None or item's start and end timestamps are outside the range specified
+    by start_dt and end_dt, return None. Otherwise, return the original item
+
+    Args:
+        item (ParsedItem | None): parsed item
+        start_dt (datetime.datetime | None): start date
+        end_dt (datetime.datetime | None): end date
+
+    Returns:
+        ParsedItem | None: filter result
+    """
     if item:
         if (start_dt and start_dt > item.end) or (end_dt and end_dt < item.start):
             return None
@@ -153,6 +215,34 @@ def date_filter(
 def band_filter(
     item: ParsedItem | None, bands: Sequence[str] | None
 ) -> ParsedItem | None:
+    """Parse and filter an item based on requested bands
+
+    If the bands parameter is None or empty, all items' bands should be loaded. For
+    point and raster data, the loaded bands are columns/attributes described
+    in column_info and band_info. For raster data, the loaded bands are columns
+    described in column_info and join_column_info is not null.
+
+    If the bands parameter is not empty, items that contain any subset of the requested bands
+    are selected for loading. Items with no overlapping band will not be loaded.
+    For point, the filtering is based on item.bands (columns described in column_info).
+    For raster, the filtering is based on item.bands (columns described in band_info) and
+    item.alias (list of potential alias). For vector, the filtering is based on item.bands
+    and item.aux_bands (columns described in join_column_info).
+
+    Selected items will have item.load_bands updated as the (set) intersection
+    between item.bands and bands (same for item.aux_bands and item.load_aux_bands).
+    For vector, if aux_bands are not null (columns will need to be read from the external asset),
+    join_vector_attribute and join_field will be added to item.load_bands and item.load_aux_bands.
+    This means that to perform a join, the join columns must be loaded for both the vector asset
+    and the external asset.
+
+    Args:
+        item (ParsedItem | None): parsed item, can be none
+        bands (Sequence[str] | None): requested bands, can be none
+
+    Returns:
+        ParsedItem | None: parsed result
+    """
     if item and bands:
         item.load_bands = set([band for band in bands if band in item.bands])
         # If vector - check if bands to be loaded are from joined_file - i.e. aux_bands

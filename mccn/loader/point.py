@@ -24,11 +24,33 @@ if TYPE_CHECKING:
 
 @dataclass
 class PointLoadConfig:
+    """Point load config - determines how point data should be aggregated and interpolated"""
+
     interp: InterpMethods | None = "nearest"
+    """Interpolation Mode"""
     agg_method: MergeMethods = "mean"
+    """Merge method for aggregation"""
 
 
 class PointLoader(Loader[ParsedPoint]):
+    """Point Loader
+
+    The loading process comprises of:
+    - Loading point data as GeoDataFrame from asset's location
+    - Aggregating data by (time, y, x) or (time, y, x, z) depending on whether use_z is set
+    - Interpolating point data into the geobox
+
+    Note:
+    - Aggregation is necessary for removing duplicates, either intentional or unintentional. For
+    instance, we may not want to use depth value in a soil dataset. In that case, aggregation with
+    mean will average soil traits over different depths.
+
+    Caveats:
+    - Point data bands should contain numeric values only - aggregation does not work with non-numeric data.
+    - Interpolating into a geobox grid may lead to fewer values. This is the case of falling through the mesh.
+
+    """
+
     def __init__(
         self,
         items: Sequence[ParsedPoint],
