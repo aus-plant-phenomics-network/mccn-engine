@@ -54,11 +54,11 @@ def _parse_vector(
         aux_bands - attributes of the external aslist that joins with vector file - i.e. join_column_info
     """
     crs = get_item_crs(item)
-    bands = list([band["name"] for band in config.column_info])
+    bands = set([band["name"] for band in config.column_info])
     aux_bands = (
-        list([band["name"] for band in config.join_column_info])
+        set([band["name"] for band in config.join_column_info])
         if config.join_column_info
-        else list()
+        else set()
     )
     return ParsedVector(
         location=location,
@@ -90,8 +90,8 @@ def _parse_raster(
         bands - bands described in band_info
         alias - eo:bands' common names
     """
-    bands = list([band["name"] for band in config.band_info])
-    alias = list(
+    bands = set([band["name"] for band in config.band_info])
+    alias = set(
         [
             band["common_name"]
             for band in config.band_info
@@ -126,7 +126,7 @@ def _parse_point(
         crs - based on stac item projection
         bands - attributes described by column_info
     """
-    bands = list([band["name"] for band in config.column_info])
+    bands = set([band["name"] for band in config.column_info])
     crs = get_item_crs(item)
     return ParsedPoint(
         location=location,
@@ -265,15 +265,15 @@ def band_filter(
         ParsedItem | None: parsed result
     """
     if item and bands:
-        item.load_bands = list([band for band in bands if band in item.bands])
+        item.load_bands = set([band for band in bands if band in item.bands])
         # If vector - check if bands to be loaded are from joined_file - i.e. aux_bands
         if isinstance(item, ParsedVector):
-            item.load_aux_bands = list(
+            item.load_aux_bands = set(
                 [band for band in bands if band in item.aux_bands]
             )
         # If raster - check if bands to be loaded are an alias
         if isinstance(item, ParsedRaster):
-            alias = list([band for band in bands if band in item.alias])
+            alias = set([band for band in bands if band in item.alias])
             item.load_bands.update(alias)
         # If both load_band and load_aux_bands empty - return None
         if not item.load_bands and not (
@@ -361,13 +361,14 @@ class MCCN:
         process_bands: Mapping[str, Callable] | None = None,
         process_config: ProcessConfig | None = None,
         # Point Load Config
+        point_nodata: int | float = 0,
         interp: InterpMethods | None = "nearest",
         agg_method: MergeMethods = "mean",
         point_load_config: PointLoadConfig | None = None,
         # Vector Load Config
         fill: int = 0,
         all_touched: bool = False,
-        nodata: Any | None = None,
+        vector_nodata: Any | None = None,
         merge_alg: Literal["REPLACE", "ADD"] | MergeAlg = MergeAlg.replace,
         vector_dtype: Any | None = None,
         groupby: Literal["id", "field"] = "id",
@@ -376,7 +377,7 @@ class MCCN:
         resampling: str | dict[str, str] | None = None,
         chunks: dict[str, int | Literal["auto"]] | None = None,
         pool: ThreadPoolExecutor | int | None = None,
-        dtype: DTypeLike | Mapping[str, DTypeLike] = None,
+        raster_dtype: DTypeLike | Mapping[str, DTypeLike] = None,
         raster_load_config: RasterLoadConfig | None = None,
     ) -> None:
         self.collection = self.get_collection(endpoint, collection_id)
@@ -389,7 +390,7 @@ class MCCN:
                 geobox=self.geobox,
                 start_ts=start_ts,
                 end_ts=end_ts,
-                bands=list(bands) if bands else None,
+                bands=set(bands) if bands else None,
             )
         )
         self.filter_config.geobox = self.geobox
@@ -412,7 +413,9 @@ class MCCN:
         self.point_load_config = (
             point_load_config
             if point_load_config
-            else PointLoadConfig(interp=interp, agg_method=agg_method)
+            else PointLoadConfig(
+                interp=interp, agg_method=agg_method, nodata=point_nodata
+            )
         )
         self.vector_load_config = (
             vector_load_config
@@ -420,7 +423,7 @@ class MCCN:
             else VectorLoadConfig(
                 fill=fill,
                 all_touched=all_touched,
-                nodata=nodata,
+                nodata=vector_nodata,
                 merge_alg=merge_alg,
                 dtype=vector_dtype,
                 groupby=groupby,
@@ -430,7 +433,7 @@ class MCCN:
             raster_load_config
             if raster_load_config
             else RasterLoadConfig(
-                resampling=resampling, chunks=chunks, pool=pool, dtype=dtype
+                resampling=resampling, chunks=chunks, pool=pool, dtype=raster_dtype
             )
         )
         self.parser = Parser(self.filter_config, self.collection)
@@ -483,7 +486,7 @@ class MCCN:
         if endpoint.startswith("http"):
             res = pystac_client.Client.open(endpoint)
             return res.get_collection(collection_id)
-        return pystac_client.Client.from_file(endpoint)
+        return pystac.Collection.from_file(endpoint)
 
     def get_geobox(
         self,

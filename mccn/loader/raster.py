@@ -46,8 +46,8 @@ class RasterLoader(Loader[ParsedRaster]):
         items: Sequence[ParsedRaster],
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
-        load_config: RasterLoadConfig | None = None,
         process_config: ProcessConfig | None = None,
+        load_config: RasterLoadConfig | None = None,
         **kwargs: Any,
     ) -> None:
         self.load_config = load_config if load_config else RasterLoadConfig()

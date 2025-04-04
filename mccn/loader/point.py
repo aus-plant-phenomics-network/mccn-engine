@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Sequence, cast
 
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
 class PointLoadConfig:
     """Point load config - determines how point data should be aggregated and interpolated"""
 
+    nodata: int | float = 0
+    """No data value"""
     interp: InterpMethods | None = "nearest"
     """Interpolation Mode"""
     agg_method: MergeMethods = "mean"
@@ -61,6 +64,7 @@ class PointLoader(Loader[ParsedPoint]):
         **kwargs: Any,
     ) -> None:
         self.load_config = load_config if load_config else PointLoadConfig()
+        self.attr_map = {}
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
     def _load(self) -> xr.Dataset:
@@ -104,88 +108,109 @@ class PointLoader(Loader[ParsedPoint]):
         merged = self.groupby(
             frame=frame,
             item=item,
-            cube_config=self.cube_config,
-            load_config=self.load_config,
         )
-        return self.to_xarray(
-            merged,
-            self.filter_config,
-            self.cube_config,
-            self.load_config,
-        )
+        ds = self.to_xarray(merged)
+        # Fill nodata
+        ds = ds.fillna(self.load_config.nodata)
+        ds.attrs = self.attr_map
+        return ds
 
-    @staticmethod
     def groupby(
+        self,
         frame: gpd.GeoDataFrame,
         item: ParsedPoint,
-        cube_config: CubeConfig,
-        load_config: PointLoadConfig,
     ) -> gpd.GeoDataFrame:
-        frame[cube_config.x_coord] = frame.geometry.x
-        frame[cube_config.y_coord] = frame.geometry.y
+        frame[self.cube_config.x_coord] = frame.geometry.x
+        frame[self.cube_config.y_coord] = frame.geometry.y
+        group_index = [
+            self.cube_config.t_coord,
+            self.cube_config.y_coord,
+            self.cube_config.x_coord,
+        ]
+        if self.cube_config.use_z:
+            group_index.append(self.cube_config.z_coord)
+
+        # Excluding bands - bands excluded from aggregation
+        excluding_bands = set(
+            [
+                self.cube_config.x_coord,
+                self.cube_config.y_coord,
+                self.cube_config.t_coord,
+                "geometry",
+            ]
+        )
+        if self.cube_config.use_z:
+            if self.cube_config.z_coord not in frame.columns:
+                raise ValueError("No altitude column found but use_z expected")
+            excluding_bands.add(self.cube_config.z_coord)
+
+        # Build categorical encoding
+        non_numeric_bands = set()
+        for band in frame.columns:
+            if band not in excluding_bands and not pd.api.types.is_numeric_dtype(
+                frame[band]
+            ):
+                excluding_bands.add(band)
+                non_numeric_bands.add(band)
+                # Build attr map and categorically encode data
+                if band not in self.attr_map:
+                    self.attr_map[band] = {}
+                curr_idx = (
+                    max(self.attr_map[band].values()) + 1
+                    if self.attr_map[band].values()
+                    else 1
+                )
+                uniques = {k: 1 for k in frame[band].unique()}
+                for key in uniques:
+                    if key not in self.attr_map[band]:
+                        self.attr_map[band][key] = curr_idx
+                        curr_idx += 1
+                    uniques[key] = self.attr_map[band][key]
+                frame[band] = frame[band].map(uniques)
 
         # Prepare aggregation method
-        excluding_bands = set(
-            [cube_config.x_coord, cube_config.y_coord, cube_config.t_coord, "geometry"]
-        )
-        if cube_config.use_z:
-            if cube_config.z_coord not in frame.columns:
-                raise ValueError("No altitude column found but use_z expected")
-            excluding_bands.add(cube_config.z_coord)
-
         bands = [name for name in frame.columns if name not in excluding_bands]
 
         # band_map determines replacement strategy for each band when there is a conflict
         band_map = (
             {
-                band: load_config.agg_method[band]
+                band: self.load_config.agg_method[band]
                 for band in bands
-                if band in load_config.agg_method
+                if band in self.load_config.agg_method
             }
-            if isinstance(load_config.agg_method, dict)
-            else {band: load_config.agg_method for band in bands}
+            if isinstance(self.load_config.agg_method, dict)
+            else {band: self.load_config.agg_method for band in bands}
         )
+        for band in non_numeric_bands:
+            band_map[band] = "first"
 
         # Groupby + Aggregate
-        if cube_config.use_z:
-            return frame.groupby(
-                [
-                    cube_config.t_coord,
-                    cube_config.y_coord,
-                    cube_config.x_coord,
-                    cube_config.z_coord,
-                ]
-            ).agg(band_map)
-        grouped = frame.groupby(
-            [cube_config.t_coord, cube_config.y_coord, cube_config.x_coord]
-        ).agg(band_map)
+        if self.cube_config.use_z:
+            return frame.groupby(group_index).agg(band_map)
+        # If don't use_z but z column is present -> Drop it
+        grouped = frame.groupby(group_index).agg(band_map)
         if item.config.Z:
-            grouped.drop(columns=[cube_config.z_coord], inplace=True)
+            grouped.drop(columns=[self.cube_config.z_coord], inplace=True)
         return grouped
 
-    @staticmethod
-    def to_xarray(
-        frame: pd.DataFrame,
-        filter_config: FilterConfig,
-        cube_config: CubeConfig,
-        load_config: PointLoadConfig,
-    ) -> xr.Dataset:
+    def to_xarray(self, frame: pd.DataFrame) -> xr.Dataset:
         ds: xr.Dataset = frame.to_xarray()
         # Sometime to_xarray bugs out with datetime index so need explicit conversion
-        ds[cube_config.t_coord] = pd.DatetimeIndex(
-            ds.coords[cube_config.t_coord].values
+        ds[self.cube_config.t_coord] = pd.DatetimeIndex(
+            ds.coords[self.cube_config.t_coord].values
         )
         # For debugging purpose
-        if load_config.interp is None:
+        if self.load_config.interp is None:
             return ds
 
         coords_ = xr_coords(
-            filter_config.geobox, dims=(cube_config.y_coord, cube_config.x_coord)
+            self.filter_config.geobox,
+            dims=(self.cube_config.y_coord, self.cube_config.x_coord),
         )
 
         ds = ds.assign_coords(spatial_ref=coords_["spatial_ref"])
         coords = {
-            cube_config.y_coord: coords_[cube_config.y_coord],
-            cube_config.x_coord: coords_[cube_config.x_coord],
+            self.cube_config.y_coord: coords_[self.cube_config.y_coord],
+            self.cube_config.x_coord: coords_[self.cube_config.x_coord],
         }
-        return ds.interp(coords=coords, method=load_config.interp)
+        return ds.interp(coords=coords, method=self.load_config.interp)
