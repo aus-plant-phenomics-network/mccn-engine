@@ -1,0 +1,141 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.1.0/schema.json"
+  ],
+  "id": "NSW_SOC_0_10",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          153.63800587914326,
+          -37.504986596188665
+        ],
+        [
+          153.63800587914326,
+          -28.157987511858238
+        ],
+        [
+          141.00100665711824,
+          -28.157987511858238
+        ],
+        [
+          141.00100665711824,
+          -37.504986596188665
+        ],
+        [
+          153.63800587914326,
+          -37.504986596188665
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    141.00100665711824,
+    -37.504986596188665,
+    153.63800587914326,
+    -28.157987511858238
+  ],
+  "properties": {
+    "stac_generator": {
+      "id": "NSW_SOC_0_10",
+      "collection_date": "2022-09-01",
+      "collection_time": "00:00:00",
+      "location": "/Users/a1234648/Desktop/nsw_soil_datasets/NSW_SOCmass_means_allDepths to 30cm_220901reduced/NSW_SOCm0_10_mean_220901reduced.tif",
+      "band_info": [
+        {
+          "name": "soc_0_10_mean",
+          "description": "Soil Organic Carbon mass (0\u201310 cm depth) in t/ha"
+        }
+      ]
+    },
+    "start_datetime": "2022-08-31T13:55:00Z",
+    "end_datetime": "2022-08-31T13:55:00Z",
+    "proj:code": "EPSG:4283",
+    "proj:wkt2": "GEOGCS[\"GCS_GDA_1994 (with axis order normalized for visualization)\",DATUM[\"Geocentric_Datum_of_Australia_1994\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6283\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+    "proj:shape": [
+      9347,
+      12637
+    ],
+    "proj:transform": [
+      0.0009999999384367353,
+      0.0,
+      141.00100665711824,
+      0.0,
+      -0.000999999902035993,
+      -28.157987511858238,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "datetime": "2022-08-31T13:55:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_0_10/NSW_SOC_0_10.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "/Users/a1234648/Desktop/nsw_soil_datasets/NSW_SOCmass_means_allDepths to 30cm_220901reduced/NSW_SOCm0_10_mean_220901reduced.tif",
+      "type": "image/tiff; application=geotiff",
+      "title": "Raster Data",
+      "proj:code": "EPSG:4283",
+      "proj:wkt2": "GEOGCS[\"GCS_GDA_1994 (with axis order normalized for visualization)\",DATUM[\"Geocentric_Datum_of_Australia_1994\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6283\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+      "proj:shape": [
+        9347,
+        12637
+      ],
+      "proj:transform": [
+        0.0009999999384367353,
+        0.0,
+        141.00100665711824,
+        0.0,
+        -0.000999999902035993,
+        -28.157987511858238,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "raster:bands": [
+        {
+          "nodata": 0
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "soc_0_10_mean",
+          "description": "Soil Organic Carbon mass (0\u201310 cm depth) in t/ha"
+        }
+      ],
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "combined"
+}

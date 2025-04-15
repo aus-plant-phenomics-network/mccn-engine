@@ -1,0 +1,126 @@
+{
+  "type": "Collection",
+  "id": "combined",
+  "stac_version": "1.1.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_0_5/NSW_SOC_0_5.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_5_15/NSW_SOC_5_15.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_15_30/NSW_SOC_15_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_0_10/NSW_SOC_0_10.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_10_30/NSW_SOC_10_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_SOC_0_30/NSW_SOC_0_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_0_5/NSW_pH_0_5.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_5_15/NSW_pH_5_15.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_15_30/NSW_pH_15_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_30_60/NSW_pH_30_60.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_60_100/NSW_pH_60_100.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_100_200/NSW_pH_100_200.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_0_10/NSW_pH_0_10.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_10_30/NSW_pH_10_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_0_30/NSW_pH_0_30.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/rainfall/rainfall.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/Users/a1234648/mccn-engine/generated_new/temperature/temperature.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "self",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          140.94791666710677,
+          -37.54986111136325,
+          153.6901388895347,
+          -28.111805555655334
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2009-12-30T13:55:00Z",
+          "2022-08-31T13:55:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

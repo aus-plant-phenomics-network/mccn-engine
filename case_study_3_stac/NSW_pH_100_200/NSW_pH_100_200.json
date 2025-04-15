@@ -1,0 +1,141 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.1.0/schema.json"
+  ],
+  "id": "NSW_pH_100_200",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          153.638,
+          -37.505
+        ],
+        [
+          153.638,
+          -28.158
+        ],
+        [
+          141.001,
+          -28.158
+        ],
+        [
+          141.001,
+          -37.505
+        ],
+        [
+          153.638,
+          -37.505
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    141.001,
+    -37.505,
+    153.638,
+    -28.158
+  ],
+  "properties": {
+    "stac_generator": {
+      "id": "NSW_pH_100_200",
+      "collection_date": "2022-09-01",
+      "collection_time": "00:00:00",
+      "location": "/Users/a1234648/Desktop/nsw_soil_datasets/ph_means_alldepthto2m_220901/NSW_pH100_200_mean_220901reduced.tif",
+      "band_info": [
+        {
+          "name": "ph_100_200_mean",
+          "description": "Soil pH (100\u2013200 cm depth)"
+        }
+      ]
+    },
+    "start_datetime": "2022-08-31T13:55:00Z",
+    "end_datetime": "2022-08-31T13:55:00Z",
+    "proj:code": null,
+    "proj:wkt2": "GEOGCS[\"unknown\",DATUM[\"Unknown based on GRS80 ellipsoid\",SPHEROID[\"GRS 1980\",6378137,298.257222101004,AUTHORITY[\"EPSG\",\"7019\"]]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+    "proj:shape": [
+      9347,
+      12637
+    ],
+    "proj:transform": [
+      0.001,
+      0.0,
+      141.001,
+      0.0,
+      -0.0010000000000000002,
+      -28.158,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "datetime": "2022-08-31T13:55:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/Users/a1234648/mccn-engine/generated_new/NSW_pH_100_200/NSW_pH_100_200.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/Users/a1234648/mccn-engine/generated_new/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "/Users/a1234648/Desktop/nsw_soil_datasets/ph_means_alldepthto2m_220901/NSW_pH100_200_mean_220901reduced.tif",
+      "type": "image/tiff; application=geotiff",
+      "title": "Raster Data",
+      "proj:code": null,
+      "proj:wkt2": "GEOGCS[\"unknown\",DATUM[\"Unknown based on GRS80 ellipsoid\",SPHEROID[\"GRS 1980\",6378137,298.257222101004,AUTHORITY[\"EPSG\",\"7019\"]]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]]",
+      "proj:shape": [
+        9347,
+        12637
+      ],
+      "proj:transform": [
+        0.001,
+        0.0,
+        141.001,
+        0.0,
+        -0.0010000000000000002,
+        -28.158,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "raster:bands": [
+        {
+          "nodata": 0
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "ph_100_200_mean",
+          "description": "Soil pH (100\u2013200 cm depth)"
+        }
+      ],
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "combined"
+}
