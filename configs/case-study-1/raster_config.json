@@ -1,0 +1,13 @@
+[
+    {
+        "id": "VegetationCover",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/case-study-1-files/vegetation_cover.tif",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00",
+        "band_info": [
+            {
+                "name": "Vegetation_Cover"
+            }
+        ]
+    }
+]

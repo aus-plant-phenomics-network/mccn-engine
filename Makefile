@@ -13,7 +13,7 @@ PDM 			?= 	pdm $(PDM_OPTS)
 NECTAR_PATH		= 	https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data
 SERVER_PATH		= 	http://203.101.230.81:8082
 TEST_PATH 		= 	tests/files/unit_tests
-
+CONFIG_PATH 	= 	configs
 .EXPORT_ALL_VARIABLES:
 
 
@@ -111,3 +111,23 @@ vector-fixtures:
 
 .PHONY: fixtures
 fixtures: point-fixtures raster-fixtures
+
+.PHONY: gryfn
+gryfn:
+	@echo running config from $(CONFIG_PATH)/gryfn/config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/gryfn/config.json --id Gryfn --dst generated -v
+
+.PHONY: llara_campey_raster
+llara_campey_raster:
+	@echo running config from $(CONFIG_PATH)/llara_campey/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_config.json --id Llara_Campey_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: case-study-1-raster
+case-study-1-raster:
+	@echo running config from $(CONFIG_PATH)/case-study-1/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: test-geotiff
+test-geotiff:
+	@echo running config from $(CONFIG_PATH)/test-geotiff/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster --dst $(SERVER_PATH) -v
