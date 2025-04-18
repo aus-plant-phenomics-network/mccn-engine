@@ -1,0 +1,103 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json"
+  ],
+  "id": "L3_2017_wheat",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          149.888093,
+          -30.281773
+        ],
+        [
+          149.888093,
+          -30.266443
+        ],
+        [
+          149.875642,
+          -30.266443
+        ],
+        [
+          149.875642,
+          -30.281773
+        ],
+        [
+          149.888093,
+          -30.281773
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    149.875642,
+    -30.281773,
+    149.888093,
+    -30.266443
+  ],
+  "properties": {
+    "stac_generator": {
+      "column_info": [
+        {
+          "name": "yield_t_ha",
+          "description": "yield (t/ha)"
+        },
+        {
+          "name": "moisture"
+        }
+      ],
+      "id": "L3_2017_wheat",
+      "collection_date": "2017-01-01",
+      "collection_time": "00:00:00",
+      "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/L3_2017_wheat.txt",
+      "X": "longitude",
+      "Y": "latitude",
+      "Z": "elevation_m",
+      "epsg": 4326
+    },
+    "start_datetime": "2016-12-31T13:55:00Z",
+    "end_datetime": "2016-12-31T13:55:00Z",
+    "proj:code": "EPSG:4326",
+    "proj:wkt2": "GEOGCRS[\"WGS 84\",ENSEMBLE[\"World Geodetic System 1984 ensemble\",MEMBER[\"World Geodetic System 1984 (Transit)\"],MEMBER[\"World Geodetic System 1984 (G730)\"],MEMBER[\"World Geodetic System 1984 (G873)\"],MEMBER[\"World Geodetic System 1984 (G1150)\"],MEMBER[\"World Geodetic System 1984 (G1674)\"],MEMBER[\"World Geodetic System 1984 (G1762)\"],MEMBER[\"World Geodetic System 1984 (G2139)\"],MEMBER[\"World Geodetic System 1984 (G2296)\"],ELLIPSOID[\"WGS 84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1]],ENSEMBLEACCURACY[2.0]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"geodetic latitude (Lat)\",north,ORDER[1],ANGLEUNIT[\"degree\",0.0174532925199433]],AXIS[\"geodetic longitude (Lon)\",east,ORDER[2],ANGLEUNIT[\"degree\",0.0174532925199433]],USAGE[SCOPE[\"Horizontal component of 3D system.\"],AREA[\"World.\"],BBOX[-90,-180,90,180]],ID[\"EPSG\",4326]]",
+    "datetime": "2016-12-31T13:55:00Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/L3_2017_wheat/L3_2017_wheat.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/L3_2017_wheat.txt",
+      "type": "text/csv",
+      "description": "Raw csv data",
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "Case_Study_7_Llara_Scenario1"
+}

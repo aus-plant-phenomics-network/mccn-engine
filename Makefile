@@ -131,3 +131,13 @@ case-study-1-raster:
 test-geotiff:
 	@echo running config from $(CONFIG_PATH)/test-geotiff/raster_config.json
 	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: case-study-7-llara
+case-study-7-llara:
+	@echo running config from $(CONFIG_PATH)/case-study-7
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json --id Case_Study_7_Llara --dst generated -v
+
+.PHONY: case-study-7-llara-scenario1
+case-study-7-llara-scenario1:
+	@echo running config from $(CONFIG_PATH)/case-study-7
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json $(CONFIG_PATH)/case-study-7/scenario_1_config.json --id Case_Study_7_Llara_Scenario1 --dst generated -v

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         VectorConfig,
     )
 
-
+TimeGroupby = Literal["time", "day", "hour", "minute", "year", "month"]
 InterpMethods = (
     Literal["linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial"]
     | Literal["barycentric", "krogh", "pchip", "spline", "akima", "makima"]

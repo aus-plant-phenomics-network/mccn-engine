@@ -63,7 +63,7 @@ class PointLoader(Loader[ParsedPoint]):
         **kwargs: Any,
     ) -> None:
         self.load_config = load_config if load_config else PointLoadConfig()
-        self.attr_map = {}
+        self.attr_map: dict[str, Any] = {}
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
     def _load(self) -> xr.Dataset:
@@ -181,7 +181,7 @@ class PointLoader(Loader[ParsedPoint]):
             else {band: self.load_config.agg_method for band in bands}
         )
         for band in non_numeric_bands:
-            band_map[band] = "first"
+            band_map[band] = "replace"
 
         # Groupby + Aggregate
         if self.cube_config.use_z:

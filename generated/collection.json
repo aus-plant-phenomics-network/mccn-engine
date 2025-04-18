@@ -1,0 +1,61 @@
+{
+  "type": "Collection",
+  "id": "Case_Study_7_Llara_Scenario1",
+  "stac_version": "1.1.0",
+  "description": "Auto-generated",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/L1Boundary/L1Boundary.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/L3Boundary/L3Boundary.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/L4Boundary/L4Boundary.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/L1_2017_wheat/L1_2017_wheat.json",
+      "type": "application/geo+json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/harry/CodingProject/mccn-engine/generated/collection.json",
+      "type": "application/json"
+    }
+  ],
+  "title": "Auto-generated.",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          149.85938139194036,
+          -30.281932432963792,
+          149.9019787895862,
+          -30.2554679437481
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2016-12-31T13:55:00Z",
+          "2024-12-31T13:55:00Z"
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}
