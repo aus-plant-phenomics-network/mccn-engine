@@ -1,40 +1,23 @@
 from __future__ import annotations
 
 import datetime
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Callable, Literal, cast
+from collections.abc import Sequence
+from typing import cast
 
 import pandas as pd
 import pystac
-import pystac_client
-import xarray as xr
-from rasterio.enums import MergeAlg
 from stac_generator import StacGeneratorFactory
 from stac_generator.core import PointConfig, RasterConfig, VectorConfig
 
 from mccn._types import (
     BBox_T,
-    CubeConfig,
     FilterConfig,
     ParsedItem,
     ParsedPoint,
     ParsedRaster,
     ParsedVector,
-    ProcessConfig,
 )
-from mccn.extent import GeoBoxBuilder
-from mccn.loader.point import PointLoadConfig, PointLoader
-from mccn.loader.raster import RasterLoadConfig, RasterLoader
 from mccn.loader.utils import bbox_from_geobox, get_item_crs
-from mccn.loader.vector import VectorLoadConfig, VectorLoader
-
-if TYPE_CHECKING:
-    from concurrent.futures import ThreadPoolExecutor
-
-    from numpy.typing import DTypeLike
-    from odc.geo.geobox import GeoBox
-
-    from mccn._types import InterpMethods, MergeMethods
 
 
 def _parse_vector(
@@ -290,12 +273,32 @@ def band_filter(
 
 
 class Parser:
+    """
+    Parser collects metadata from pystac.Item for efficient loading. Also pre-filters
+    items based on filter_config.
+
+    The following basic filters are applied:
+    - Date Filter - based on (start_ts, end_ts)
+    - Bounding Box Filter - based on bbox in wgs 84
+    - Band Filter - based on band information:
+        If filtering band is None, all bands and columns from all assets will be loaded
+        If filtering band is provided,
+            - Raster - filter based on item's bands' name and common names
+            - Vector - filter based on vector attributes (column_info) and join file attributes (join_column_info)
+            - Point - filter based on point attributes (column_info)
+    """
+
     def __init__(
-        self, filter_config: FilterConfig, collection: pystac.Collection
+        self,
+        filter_config: FilterConfig,
+        collection: pystac.Collection,
     ) -> None:
         self.collection = collection
         self.items = collection.get_items(recursive=True)
         self.filter_config = filter_config
+        self.bands = (
+            list(self.filter_config.bands) if self.filter_config.bands else None
+        )
         self.bbox = bbox_from_geobox(self.filter_config.geobox)
         self._point_items: list[ParsedPoint] = list()
         self._vector_items: list[ParsedVector] = list()
@@ -324,196 +327,16 @@ class Parser:
         parsed_item = date_filter(
             parsed_item, self.filter_config.start_ts, self.filter_config.end_ts
         )
-        parsed_item = band_filter(parsed_item, self.filter_config.bands)
+        parsed_item = band_filter(parsed_item, self.bands)
+        # Categorise parsed items
         if parsed_item:
             if isinstance(parsed_item.config, VectorConfig):
-                self._vector_items.append(parsed_item)
+                self._vector_items.append(cast(ParsedVector, parsed_item))
             elif isinstance(parsed_item.config, RasterConfig):
-                self._raster_items.append(parsed_item)
+                self._raster_items.append(cast(ParsedRaster, parsed_item))
             elif isinstance(parsed_item.config, PointConfig):
-                self._point_items.append(parsed_item)
+                self._point_items.append(cast(ParsedPoint, parsed_item))
             else:
                 raise ValueError(
                     f"Invalid item type - none of raster, vector or point: {type(parsed_item.config)}"
                 )
-
-
-class MCCN:
-    def __init__(
-        self,
-        endpoint: str,
-        collection_id: str,
-        shape: int | tuple[int, int] | None = None,
-        # Filter config
-        geobox: GeoBox | None = None,
-        start_ts: datetime.datetime | None = None,
-        end_ts: datetime.datetime | None = None,
-        bands: Sequence[str] | None = None,
-        filter_config: FilterConfig | None = None,
-        # Cube config
-        x_coord: str = "x",
-        y_coord: str = "y",
-        t_coord: str = "time",
-        z_coord: str = "z",
-        use_z: bool = False,
-        cube_config: CubeConfig | None = None,
-        # Process Config
-        rename_bands: Mapping[str, str] | None = None,
-        process_bands: Mapping[str, Callable] | None = None,
-        process_config: ProcessConfig | None = None,
-        # Point Load Config
-        point_nodata: int | float = 0,
-        interp: InterpMethods | None = "nearest",
-        agg_method: MergeMethods = "mean",
-        point_load_config: PointLoadConfig | None = None,
-        # Vector Load Config
-        fill: int = 0,
-        all_touched: bool = False,
-        vector_nodata: Any | None = None,
-        merge_alg: Literal["REPLACE", "ADD"] | MergeAlg = MergeAlg.replace,
-        vector_dtype: Any | None = None,
-        groupby: Literal["id", "field"] = "id",
-        vector_load_config: VectorLoadConfig | None = None,
-        # Raster Load Config
-        resampling: str | dict[str, str] | None = None,
-        chunks: dict[str, int | Literal["auto"]] | None = None,
-        pool: ThreadPoolExecutor | int | None = None,
-        raster_dtype: DTypeLike | Mapping[str, DTypeLike] = None,
-        raster_load_config: RasterLoadConfig | None = None,
-    ) -> None:
-        self.collection = self.get_collection(endpoint, collection_id)
-        # Prepare configs
-        self.geobox = self.get_geobox(self.collection, geobox, shape)
-        self.filter_config = (
-            filter_config
-            if filter_config
-            else FilterConfig(
-                geobox=self.geobox,
-                start_ts=start_ts,
-                end_ts=end_ts,
-                bands=set(bands) if bands else None,
-            )
-        )
-        self.filter_config.geobox = self.geobox
-        self.cube_config = (
-            cube_config
-            if cube_config
-            else CubeConfig(
-                x_coord=x_coord,
-                y_coord=y_coord,
-                z_coord=z_coord,
-                t_coord=t_coord,
-                use_z=use_z,
-            )
-        )
-        self.process_config = (
-            process_config
-            if process_config
-            else ProcessConfig(rename_bands=rename_bands, process_bands=process_bands)
-        )
-        self.point_load_config = (
-            point_load_config
-            if point_load_config
-            else PointLoadConfig(
-                interp=interp, agg_method=agg_method, nodata=point_nodata
-            )
-        )
-        self.vector_load_config = (
-            vector_load_config
-            if vector_load_config
-            else VectorLoadConfig(
-                fill=fill,
-                all_touched=all_touched,
-                nodata=vector_nodata,
-                merge_alg=merge_alg,
-                dtype=vector_dtype,
-                groupby=groupby,
-            )
-        )
-        self.raster_load_config = (
-            raster_load_config
-            if raster_load_config
-            else RasterLoadConfig(
-                resampling=resampling, chunks=chunks, pool=pool, dtype=raster_dtype
-            )
-        )
-        self.parser = Parser(self.filter_config, self.collection)
-        self.parser()
-        self._point_loader = None
-        self._vector_loader = None
-        self._raster_loader = None
-
-    @property
-    def point_loader(self) -> PointLoader:
-        if not self._point_loader:
-            self._point_loader = PointLoader(
-                list(self.parser.point),
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.point_load_config,
-            )
-        return self._point_loader
-
-    @property
-    def vector_loader(self) -> VectorLoader:
-        if not self._vector_loader:
-            self._vector_loader = VectorLoader(
-                list(self.parser.vector),
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.vector_load_config,
-            )
-        return self._vector_loader
-
-    @property
-    def raster_loader(self) -> RasterLoader:
-        if not self._raster_loader:
-            self._raster_loader = RasterLoader(
-                list(self.parser.raster),
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.raster_load_config,
-            )
-        return self._raster_loader
-
-    def get_collection(
-        self,
-        endpoint: str,
-        collection_id: str,
-    ) -> pystac.Collection:
-        if endpoint.startswith("http"):
-            res = pystac_client.Client.open(endpoint)
-            return res.get_collection(collection_id)
-        return pystac.Collection.from_file(endpoint)
-
-    def get_geobox(
-        self,
-        collection: pystac.Collection,
-        geobox: GeoBox | None = None,
-        shape: int | tuple[int, int] | None = None,
-    ) -> GeoBox:
-        if geobox is not None:
-            return geobox
-        if shape is None:
-            raise ValueError(
-                "If geobox is not defined, shape must be provided to calculate geobox from collection"
-            )
-        return GeoBoxBuilder.from_collection(collection, shape)
-
-    def load_point(self) -> xr.Dataset:
-        return self.point_loader.load()
-
-    def load_vector(self) -> xr.Dataset:
-        return self.vector_loader.load()
-
-    def load_raster(self) -> xr.Dataset:
-        return self.raster_loader.load()
-
-    def load(self) -> xr.Dataset:
-        return xr.merge(
-            [self.load_point(), self.load_vector(), self.load_raster()],
-            combine_attrs="drop_conflicts",
-        )

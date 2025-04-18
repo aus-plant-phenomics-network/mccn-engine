@@ -12,13 +12,13 @@ from mccn.loader.raster.config import (
     _groupby_month,
     _groupby_year,
 )
-from tests.loader.raster.utils import FIXTURE_PATH
+from tests.utils import RASTER_FIXTURE_PATH
 
 
 @pytest.fixture(scope="module")
 def parsed_item_fx() -> tuple[pystac.Item, ParsedItem]:
     # Datetime is 2021-02-21T09:10:17Z
-    item = pystac.Item.from_file(FIXTURE_PATH / "L2A_PVI.json")
+    item = pystac.Item.from_file(RASTER_FIXTURE_PATH / "L2A_PVI.json")
     from odc.stac._mdtools import parse_items
 
     parsed_item = list(parse_items([item]))[0]

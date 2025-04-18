@@ -68,7 +68,7 @@
     {
         "id": "bottom-left-15",
         "location": "tests/loader/raster/fixture/bottom-left.tif",
-        "collection_date": "2015-11-01",
+        "collection_date": "2015-11-05",
         "collection_time": "10:00",
         "band_info": [
             {
@@ -79,7 +79,7 @@
     {
         "id": "bottom-right-15",
         "location": "tests/loader/raster/fixture/bottom-right.tif",
-        "collection_date": "2015-11-02",
+        "collection_date": "2015-11-05",
         "collection_time": "10:00",
         "band_info": [
             {

@@ -1,37 +1,14 @@
 import datetime
-import json
-from pathlib import Path
 from typing import cast
 
 import pandas as pd
 import pystac
 import pytest
 from odc.geo.geobox import GeoBox
-from stac_generator.core import StacCollectionConfig
-from stac_generator.factory import StacGeneratorFactory
 
 from mccn._types import CubeConfig
-from mccn.extent import GeoBoxBuilder
 from mccn.loader.raster.config import RasterLoadConfig
 from mccn.loader.raster.loader import read_raster_asset
-from tests.loader.raster.utils import FIXTURE_PATH
-
-
-@pytest.fixture()
-def collection() -> pystac.Collection:
-    with Path(FIXTURE_PATH / "config.json").open("r") as file:
-        config = json.load(file)
-    for i in range(len(config)):
-        config[i]["location"] = Path(config[i]["location"]).absolute().as_uri()
-    factory = StacGeneratorFactory.get_stac_generator(
-        config, StacCollectionConfig(id="Collection")
-    )
-    return factory.create_collection()
-
-
-@pytest.fixture()
-def collection_geobox(collection: pystac.Collection) -> GeoBox:
-    return GeoBoxBuilder.from_collection(collection, (100, 100))
 
 
 @pytest.fixture()
@@ -40,10 +17,10 @@ def cube_config() -> CubeConfig:
 
 
 def test_year_raster_generation(
-    collection: pystac.Collection,
+    dsm_collection: pystac.Collection,
     cube_config: CubeConfig,
 ) -> None:
-    items = list(collection.get_items(recursive=True))
+    items = list(dsm_collection.get_items(recursive=True))
     ds = read_raster_asset(
         items,
         None,
@@ -80,18 +57,18 @@ def test_year_raster_generation(
 
 
 def test_month_raster_generation(
-    collection: pystac.Collection,
-    collection_geobox: GeoBox,
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
     cube_config: CubeConfig,
 ) -> None:
-    items = list(collection.get_items(recursive=True))
+    items = list(dsm_collection.get_items(recursive=True))
     items_2016 = [
         item for item in items if cast(datetime.datetime, item.datetime).year >= 2016
     ]
     ds = read_raster_asset(
         items_2016,
         None,
-        collection_geobox,
+        dsm_geobox,
         cube_config=cube_config,
         raster_config=RasterLoadConfig("month"),
     )
@@ -114,7 +91,7 @@ def test_month_raster_generation(
             if cast(datetime.datetime, item.datetime).month < 11
         ],
         bands=None,
-        geobox=collection_geobox,
+        geobox=dsm_geobox,
         cube_config=cube_config,
         raster_config=RasterLoadConfig(groupby="year"),
     )

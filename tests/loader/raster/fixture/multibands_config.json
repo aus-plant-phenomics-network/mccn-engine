@@ -1,0 +1,50 @@
+[
+    {
+        "id": "dsm",
+        "location": "tests/loader/raster/fixture/top-left.tif",
+        "collection_date": "2016-10-01",
+        "collection_time": "12:00",
+        "band_info": [
+            {
+                "name": "dsm"
+            }
+        ]
+    },
+    {
+        "id": "rgb",
+        "location": "tests/loader/raster/fixture/top-left-rgb.tif",
+        "collection_date": "2016-10-01",
+        "collection_time": "12:00",
+        "band_info": [
+            {
+                "name": "red"
+            },
+            {
+                "name": "green"
+            },
+            {
+                "name": "blue"
+            }
+        ]
+    },
+    {
+        "id": "rgb-alias",
+        "location": "tests/loader/raster/fixture/top-left-rgb.tif",
+        "collection_date": "2016-10-01",
+        "collection_time": "12:00",
+        "band_info": [
+            {
+                "name": "ms-red",
+                "common_name": "red"
+            },
+            {
+                "name": "ms-green",
+                "common_name": "green"
+            },
+            {
+                "name": "ms-blue",
+                "common_name": "blue"
+            }
+        ]
+    }
+]
