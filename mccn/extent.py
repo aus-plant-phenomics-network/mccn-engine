@@ -101,12 +101,17 @@ class GeoBoxBuilder:
         self._transform: Affine = None
         self._tol = tol
         self._anchor: GeoboxAnchor = "default"
+        self._geobox: GeoBox | None = None
         if isinstance(anchor, tuple):
             if len(anchor) != 2:
                 raise ValueError("Expect 2-tuple for anchor")
             self._anchor = XY(anchor[0], anchor[1])
         else:
             self._anchor = anchor
+
+    def set_geobox(self, geobox: GeoBox) -> Self:
+        self._geobox = geobox
+        return self
 
     def set_crs(self, crs: CRS_T) -> Self:
         """Overwrite CRS value
@@ -179,6 +184,8 @@ class GeoBoxBuilder:
 
     def build(self) -> GeoBox:
         """Build the geobox object based on given parameters"""
+        if self._geobox:
+            return self._geobox
         if self._transform and self._shape:
             return GeoBox(self._shape, self._transform, self._crs)
         if self._bbox is None:
