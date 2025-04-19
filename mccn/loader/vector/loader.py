@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Any, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, Any, Hashable, Mapping, Sequence
 
 import geopandas as gpd
 import numpy as np
@@ -85,11 +85,11 @@ def field_rasterize(
 
 def groupby(
     data: Mapping[str, gpd.GeoDataFrame],
+    coords: Mapping[Hashable, xr.DataArray],
     geobox: GeoBox,
     fields: set[str],
     cube_config: CubeConfig,
     vector_config: VectorLoadConfig,
-    rasterize_config: VectorRasterizeConfig,
 ) -> xr.Dataset:
     if not data:
         return xr.Dataset()
@@ -118,17 +118,19 @@ def groupby(
 
     # Rasterise field by field
     for field in fields:
-        update_attr_legend(ds_attrs, field, gdf)
+        update_attr_legend(ds_attrs, field, gdf, vector_config.categorical_encode_start)
         ds_data[field] = field_rasterize(
-            gdf, field, dates, geobox, rasterize_config, cube_config
+            gdf, field, dates, geobox, vector_config.rasterize_config, cube_config
         )
-    ds = xr.Dataset(ds_data, coords=geobox.coordinates, attrs=ds_attrs)
+    ds = xr.Dataset(ds_data, coords=coords, attrs=ds_attrs)
     ds[cube_config.t_coord] = dates.values
     return ds
 
 
 def read_vector_asset(
-    item: ParsedVector, geobox: GeoBox, t_coord: str = "time"
+    item: ParsedVector,
+    geobox: GeoBox,
+    t_coord: str = "time",
 ) -> gpd.GeoDataFrame:
     """Load a single vector item
 
@@ -154,26 +156,26 @@ def read_vector_asset(
         layer=item.config.layer,
     )
     # Load aux df
-    if item.load_aux_bands:
-        if item.config.join_T_column and item.config.join_file:
-            date_col = item.config.join_T_column
+    if item.load_aux_bands and item.config.join_config:
+        if item.config.join_config.date_column and item.config.join_config.file:
+            date_col = item.config.join_config.date_column
             aux_df = pd.read_csv(
-                item.config.join_file,
+                item.config.join_config.file,
                 usecols=list(item.load_aux_bands),
-                parse_dates=[item.config.join_T_column],
-                date_format=cast(str, item.config.date_format),
+                parse_dates=[item.config.join_config.date_column],
+                date_format=item.config.join_config.date_format,
             )
         else:
             aux_df = pd.read_csv(
-                cast(str, item.config.join_file),
+                item.config.join_config.file,
                 usecols=list(item.load_aux_bands),
             )
         # Join dfs
         gdf = pd.merge(
             gdf,
             aux_df,
-            left_on=item.config.join_attribute_vector,
-            right_on=item.config.join_field,
+            left_on=item.config.join_config.left_on,
+            right_on=item.config.join_config.right_on,
         )
     # Convert CRS
     gdf.to_crs(geobox.crs, inplace=True)
@@ -219,23 +221,35 @@ class VectorLoader(Loader[ParsedVector]):
         self.load_config = load_config if load_config else VectorLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
+    def _collect_fields_to_load(self) -> set[str]:
+        if self.load_config.load_mask_only:
+            return set()
+        fields = set()
+        for item in self.items:
+            fields.update(item.load_bands)
+            fields.update(item.load_aux_bands)
+            if item.config.join_config and item.config.join_config.date_column:
+                fields.remove(item.config.join_config.date_column)
+        return fields
+
     def _load(self) -> xr.Dataset:
         data = {}  # Mapping of item id to geodataframe
-        bands = set()  # All bands available in vector collection
-        mask_only = set()  # Set of items to be loaded as mask only
+        fields = self._collect_fields_to_load()
 
         # Prepare items
         for item in self.items:
-            if not item.load_aux_bands and not item.load_bands:
-                mask_only.add(item.item.id)
-            bands.update(item.load_bands)
-            bands.update(item.load_aux_bands)
-            # Remove date column - not a variable to load
-            if item.config.join_T_column:
-                bands.remove(item.config.join_T_column)
-            data[item.item.id] = self.apply_process(
+            item_id = item.item.id
+            data[item_id] = self.apply_process(
                 read_vector_asset(
                     item, self.filter_config.geobox, self.cube_config.t_coord
                 ),
                 self.process_config,
             )
+        return groupby(
+            data,
+            self.coords,
+            self.filter_config.geobox,
+            fields,
+            self.cube_config,
+            self.load_config,
+        )

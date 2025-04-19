@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from rasterio.enums import MergeAlg
@@ -22,7 +22,14 @@ class VectorRasterizeConfig:
     def __post_init__(self) -> None:
         # Instantiate merge_alg enum from string
         if isinstance(self.merge_alg, str):
-            self.merge_alg = MergeAlg[self.merge_alg]
+            if self.merge_alg.lower() == "replace":
+                self.merge_alg = MergeAlg.replace
+            elif self.merge_alg.lower() == "add":
+                self.merge_alg = MergeAlg.add
+            else:
+                raise ValueError(
+                    f"Invalid merge alg value: expects replace or add, received: {self.merge_alg}"
+                )
 
 
 @dataclass
@@ -35,5 +42,7 @@ class VectorLoadConfig:
     """
     Starting value for encoding categorical variables.
     """
-    rasterize_config: VectorRasterizeConfig = VectorRasterizeConfig()
+    rasterize_config: VectorRasterizeConfig = field(
+        default_factory=VectorRasterizeConfig
+    )
     """Parameters to be passed to `rasterio.features.rasterize`"""
