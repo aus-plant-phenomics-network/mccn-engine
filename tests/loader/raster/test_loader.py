@@ -6,7 +6,7 @@ import pystac
 import pytest
 from odc.geo.geobox import GeoBox
 
-from mccn._types import CubeConfig
+from mccn.config import CubeConfig
 from mccn.loader.raster.config import RasterLoadConfig
 from mccn.loader.raster.loader import read_raster_asset
 

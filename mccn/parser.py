@@ -11,12 +11,12 @@ from stac_generator.core import PointConfig, RasterConfig, VectorConfig
 
 from mccn._types import (
     BBox_T,
-    FilterConfig,
     ParsedItem,
     ParsedPoint,
     ParsedRaster,
     ParsedVector,
 )
+from mccn.config import FilterConfig
 from mccn.loader.utils import bbox_from_geobox, get_item_crs
 
 

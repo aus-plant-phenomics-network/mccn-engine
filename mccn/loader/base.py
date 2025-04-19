@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import abc
 from typing import (
-    TYPE_CHECKING,
     Any,
     Generic,
     Hashable,
@@ -15,10 +14,8 @@ import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
 
-from mccn._types import CubeConfig, ParsedItem, ProcessConfig
-
-if TYPE_CHECKING:
-    from mccn._types import FilterConfig
+from mccn._types import ParsedItem
+from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 
 T = TypeVar("T", bound=ParsedItem)
 
