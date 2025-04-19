@@ -6,7 +6,7 @@ authors = [
 ]
 dependencies = [
     "odc-stac>=0.3.10",
-    "pystac-generator>=0.3.21",
+    "pystac-generator>=0.3.22",
     "matplotlib>=3.10.1",
     "pystac-client>=0.8.6",
     "dask==2024.10.0",

@@ -31,7 +31,9 @@ class VectorLoadConfig:
     """If true, will only load the mask layer"""
     mask_layer_name: str = "__MASK__"
     """Name of the mask layer"""
-    mask_value_start: int = 1
-    """Start mask value enumeration. When loaded as mask, each vector layer is assigned an id, the minimum of all of which is set by this variable. This is generally to avoid nodata = 0."""
+    categorical_encode_start: int = 1
+    """
+    Starting value for encoding categorical variables. 
+    """
     rasterize_config: VectorRasterizeConfig = VectorRasterizeConfig()
     """Parameters to be passed to `rasterio.features.rasterize`"""

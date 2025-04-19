@@ -22,7 +22,10 @@ if TYPE_CHECKING:
 
 
 def update_attr_legend(
-    attr_dict: dict[str, Any], field: str, frame: gpd.GeoDataFrame
+    attr_dict: dict[str, Any],
+    field: str,
+    frame: gpd.GeoDataFrame,
+    start: int = 1,
 ) -> None:
     """Update attribute dict with legend for non numeric fields.
 
@@ -34,11 +37,14 @@ def update_attr_legend(
         attr_dict (dict[str, Any]): attribute dict
         field (str): field name
         frame (gpd.GeoDataFrame): input data frame
+        start (int): starting value
     """
     if not pd.api.types.is_numeric_dtype(frame[field]):
+        # Category map - original -> mapped value
         cat_map = {
-            name: index for index, name in enumerate(frame[field].unique(), start=1)
+            name: index for index, name in enumerate(frame[field].unique(), start=start)
         }
+        # Attr dict - mapped value -> original
         attr_dict[field] = {v: k for k, v in cat_map.items()}
         frame[field] = frame[field].map(cat_map)
 
@@ -81,10 +87,8 @@ def groupby(
     data: Mapping[str, gpd.GeoDataFrame],
     geobox: GeoBox,
     fields: set[str],
-    load_mask_only: bool,
-    mask_layer_name: str,
-    mask_value_start: int,
     cube_config: CubeConfig,
+    vector_config: VectorLoadConfig,
     rasterize_config: VectorRasterizeConfig,
 ) -> xr.Dataset:
     if not data:
@@ -93,17 +97,19 @@ def groupby(
     ds_attrs: dict[str, dict[str, Any]] = {}
 
     # if load as mask - load mask only
-    if load_mask_only:
+    if vector_config.load_mask_only:
         fields.clear()
 
     # Add mask layer to field to load
-    fields.add(mask_layer_name)
+    fields.add(vector_config.mask_layer_name)
     # Make mask attrs
-    ds_attrs[mask_layer_name] = {}
+    ds_attrs[vector_config.mask_layer_name] = {}
     # Assign mapping id to each df
-    for idx, (k, v) in enumerate(data.items(), start=mask_value_start):
-        v[mask_layer_name] = idx
-        ds_attrs[mask_layer_name][str(idx)] = k
+    for idx, (k, v) in enumerate(
+        data.items(), start=vector_config.categorical_encode_start
+    ):
+        v[vector_config.mask_layer_name] = idx
+        ds_attrs[vector_config.mask_layer_name][str(idx)] = k
 
     # Concatenate
     gdf = pd.concat(data.values())
@@ -212,8 +218,6 @@ class VectorLoader(Loader[ParsedVector]):
     ) -> None:
         self.load_config = load_config if load_config else VectorLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
-
-    def 
 
     def _load(self) -> xr.Dataset:
         data = {}  # Mapping of item id to geodataframe

@@ -39,8 +39,8 @@ def _parse_vector(
     crs = get_item_crs(item)
     bands = set([band["name"] for band in config.column_info])
     aux_bands = (
-        set([band["name"] for band in config.join_column_info])
-        if config.join_column_info
+        set([band["name"] for band in config.join_config.column_info])
+        if config.join_config
         else set()
     )
     return ParsedVector(
@@ -216,6 +216,39 @@ def date_filter(
     return item
 
 
+def _filter_point(
+    item: ParsedPoint, bands: Sequence[str] | set[str]
+) -> ParsedPoint | None:
+    if item.load_bands:
+        return item
+    return None
+
+
+def _update_vector_load_aux_band_hook(item: ParsedVector) -> ParsedVector:
+    if item.config.join_config and item.load_aux_bands:
+        join_config = item.config.join_config
+        item.load_bands.add(join_config.left_on)
+        item.load_aux_bands.add(join_config.right_on)
+        if join_config.date_column:
+            item.load_aux_bands.add(join_config.date_column)
+    return item
+
+
+def _filter_vector(item: ParsedVector, bands: Sequence[str] | set[str]) -> ParsedVector:
+    item.load_aux_bands = set([band for band in bands if band in item.aux_bands])
+    return _update_vector_load_aux_band_hook(item)
+
+
+def _filter_raster(
+    item: ParsedRaster, bands: Sequence[str] | set[str]
+) -> ParsedRaster | None:
+    alias = set([band for band in bands if band in item.alias])
+    item.load_bands.update(alias)
+    if item.load_bands:
+        return item
+    return None
+
+
 def band_filter(
     item: ParsedItem | None, bands: Sequence[str] | None
 ) -> ParsedItem | None:
@@ -247,29 +280,20 @@ def band_filter(
     Returns:
         ParsedItem | None: parsed result
     """
-    if item and bands:
-        item.load_bands = set([band for band in bands if band in item.bands])
-        # If vector - check if bands to be loaded are from joined_file - i.e. aux_bands
+    if not item:
+        return None
+    if not bands:
         if isinstance(item, ParsedVector):
-            item.load_aux_bands = set(
-                [band for band in bands if band in item.aux_bands]
-            )
-        # If raster - check if bands to be loaded are an alias
-        if isinstance(item, ParsedRaster):
-            alias = set([band for band in bands if band in item.alias])
-            item.load_bands.update(alias)
-        # If both load_band and load_aux_bands empty - return None
-        if not item.load_bands and not (
-            hasattr(item, "load_aux_bands") and item.load_aux_bands
-        ):
-            return None
-    # If item is a vector - ensure that join attribute and join column are loaded
-    if isinstance(item, ParsedVector) and item.load_aux_bands:
-        item.load_aux_bands.add(cast(str, item.config.join_field))
-        if item.config.join_T_column:
-            item.load_aux_bands.add(item.config.join_T_column)
-        item.load_bands.add(cast(str, item.config.join_attribute_vector))
-    return item
+            item = _update_vector_load_aux_band_hook(item)
+        return item
+    item.load_bands = set([band for band in bands if band in item.bands])
+    if isinstance(item, ParsedPoint):
+        return _filter_point(item, bands)
+    if isinstance(item, ParsedVector):
+        return _filter_vector(item, bands)
+    if isinstance(item, ParsedRaster):
+        return _filter_raster(item, bands)
+    raise ValueError(f"Invalid item type: {type(item)}")
 
 
 class Parser:
