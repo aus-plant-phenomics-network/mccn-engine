@@ -250,7 +250,7 @@ def _filter_raster(
 
 
 def band_filter(
-    item: ParsedItem | None, bands: Sequence[str] | None
+    item: ParsedItem | None, bands: Sequence[str] | set[str] | None
 ) -> ParsedItem | None:
     """Parse and filter an item based on requested bands
 
@@ -320,9 +320,7 @@ class Parser:
         self.collection = collection
         self.items = collection.get_items(recursive=True)
         self.filter_config = filter_config
-        self.bands = (
-            list(self.filter_config.bands) if self.filter_config.bands else None
-        )
+        self.bands = self.filter_config.bands
         self.bbox = bbox_from_geobox(self.filter_config.geobox)
         self._point_items: list[ParsedPoint] = list()
         self._vector_items: list[ParsedVector] = list()

@@ -33,7 +33,7 @@ class VectorLoadConfig:
     """Name of the mask layer"""
     categorical_encode_start: int = 1
     """
-    Starting value for encoding categorical variables. 
+    Starting value for encoding categorical variables.
     """
     rasterize_config: VectorRasterizeConfig = VectorRasterizeConfig()
     """Parameters to be passed to `rasterio.features.rasterize`"""
