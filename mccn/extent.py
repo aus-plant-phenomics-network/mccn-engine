@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, Self, Sequence, cast
 
 import pystac
 from odc.geo.geobox import GeoBox
 from odc.geo.types import Shape2d
+from stac_generator.core.base import CollectionGenerator
 
 from mccn._types import BBox_T
 
@@ -198,14 +199,47 @@ class GeoBoxBuilder:
         )
 
     @classmethod
-    def from_collection(
-        cls, collection: pystac.Collection, shape: int | tuple[int, int]
+    def from_stac_bbox(
+        cls,
+        bbox: BBox_T,
+        shape: int | tuple[int, int],
+        anchor: AnchorPos_T = "default",
     ) -> GeoBox:
         builder = GeoBoxBuilder(
-            crs=4326
-        )  # Note that collection bbox info is always 4326
-        bbox = collection.extent.spatial.bboxes[0]  # First bbox is the enclosing bbox
+            crs=4326,
+            anchor=anchor,
+        )  # STAC Bbox is always 4326
         if isinstance(shape, int):
             shape = (shape, shape)
-        builder = builder.set_bbox(bbox=cast(BBox_T, bbox)).set_shape(*shape)
+        builder = builder.set_bbox(bbox=bbox).set_shape(*shape)
         return builder.build()
+
+    @classmethod
+    def from_item(
+        cls,
+        item: pystac.Item,
+        shape: int | tuple[int, int],
+        anchor: AnchorPos_T = "default",
+    ) -> GeoBox:
+        bbox = item.bbox
+        return cls.from_stac_bbox(cast(BBox_T, bbox), shape, anchor)
+
+    @classmethod
+    def from_items(
+        cls,
+        items: Sequence[pystac.Item],
+        shape: int | tuple[int, int],
+        anchor: AnchorPos_T = "default",
+    ) -> GeoBox:
+        extent = CollectionGenerator.spatial_extent(items)
+        return cls.from_stac_bbox(cast(BBox_T, extent.bboxes[0]), shape, anchor)
+
+    @classmethod
+    def from_collection(
+        cls,
+        collection: pystac.Collection,
+        shape: int | tuple[int, int],
+        anchor: AnchorPos_T = "default",
+    ) -> GeoBox:
+        bbox = collection.extent.spatial.bboxes[0]  # First bbox is the enclosing bbox
+        return cls.from_stac_bbox(cast(BBox_T, bbox), shape, anchor)

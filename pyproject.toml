@@ -1,25 +1,28 @@
 [project]
 name = "mccn-engine"
-version = "0.1.2"
 description = "mccn engine"
 authors = [
     {name = "Joseph", email = "joseph.sclauzero@adelaide.edu.au"},
 ]
 dependencies = [
-    "pystac-client>=0.8.5",
-    "matplotlib<4.0.0,>=3.9.0",
-    "odc-stac<1.0.0,>=0.3.10",
-    "pystac-generator>=0.2.0",
-    "pystac>=1.11.0",
+    "odc-stac>=0.3.10",
+    "pystac-generator>=0.3.27",
+    "matplotlib>=3.10.1",
+    "pystac-client>=0.8.6",
     "dask==2024.10.0",
+    "scipy>=1.15.2",
+    "duckdb>=1.2.2",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
-
+dynamic = ["version"]
 
 [tool.pdm]
 distribution = true
+[tool.pdm.version]
+source = "file"
+path = "mccn/__version__.py"
 
 [tool.pdm.dev-dependencies]
 test = ["pytest>=8.3.3", "pytest-cov>=5.0.0"]
@@ -101,3 +104,9 @@ ignore_missing_imports = true
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore:.*deprecated.*:DeprecationWarning",
+]

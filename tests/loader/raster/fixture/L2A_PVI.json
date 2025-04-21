@@ -1,0 +1,175 @@
+{
+  "type": "Feature",
+  "stac_version": "1.1.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+    "https://stac-extensions.github.io/eo/v1.1.0/schema.json"
+  ],
+  "id": "L2A_PVI",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          15.110630736098942,
+          36.95292538275869
+        ],
+        [
+          15.110630736098942,
+          37.947537561322136
+        ],
+        [
+          13.876365195204773,
+          37.947537561322136
+        ],
+        [
+          13.876365195204773,
+          36.95292538275869
+        ],
+        [
+          15.110630736098942,
+          36.95292538275869
+        ]
+      ]
+    ]
+  },
+  "bbox": [
+    13.876365195204773,
+    36.95292538275869,
+    15.110630736098942,
+    37.947537561322136
+  ],
+  "properties": {
+    "stac_generator": {
+      "id": "L2A_PVI",
+      "collection_date": "2021-02-21",
+      "collection_time": "10:00:17",
+      "location": "tests/files/integration_tests/raster/data/L2A_PVI.tif",
+      "band_info": [
+        {
+          "name": "b04",
+          "common_name": "red",
+          "wavelength": 0.6645,
+          "description": "Common name: red, Range: 0.6 to 0.7"
+        },
+        {
+          "name": "b03",
+          "common_name": "green",
+          "wavelength": 0.56,
+          "description": "Common name: green, Range: 0.5 to 0.6"
+        },
+        {
+          "name": "b02",
+          "common_name": "blue",
+          "wavelength": 0.4966,
+          "description": "Common name: blue, Range: 0.45 to 0.5"
+        }
+      ]
+    },
+    "start_datetime": "2021-02-21T09:10:17Z",
+    "end_datetime": "2021-02-21T09:10:17Z",
+    "proj:code": "EPSG:32633",
+    "proj:wkt2": "PROJCS[\"WGS 84 / UTM zone 33N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32633\"]]",
+    "proj:shape": [
+      343,
+      343
+    ],
+    "proj:transform": [
+      320.0,
+      0.0,
+      399960.0,
+      0.0,
+      -320.0,
+      4200000.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "datetime": "2021-02-21T09:10:17Z"
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/hoangson/Projects/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "collection",
+      "href": "/home/hoangson/Projects/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    },
+    {
+      "rel": "self",
+      "href": "/home/hoangson/Projects/stac-generator/tests/files/integration_tests/raster/generated/L2A_PVI/L2A_PVI.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/hoangson/Projects/stac-generator/tests/files/integration_tests/raster/generated/collection.json",
+      "type": "application/json",
+      "title": "Auto-generated."
+    }
+  ],
+  "assets": {
+    "data": {
+      "href": "tests/files/integration_tests/raster/data/L2A_PVI.tif",
+      "type": "image/tiff; application=geotiff",
+      "title": "Raster Data",
+      "proj:code": "EPSG:32633",
+      "proj:wkt2": "PROJCS[\"WGS 84 / UTM zone 33N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32633\"]]",
+      "proj:shape": [
+        343,
+        343
+      ],
+      "proj:transform": [
+        320.0,
+        0.0,
+        399960.0,
+        0.0,
+        -320.0,
+        4200000.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "raster:bands": [
+        {
+          "nodata": 0
+        },
+        {
+          "nodata": 0
+        },
+        {
+          "nodata": 0
+        }
+      ],
+      "eo:bands": [
+        {
+          "name": "b04",
+          "common_name": "red",
+          "description": "Common name: red, Range: 0.6 to 0.7",
+          "center_wavelength": 0.6645
+        },
+        {
+          "name": "b03",
+          "common_name": "green",
+          "description": "Common name: green, Range: 0.5 to 0.6",
+          "center_wavelength": 0.56
+        },
+        {
+          "name": "b02",
+          "common_name": "blue",
+          "description": "Common name: blue, Range: 0.45 to 0.5",
+          "center_wavelength": 0.4966
+        }
+      ],
+      "roles": [
+        "data"
+      ]
+    }
+  },
+  "collection": "collection"
+}

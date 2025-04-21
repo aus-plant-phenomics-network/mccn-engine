@@ -1,83 +1,93 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Mapping
-from warnings import warn
+import logging
+from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from pyproj import CRS
+from pyproj.transformer import Transformer
+
+from mccn._types import BBox_T
 
 if TYPE_CHECKING:
     import pystac
+    from odc.geo.geobox import GeoBox
+
+ASSET_KEY = "data"
+BBOX_TOL = 1e-10
 
 
 class StacExtensionError(Exception): ...
 
 
-ASSET_KEY = "data"
-BBOX_TOL = 1e-10
-
-# Data format Agnostic Utilities
+logger = logging.getLogger(__name__)
 
 
-def get_item_href(
-    item: pystac.Item,
-    asset_key: str | Mapping[str, str],
-) -> str:
-    """Get the href of the source asset in item.
+@lru_cache(maxsize=None)
+def get_crs_transformer(src: CRS, dst: CRS) -> Transformer:
+    """Cached method for getting pyproj.Transformer object
 
-    Source asset is the source file which the stac item primarily describes. This
-    is to differentiate from other assets which might serve as summary for the source
-    asset. The source asset should be indexed by asset key, which can either be a string,
-    or a dictionary that maps item id to source asset key.
+    Args:
+        src (CRS): source crs
+        dst (CRS): destition crs
 
-    :param item: stac item
-    :type item: pystac.Item
-    :param asset_key: if provided as a string, will be the key of the source asset in item.Assets.
-    if provided as a dictionary, must contain an entry for the current item with item.id as key and
-    asset key as value.
-    :type asset_key: str | Mapping[str, str]
-    :raises KeyError: if asset_key is provided as a dictionary but does not contain item.id
-    :raises TypeError: if asset_key is neither a string or a dictionary
-    :return: the source asset href
-    :rtype: str
+    Returns:
+        Transformer: transformer object
     """
-    if isinstance(asset_key, str):
-        return item.assets[asset_key].href
-    elif isinstance(asset_key, dict):
-        if item.id not in asset_key:
-            raise KeyError(f"Asset key map does not have entry for item: {item.id}")
-        return item.assets[asset_key[item.id]].href
-    raise TypeError(
-        f"Invalid type for asset key: {type(asset_key)}. Accepts either a string or a mapping"
-    )
+    return Transformer.from_crs(src, dst, always_xy=True)
+
+
+@lru_cache(maxsize=None)
+def bbox_from_geobox(geobox: GeoBox, crs: CRS | str | int = 4326) -> BBox_T:
+    """Generate a bbox from a geobox
+
+    Args:
+        geobox (GeoBox): source geobox which might have a different crs
+        crs (CRS | str | int, optional): target crs. Defaults to 4326.
+
+    Returns:
+        BBox_T: bounds of the geobox in crs
+    """
+    if isinstance(crs, str | int):
+        crs = CRS.from_epsg(crs)
+    transformer = get_crs_transformer(geobox.crs, crs)
+    bbox = list(geobox.boundingbox)
+    left, bottom = transformer.transform(bbox[0], bbox[1])
+    right, top = transformer.transform(bbox[2], bbox[3])
+    return left, bottom, right, top
 
 
 def get_item_crs(item: pystac.Item) -> CRS:
-    """Extract CRS information from item properties.
+    """Extract CRS information from a STAC Item.
 
-    This will first look for CRS information encoded as proj extension, in the following order:
-    `proj:code, proj:wkt2, proj:projjson, proj:epsg`
+    For the best result, item should be generated using the
+    projection extension (stac_generator does this by default).
+    This method will look up proj:wkt2 (wkt2 string - the best option), proj:code,
+    proj:projjson, proj:epsg, then epsg. An error is raised if none of the key
+    is found.
 
-    If no proj extension fields is found, will attempt to look for the field `epsg` in properties.
+    Args:
+        item (pystac.Item): STAC Item with proj extension applied to properties
 
-    :param item: stac item metadata
-    :type item: pystac.Item
-    :raises StacExtensionError: if proj:projjson is provided but with an invalid format
-    :raises StacExtensionError: if there is no crs field in the metadata
-    :return: CRS information
-    :rtype: CRS
+    Raises:
+        StacExtensionError: ill-formatted proj:projjson
+        StacExtensionError: no suitable proj key is found in item's properties
+
+    Returns:
+        CRS: CRS of item
     """
-    if "proj:code" in item.properties:
-        return CRS(item.properties.get("proj:code"))
-    elif "proj:wkt2" in item.properties:
+    if "proj:wkt2" in item.properties:
         return CRS(item.properties.get("proj:wkt2"))
+    elif "proj:code" in item.properties:
+        return CRS(item.properties.get("proj:code"))
     elif "proj:projjson" in item.properties:
         try:
             return CRS(json.loads(item.properties.get("proj:projjson")))  # type: ignore[arg-type]
         except json.JSONDecodeError as e:
             raise StacExtensionError("Invalid projjson encoding in STAC config") from e
     elif "proj:epsg" in item.properties:
-        warn(
+        logger.warning(
             "proj:epsg is deprecated in favor of proj:code. Please consider using proj:code, or if possible, the full wkt2 instead"
         )
         return CRS(int(item.properties.get("proj:epsg")))  # type: ignore[arg-type]

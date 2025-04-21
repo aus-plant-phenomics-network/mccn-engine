@@ -1,0 +1,23 @@
+[
+    {
+        "id": "L1Boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L1_poly",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00"
+    },
+    {
+        "id": "L3Boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L3_poly",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00"
+    },
+    {
+        "id": "L4Boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L4_poly",
+        "collection_date": "2025-01-01",
+        "collection_time": "00:00"
+    }
+]

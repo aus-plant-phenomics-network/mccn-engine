@@ -10,7 +10,10 @@ ENV_PREFIX		=  .venv/bin/
 VENV_EXISTS		=	$(shell python3 -c "if __import__('pathlib').Path('.venv/bin/activate').exists(): print('yes')")
 PDM_OPTS 		?=
 PDM 			?= 	pdm $(PDM_OPTS)
-
+NECTAR_PATH		= 	https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data
+SERVER_PATH		= 	http://203.101.230.81:8082
+TEST_PATH 		= 	tests/files/unit_tests
+CONFIG_PATH 	= 	configs
 .EXPORT_ALL_VARIABLES:
 
 
@@ -83,3 +86,58 @@ test:  												## Run the tests
 
 .PHONY: check-all
 check-all: lint test coverage                   ## Run all linting, tests, and coverage checks
+
+
+.PHONY: point-fixtures
+point-fixtures:
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_std.json --id silo_std --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/silo_proc_bands.json --id silo_proc_bands --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/soil.json --id soil --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/point/campey_point.json --id campey_point --dst $(SERVER_PATH)
+
+
+.PHONY: raster-fixtures
+raster-fixtures:
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/rea.json --id rea --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/ozbarley_raster.json --id ozbarley_raster --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/raster/llara_campey_raster.json --id llara_campey_raster --dst $(SERVER_PATH)
+
+.PHONY: vector-fixtures
+vector-fixtures:
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/attribute.json --id attribute --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask.json --id mask --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/mask_attribute.json --id mask_attribute --dst $(SERVER_PATH)
+	@$(PDM) run stac_generator serialise $(TEST_PATH)/vector/join.json --id join --dst $(SERVER_PATH)
+
+.PHONY: fixtures
+fixtures: point-fixtures raster-fixtures
+
+.PHONY: gryfn
+gryfn:
+	@echo running config from $(CONFIG_PATH)/gryfn/config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/gryfn/config.json --id Gryfn --dst generated -v
+
+.PHONY: llara_campey_raster
+llara_campey_raster:
+	@echo running config from $(CONFIG_PATH)/llara_campey/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_config.json --id Llara_Campey_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: case-study-1-raster
+case-study-1-raster:
+	@echo running config from $(CONFIG_PATH)/case-study-1/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: test-geotiff
+test-geotiff:
+	@echo running config from $(CONFIG_PATH)/test-geotiff/raster_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster --dst $(SERVER_PATH) -v
+
+.PHONY: case-study-7-llara
+case-study-7-llara:
+	@echo running config from $(CONFIG_PATH)/case-study-7
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json --id Case_Study_7_Llara --dst generated -v
+
+.PHONY: case-study-7-llara-scenario1
+case-study-7-llara-scenario1:
+	@echo running config from $(CONFIG_PATH)/case-study-7
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json $(CONFIG_PATH)/case-study-7/scenario_1_config.json --id Case_Study_7_Llara_Scenario1 --dst generated -v
