@@ -1,10 +1,19 @@
-import pandas as pd
-import pystac
-import pytest
-from odc.geo.geobox import GeoBox
+from __future__ import annotations
 
-from mccn._types import TimeGroupby
+from typing import TYPE_CHECKING
+
+import pandas as pd
+import pytest
+
 from mccn.client import MCCN
+
+if TYPE_CHECKING:
+    from typing import Callable
+
+    import pystac
+    from odc.geo.geobox import GeoBox
+
+    from mccn._types import TimeGroupby
 
 X_COORD, Y_COORD, T_COORD = "X", "Y", "T"
 
@@ -92,3 +101,78 @@ def test_raster_generation_expects_correct_time_rounded_ts(
     assert len(ds[T_COORD]) == len(exp_ts)  # 2 Years - 2015 and 2016
     timestamps = pd.DatetimeIndex(ds[T_COORD].values)
     assert all(timestamps == exp_ts)
+
+
+@pytest.mark.parametrize(
+    "filter_logic, index",
+    [
+        (lambda x: x.datetime < pd.Timestamp("2016-01-01T00:00:00Z"), 0),
+        (lambda x: x.datetime > pd.Timestamp("2016-01-01T00:00:00Z"), 1),
+    ],
+    ids=["2015", "2016"],
+)
+def test_raster_year_generation_expects_full_matching(
+    dsm_items: list[pystac.Item],
+    dsm_geobox: GeoBox,
+    filter_logic: Callable,
+    index: int,
+) -> None:
+    groupby: TimeGroupby = "year"
+    client = MCCN(
+        items=dsm_items, geobox=dsm_geobox, time_groupby=groupby, t_coord=T_COORD
+    )
+    ds = client.load_raster()
+
+    # Prepare ref clients - 2015
+    ref_items = list(filter(filter_logic, dsm_items))
+    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby=groupby)
+    ref_ds = ref_client.load_raster()
+
+    # Compare values
+    diff = ds["dsm"].values[index, :, :] - ref_ds["dsm"].values[0, :, :]
+    assert diff.max() == 0
+
+
+@pytest.mark.parametrize(
+    "filter_logic, index",
+    [
+        (lambda x: x.datetime < pd.Timestamp("2015-11-01T00:00:00Z"), 0),  # 2015-10-01
+        (
+            lambda x: pd.Timestamp("2015-11-01T00:00:00Z")
+            < x.datetime
+            < pd.Timestamp("2016-01-01T00:00:00Z"),
+            1,
+        ),
+        (
+            lambda x: pd.Timestamp("2016-01-01T00:00:00Z")
+            < x.datetime
+            < pd.Timestamp("2016-11-01T00:00:00Z"),
+            2,
+        ),
+        (
+            lambda x: pd.Timestamp("2016-11-01T00:00:00Z") < x.datetime,
+            3,
+        ),
+    ],
+    ids=["2015-10", "2015-11", "2016-10", "2016-11"],
+)
+def test_raster_month_generation_expects_full_matching(
+    dsm_items: list[pystac.Item],
+    dsm_geobox: GeoBox,
+    filter_logic: Callable,
+    index: int,
+) -> None:
+    groupby: TimeGroupby = "month"
+    client = MCCN(
+        items=dsm_items, geobox=dsm_geobox, time_groupby=groupby, t_coord=T_COORD
+    )
+    ds = client.load_raster()
+
+    # Prepare ref clients - 2015
+    ref_items = list(filter(filter_logic, dsm_items))
+    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby=groupby)
+    ref_ds = ref_client.load_raster()
+
+    # Compare values
+    diff = ds["dsm"].values[index, :, :] - ref_ds["dsm"].values[0, :, :]
+    assert diff.max() == 0
