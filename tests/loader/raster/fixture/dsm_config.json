@@ -4,6 +4,7 @@
         "location": "tests/loader/raster/fixture/top-left.tif",
         "collection_date": "2016-10-01",
         "collection_time": "12:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -15,6 +16,7 @@
         "location": "tests/loader/raster/fixture/top-right.tif",
         "collection_date": "2016-10-02",
         "collection_time": "12:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -26,6 +28,7 @@
         "location": "tests/loader/raster/fixture/bottom-left.tif",
         "collection_date": "2016-11-01",
         "collection_time": "10:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -37,6 +40,7 @@
         "location": "tests/loader/raster/fixture/bottom-right.tif",
         "collection_date": "2016-11-02",
         "collection_time": "10:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -48,6 +52,7 @@
         "location": "tests/loader/raster/fixture/top-left.tif",
         "collection_date": "2015-10-01",
         "collection_time": "12:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -59,6 +64,7 @@
         "location": "tests/loader/raster/fixture/top-right.tif",
         "collection_date": "2015-10-02",
         "collection_time": "12:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -68,8 +74,9 @@
     {
         "id": "bottom-left-15",
         "location": "tests/loader/raster/fixture/bottom-left.tif",
-        "collection_date": "2015-11-05",
+        "collection_date": "2015-11-01",
         "collection_time": "10:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"
@@ -79,8 +86,9 @@
     {
         "id": "bottom-right-15",
         "location": "tests/loader/raster/fixture/bottom-right.tif",
-        "collection_date": "2015-11-05",
+        "collection_date": "2015-11-02",
         "collection_time": "10:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "dsm"

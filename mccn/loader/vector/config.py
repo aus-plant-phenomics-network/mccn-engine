@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -5,7 +6,7 @@ from rasterio.enums import MergeAlg
 
 
 @dataclass
-class VectorRasterizeConfig:
+class RasterizeConfig:
     """Parameters to be passed to `rasterio.features.rasterize` function"""
 
     fill: int = 0
@@ -38,11 +39,7 @@ class VectorLoadConfig:
     """If true, will only load the mask layer"""
     mask_layer_name: str = "__MASK__"
     """Name of the mask layer"""
-    categorical_encode_start: int = 1
-    """
-    Starting value for encoding categorical variables.
-    """
-    rasterize_config: VectorRasterizeConfig = field(
-        default_factory=VectorRasterizeConfig
+    rasterize_config: RasterizeConfig | Mapping[str, RasterizeConfig] = field(
+        default_factory=RasterizeConfig
     )
     """Parameters to be passed to `rasterio.features.rasterize`"""

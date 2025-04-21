@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
+    Any,
 )
+
+from mccn.config import ProcessConfig
 
 if TYPE_CHECKING:
     from concurrent.futures import ThreadPoolExecutor
@@ -42,30 +45,44 @@ def _groupby_minute(item: pystac.Item, parsed: ParsedItem, index: int) -> str:
     return parsed.nominal_datetime.strftime("%Y-%m-%dT%H:%M")
 
 
+def set_groupby(
+    groupby: TimeGroupby | str | GroupbyCallback,
+) -> str | GroupbyCallback:
+    match groupby:
+        case "year":
+            return _groupby_year
+        case "month":
+            return _groupby_month
+        case "day":
+            return _groupby_day
+        case "hour":
+            return _groupby_hour
+        case "minute":
+            return _groupby_minute
+        case _:
+            return groupby
+
+
 @dataclass
 class RasterLoadConfig:
     """Load config for raster asset. Parameters come from odc.stac.load"""
 
-    groupby: TimeGroupby | GroupbyCallback | str = "time"
+    groupby: str | GroupbyCallback = "time"
+    period: str | None = None
     resampling: str | dict[str, str] | None = None
     chunks: dict[str, int | Literal["auto"]] | None = None
     pool: ThreadPoolExecutor | int | None = None
     dtype: DTypeLike | Mapping[str, DTypeLike] = None
 
     def __post_init__(self) -> None:
-        self.set_groupby()
+        self.groupby = set_groupby(self.groupby)
 
-    def set_groupby(self) -> None:
-        match self.groupby:
-            case "time":
-                self.groupby = "time"
-            case "year":
-                self.groupby = _groupby_year
-            case "month":
-                self.groupby = _groupby_month
-            case "day":
-                self.groupby = _groupby_day
-            case "hour":
-                self.groupby = _groupby_hour
-            case "minute":
-                self.groupby = _groupby_minute
+    @classmethod
+    def from_process_config(
+        cls, process_config: ProcessConfig, **kwargs: Any
+    ) -> RasterLoadConfig:
+        return cls(
+            groupby=process_config.time_groupby,
+            period=process_config.period,
+            **kwargs,
+        )

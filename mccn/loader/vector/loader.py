@@ -8,17 +8,22 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from rasterio.features import rasterize
+from stac_generator.core.base.utils import (
+    calculate_timezone,
+    read_join_asset,
+    read_vector_asset,
+)
 
-from mccn._types import CubeConfig, FilterConfig, ParsedVector, ProcessConfig
+from mccn._types import Number_T, ParsedVector
+from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 from mccn.loader.base import Loader
 from mccn.loader.utils import (
     bbox_from_geobox,
 )
+from mccn.loader.vector.config import RasterizeConfig, VectorLoadConfig
 
 if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
-
-    from mccn.loader.vector.config import VectorLoadConfig, VectorRasterizeConfig
 
 
 def update_attr_legend(
@@ -26,6 +31,8 @@ def update_attr_legend(
     field: str,
     frame: gpd.GeoDataFrame,
     start: int = 1,
+    nodata: Number_T | Mapping[str, Number_T] = 0,
+    nodata_fallback: Number_T = 0,
 ) -> None:
     """Update attribute dict with legend for non numeric fields.
 
@@ -39,11 +46,17 @@ def update_attr_legend(
         frame (gpd.GeoDataFrame): input data frame
         start (int): starting value
     """
+    nodata_value = (
+        nodata if not isinstance(nodata, dict) else nodata.get(field, nodata_fallback)
+    )
     if not pd.api.types.is_numeric_dtype(frame[field]):
+        curr = start
+        cat_map = {}
         # Category map - original -> mapped value
-        cat_map = {
-            name: index for index, name in enumerate(frame[field].unique(), start=start)
-        }
+        for name in frame[field].unique():
+            if name != nodata_value and not pd.isna(name):
+                cat_map[name] = curr
+                curr += 1
         # Attr dict - mapped value -> original
         attr_dict[field] = {v: k for k, v in cat_map.items()}
         frame[field] = frame[field].map(cat_map)
@@ -54,18 +67,19 @@ def field_rasterize(
     field: str,
     dates: pd.Series,
     geobox: GeoBox,
-    rasterize_config: VectorRasterizeConfig,
+    rasterize_config: RasterizeConfig,
     cube_config: CubeConfig,
 ) -> tuple[tuple[str, str, str], np.ndarray]:
     raster: list[np.ndarray] = []
     for date in dates:
+        mask = (gdf[cube_config.t_coord] == date) & (~gdf[field].isna())
         raster.append(
             rasterize(
                 (
                     (geom, value)
                     for geom, value in zip(
-                        gdf[gdf[cube_config.t_coord] == date].geometry,
-                        gdf[gdf[cube_config.t_coord] == date][field],
+                        gdf[mask].geometry,
+                        gdf[mask][field],
                     )
                 ),
                 out_shape=geobox.shape,
@@ -90,6 +104,7 @@ def groupby(
     fields: set[str],
     cube_config: CubeConfig,
     vector_config: VectorLoadConfig,
+    process_config: ProcessConfig,
 ) -> xr.Dataset:
     if not data:
         return xr.Dataset()
@@ -106,7 +121,7 @@ def groupby(
     ds_attrs[vector_config.mask_layer_name] = {}
     # Assign mapping id to each df
     for idx, (k, v) in enumerate(
-        data.items(), start=vector_config.categorical_encode_start
+        data.items(), start=process_config.categorical_encoding_start
     ):
         v[vector_config.mask_layer_name] = idx
         ds_attrs[vector_config.mask_layer_name][str(idx)] = k
@@ -118,16 +133,28 @@ def groupby(
 
     # Rasterise field by field
     for field in fields:
-        update_attr_legend(ds_attrs, field, gdf, vector_config.categorical_encode_start)
+        update_attr_legend(
+            ds_attrs,
+            field,
+            gdf,
+            process_config.categorical_encoding_start,
+            process_config.nodata,
+            process_config.nodata_fallback,
+        )
+        rasterize_config = (
+            vector_config.rasterize_config
+            if isinstance(vector_config.rasterize_config, RasterizeConfig)
+            else vector_config.rasterize_config.get(field, RasterizeConfig())
+        )
         ds_data[field] = field_rasterize(
-            gdf, field, dates, geobox, vector_config.rasterize_config, cube_config
+            gdf, field, dates, geobox, rasterize_config, cube_config
         )
     ds = xr.Dataset(ds_data, coords=coords, attrs=ds_attrs)
     ds[cube_config.t_coord] = dates.values
     return ds
 
 
-def read_vector_asset(
+def read_asset(
     item: ParsedVector,
     geobox: GeoBox,
     t_coord: str = "time",
@@ -145,31 +172,28 @@ def read_vector_asset(
     Returns:
         gpd.GeoDataFrame: vector geodataframe
     """
-    date_col = None
+    date_col = item.config.join_config.date_column if item.config.join_config else None
     # Prepare geobox for filtering
     bbox = bbox_from_geobox(geobox, item.crs)
     # Load main item
-    gdf = gpd.read_file(
+    gdf = read_vector_asset(
         item.location,
-        bbox=bbox,
-        columns=list(item.load_bands),
-        layer=item.config.layer,
+        bbox,
+        list(item.load_bands),
+        item.config.layer,
     )
     # Load aux df
     if item.load_aux_bands and item.config.join_config:
-        if item.config.join_config.date_column and item.config.join_config.file:
-            date_col = item.config.join_config.date_column
-            aux_df = pd.read_csv(
-                item.config.join_config.file,
-                usecols=list(item.load_aux_bands),
-                parse_dates=[item.config.join_config.date_column],
-                date_format=item.config.join_config.date_format,
-            )
-        else:
-            aux_df = pd.read_csv(
-                item.config.join_config.file,
-                usecols=list(item.load_aux_bands),
-            )
+        join_config = item.config.join_config
+        tzinfo = calculate_timezone(gdf.to_crs(4326).geometry)
+        aux_df = read_join_asset(
+            join_config.file,
+            join_config.right_on,
+            join_config.date_format,
+            join_config.date_column,
+            item.load_aux_bands,
+            tzinfo,
+        )
         # Join dfs
         gdf = pd.merge(
             gdf,
@@ -240,9 +264,7 @@ class VectorLoader(Loader[ParsedVector]):
         for item in self.items:
             item_id = item.item.id
             data[item_id] = self.apply_process(
-                read_vector_asset(
-                    item, self.filter_config.geobox, self.cube_config.t_coord
-                ),
+                read_asset(item, self.filter_config.geobox, self.cube_config.t_coord),
                 self.process_config,
             )
         return groupby(
@@ -252,4 +274,5 @@ class VectorLoader(Loader[ParsedVector]):
             fields,
             self.cube_config,
             self.load_config,
+            self.process_config,
         )

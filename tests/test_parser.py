@@ -48,7 +48,7 @@ def get_combined_load_bands(item: ParsedVector) -> set[str]:
     ],
 )
 def test_time_filter(
-    dsm_collection: pystac.Collection,
+    dsm_items: list[pystac.Item],
     dsm_geobox: GeoBox,
     start_ts: str | None,
     end_ts: str | None,
@@ -61,7 +61,7 @@ def test_time_filter(
             start_ts=pd.Timestamp(start_ts) if start_ts else None,
             end_ts=pd.Timestamp(end_ts) if end_ts else None,
         ),
-        dsm_collection,
+        dsm_items,
     )
     run_parser_test(parser, exp, "raster")
 
@@ -107,13 +107,13 @@ def test_time_filter(
     ],
 )
 def test_geobox_filter(
-    dsm_collection: pystac.Collection,
+    dsm_items: list[pystac.Item],
     geobox: str,
     exp: set[str],
     request: pytest.FixtureRequest,
 ) -> None:
     geobox_fx = request.getfixturevalue(geobox)
-    parser = Parser(FilterConfig(geobox=geobox_fx), dsm_collection)
+    parser = Parser(FilterConfig(geobox=geobox_fx), dsm_items)
     run_parser_test(parser, exp, "raster")
 
 
@@ -156,13 +156,13 @@ def test_geobox_filter(
     ],
 )
 def test_raster_band_filter(
-    multibands_collection: pystac.Collection,
+    multibands_items: list[pystac.Item],
     multiband_geobox: GeoBox,
     bands: set[str] | None,
     exp_load_band: dict[str, set[str]],
 ) -> None:
     parser = Parser(
-        FilterConfig(bands=bands, geobox=multiband_geobox), multibands_collection
+        FilterConfig(bands=bands, geobox=multiband_geobox), multibands_items
     )
     parser()
     assert len(parser.raster) == len(exp_load_band)
@@ -248,12 +248,12 @@ def test_raster_band_filter(
     ids=["None-all", "name", "area_sqkm", "lga_name", "name, area_sqkm"],
 )
 def test_vector_band_filter(
-    area_collection: pystac.Collection,
+    area_items: list[pystac.Item],
     area_geobox: GeoBox,
     bands: set[str] | None,
     exp: dict[str, set[str]],
 ) -> None:
-    parser = Parser(FilterConfig(bands=bands, geobox=area_geobox), area_collection)
+    parser = Parser(FilterConfig(bands=bands, geobox=area_geobox), area_items)
     parser()
     assert len(parser.vector) == len(exp)
     for item in parser.vector:

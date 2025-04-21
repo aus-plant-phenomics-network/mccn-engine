@@ -6,8 +6,8 @@ from typing import cast
 
 import pandas as pd
 import pystac
-from stac_generator import StacGeneratorFactory
 from stac_generator.core import PointConfig, RasterConfig, VectorConfig
+from stac_generator.factory import StacGeneratorFactory
 
 from mccn._types import (
     BBox_T,
@@ -315,10 +315,9 @@ class Parser:
     def __init__(
         self,
         filter_config: FilterConfig,
-        collection: pystac.Collection,
+        items: Sequence[pystac.Item] | None = None,
     ) -> None:
-        self.collection = collection
-        self.items = collection.get_items(recursive=True)
+        self.items = list(items) if items else []
         self.filter_config = filter_config
         self.bands = self.filter_config.bands
         self.bbox = bbox_from_geobox(self.filter_config.geobox)

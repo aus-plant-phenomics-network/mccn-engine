@@ -4,14 +4,14 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "PointCook",
         "collection_date": "2026-01-01",
-        "collection_time": "12:00"
+        "collection_time": "09:40"
     },
     {
         "id": "hoppers-crossing-name",
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "HoppersCrossing",
         "collection_date": "2026-01-01",
-        "collection_time": "12:00",
+        "collection_time": "09:40",
         "column_info": [
             {
                 "name": "name"
@@ -23,7 +23,7 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Werribee",
         "collection_date": "2026-01-01",
-        "collection_time": "12:00",
+        "collection_time": "09:40",
         "column_info": [
             {
                 "name": "name"
@@ -61,7 +61,7 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Sunbury",
         "collection_date": "2026-01-01",
-        "collection_time": "12:00",
+        "collection_time": "09:40",
         "column_info": [
             {
                 "name": "name"
@@ -99,7 +99,7 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Sunbury",
         "collection_date": "2026-01-01",
-        "collection_time": "12:00",
+        "collection_time": "09:40",
         "column_info": [
             {
                 "name": "name"

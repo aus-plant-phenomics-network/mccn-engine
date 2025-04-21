@@ -7,17 +7,16 @@ import geopandas as gpd
 import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
-from stac_generator.core.point.generator import read_csv
+from stac_generator.core.base.utils import read_point_asset
 
 from mccn._types import ParsedPoint
 from mccn.loader.base import Loader
 
 if TYPE_CHECKING:
-    from mccn._types import (
+    from mccn._types import InterpMethods, MergeMethods
+    from mccn.config import (
         CubeConfig,
         FilterConfig,
-        InterpMethods,
-        MergeMethods,
         ProcessConfig,
     )
 
@@ -74,7 +73,7 @@ class PointLoader(Loader[ParsedPoint]):
 
     def load_item(self, item: ParsedPoint) -> xr.Dataset:
         # Read csv
-        frame = read_csv(
+        frame = read_point_asset(
             src_path=item.location,
             X_coord=item.config.X,
             Y_coord=item.config.Y,

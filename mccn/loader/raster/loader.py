@@ -6,10 +6,12 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
 import odc.stac
+import pandas as pd
 import xarray as xr
 
 from mccn._types import ParsedRaster
 from mccn.loader.base import Loader
+from mccn.loader.raster.config import RasterLoadConfig
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -17,8 +19,7 @@ if TYPE_CHECKING:
     import pystac
     from odc.geo.geobox import GeoBox
 
-    from mccn._types import CubeConfig, FilterConfig, ProcessConfig
-    from mccn.loader.raster.config import RasterLoadConfig
+    from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 
 
 logger = logging.getLogger(__name__)
@@ -39,8 +40,12 @@ class RasterLoader(Loader[ParsedRaster]):
         load_config: RasterLoadConfig | None = None,
         **kwargs: Any,
     ) -> None:
-        self.load_config = load_config if load_config else RasterLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
+        self.load_config = (
+            load_config
+            if load_config
+            else RasterLoadConfig.from_process_config(self.process_config)
+        )
 
     def _load(self) -> xr.Dataset:
         band_map = groupby_bands(self.items)
@@ -101,4 +106,9 @@ def read_raster_asset(
         ds = ds.rename({"x": cube_config.x_coord, "y": cube_config.y_coord})
     if "time" in ds.dims:
         ds = ds.rename({"time": cube_config.t_coord})
+    if raster_config.period is not None:
+        ts = pd.DatetimeIndex(ds[cube_config.t_coord].values)
+        ds = ds.assign_coords(
+            {cube_config.t_coord: ts.to_period(raster_config.period).start_time}
+        )
     return ds

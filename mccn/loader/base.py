@@ -131,6 +131,8 @@ class Loader(abc.ABC, Generic[T]):
             # Rename bands
             if process_config.rename_bands:
                 data.rename(columns=process_config.rename_bands, inplace=True)
+            # Fillnan
+            data.fillna(process_config.nodata, inplace=True)
             return data
         if isinstance(data, xr.Dataset):
             # Process variable
@@ -143,5 +145,7 @@ class Loader(abc.ABC, Generic[T]):
                 process_config.rename_bands.keys()
             ) & set(data.data_vars.keys()):
                 data = data.rename_vars(process_config.rename_bands)
+            # Fillnan
+            data = data.fillna(process_config.nodata)
             return data
         raise ValueError(f"Expeting data to be a dataframe or a dataset: {type(data)}")

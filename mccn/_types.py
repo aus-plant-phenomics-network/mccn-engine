@@ -35,7 +35,6 @@ Shape_T = int | tuple[int, int]
 BBox_T = tuple[float, float, float, float]
 CRS_T = str | int | CRS
 AnchorPos_T = Literal["center", "edge", "floating", "default"] | tuple[float, float]
-GroupbyOption = Literal["id", "field"]
 
 
 @dataclass(kw_only=True)

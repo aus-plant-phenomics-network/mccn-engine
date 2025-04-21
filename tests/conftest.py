@@ -5,8 +5,8 @@ from typing import cast
 import pystac
 import pytest
 from odc.geo.geobox import GeoBox
-from stac_generator import StacGeneratorFactory
 from stac_generator.core import StacCollectionConfig
+from stac_generator.factory import StacGeneratorFactory
 
 from mccn.extent import GeoBoxBuilder
 from tests.utils import RASTER_FIXTURE_PATH, VECTOR_FIXTURE_PATH
@@ -29,13 +29,28 @@ def dsm_collection() -> pystac.Collection:
 
 
 @pytest.fixture(scope="module")
+def dsm_items(dsm_collection: pystac.Collection) -> list[pystac.Item]:
+    return list(dsm_collection.get_items(recursive=True))
+
+
+@pytest.fixture(scope="module")
 def multibands_collection() -> pystac.Collection:
     return load_collection(RASTER_FIXTURE_PATH / "multibands_config.json")
 
 
 @pytest.fixture(scope="module")
+def multibands_items(multibands_collection: pystac.Collection) -> list[pystac.Item]:
+    return list(multibands_collection.get_items(recursive=True))
+
+
+@pytest.fixture(scope="module")
 def area_collection() -> pystac.Collection:
     return load_collection(VECTOR_FIXTURE_PATH / "area_config.json")
+
+
+@pytest.fixture(scope="module")
+def area_items(area_collection: pystac.Collection) -> list[pystac.Item]:
+    return list(area_collection.get_items(recursive=True))
 
 
 @pytest.fixture(scope="module")

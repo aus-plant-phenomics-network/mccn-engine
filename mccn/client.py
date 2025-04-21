@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Mapping
+from typing import TYPE_CHECKING, Callable, Mapping, Sequence
 
 import pystac
 import pystac_client
 import xarray as xr
 
-from mccn._types import CRS_T, AnchorPos_T, BBox_T, Resolution_T, Shape_T
 from mccn.config import (
     CubeConfig,
     FilterConfig,
@@ -23,6 +22,17 @@ from mccn.parser import Parser
 if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
 
+    from mccn._types import (
+        CRS_T,
+        AnchorPos_T,
+        BBox_T,
+        MergeMethods,
+        Number_T,
+        Resolution_T,
+        Shape_T,
+        TimeGroupby,
+    )
+
 
 class EndpointException(Exception): ...
 
@@ -33,7 +43,10 @@ class EndpointType(Exception): ...
 class MCCN:
     def __init__(
         self,
-        endpoint: str | Path | tuple[str, str],
+        # Item discovery
+        endpoint: str | Path | tuple[str, str] | None = None,
+        collection: pystac.Collection | None = None,
+        items: Sequence[pystac.Item] | None = None,
         # Geobox config
         shape: Shape_T | None = None,
         resolution: Resolution_T | None = None,
@@ -45,6 +58,11 @@ class MCCN:
         start_ts: datetime.datetime | None = None,
         end_ts: datetime.datetime | None = None,
         bands: set[str] | None = None,
+        nodata: Number_T | Mapping[str, Number_T] = 0,
+        nodata_fallback: Number_T = 0,
+        categorical_encoding_start: int = 1,
+        time_groupby: TimeGroupby = "time",
+        merge_alg: MergeMethods = "replace",
         # Cube config
         x_coord: str = "x",
         y_coord: str = "y",
@@ -58,30 +76,55 @@ class MCCN:
         raster_load_config: RasterLoadConfig | None = None,
     ) -> None:
         # Fetch Collection
-        self.endpoint = endpoint
-        self.collection = self.get_collection(endpoint)
+        self.items = self.get_items(items, collection, endpoint)
         # Make geobox
         self.geobox = self.build_geobox(
-            self.collection, shape, resolution, bbox, anchor, crs, geobox
+            self.items, shape, resolution, bbox, anchor, crs, geobox
         )
         # Prepare configs
         self.filter_config = FilterConfig(self.geobox, start_ts, end_ts, bands)
         self.cube_config = CubeConfig(x_coord, y_coord, t_coord)
-        self.process_config = ProcessConfig(rename_bands, process_bands)
+        self.process_config = ProcessConfig(
+            rename_bands,
+            process_bands,
+            nodata,
+            nodata_fallback,
+            categorical_encoding_start,
+            time_groupby,
+            merge_alg,
+        )
         self.point_load_config = point_load_config
         self.vector_load_config = vector_load_config
         self.raster_load_config = raster_load_config
 
         # Parse items
-        self.parser = Parser(self.filter_config, self.collection)
+        self.parser = Parser(self.filter_config, self.items)
         self.parser()
-        self._point_loader: PointLoader | None = None
-        self._vector_loader: VectorLoader | None = None
-        self._raster_loader: RasterLoader | None = None
+        self.point_loader: PointLoader = PointLoader(
+            self.parser.point,
+            self.filter_config,
+            self.cube_config,
+            self.process_config,
+            self.point_load_config,
+        )
+        self.vector_loader = VectorLoader(
+            self.parser.vector,
+            self.filter_config,
+            self.cube_config,
+            self.process_config,
+            self.vector_load_config,
+        )
+        self.raster_loader: RasterLoader = RasterLoader(
+            self.parser.raster,
+            self.filter_config,
+            self.cube_config,
+            self.process_config,
+            self.raster_load_config,
+        )
 
     @staticmethod
     def build_geobox(
-        collection: pystac.Collection,
+        items: list[pystac.Item],
         shape: Shape_T | None = None,
         resolution: Resolution_T | None = None,
         bbox: BBox_T | None = None,
@@ -90,61 +133,27 @@ class MCCN:
         # Filter config
         geobox: GeoBox | None = None,
     ) -> GeoBox:
+        if geobox:
+            return geobox
         try:
-            if resolution and not isinstance(resolution, tuple):
-                resolution = (resolution, resolution)
-            if shape and not isinstance(shape, tuple):
-                shape = (shape, shape)
-            builder = (
-                GeoBoxBuilder(crs, anchor)
-                .set_bbox(bbox)
-                .set_resolution(*resolution)
-                .set_shape(*shape)
-                .set_geobox(geobox)
-            )
+            builder = GeoBoxBuilder(crs, anchor=anchor)
+            if bbox:
+                builder = builder.set_bbox(bbox)
+            if resolution is not None:
+                if not isinstance(resolution, tuple):
+                    resolution = (resolution, resolution)
+                builder = builder.set_resolution(*resolution)
+            if shape:
+                if not isinstance(shape, tuple):
+                    shape = (shape, shape)
+                builder = builder.set_shape(*shape)
             return builder.build()
         except Exception:
             if not shape:
                 raise ValueError(
                     "Unable to build geobox. For simplicity, user can pass a shape parameter, which will be used to build a geobox from collection."
                 )
-            return GeoBoxBuilder.from_collection(collection, shape, anchor)
-
-    @property
-    def point_loader(self) -> PointLoader:
-        if not self._point_loader:
-            self._point_loader = PointLoader(
-                self.parser.point,
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.point_load_config,
-            )
-        return self._point_loader
-
-    @property
-    def vector_loader(self) -> VectorLoader:
-        if not self._vector_loader:
-            self._vector_loader = VectorLoader(
-                self.parser.vector,
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.vector_load_config,
-            )
-        return self._vector_loader
-
-    @property
-    def raster_loader(self) -> RasterLoader:
-        if not self._raster_loader:
-            self._raster_loader = RasterLoader(
-                self.parser.raster,
-                self.filter_config,
-                self.cube_config,
-                self.process_config,
-                self.raster_load_config,
-            )
-        return self._raster_loader
+            return GeoBoxBuilder.from_items(items, shape, anchor)
 
     def get_geobox(
         self,
@@ -176,14 +185,30 @@ class MCCN:
         )
 
     @staticmethod
+    def get_items(
+        items: Sequence[pystac.Item] | None = None,
+        collection: pystac.Collection | None = None,
+        endpoint: str | tuple[str, str] | Path | None = None,
+    ) -> list[pystac.Item]:
+        if items:
+            return list(items)
+        collection = MCCN.get_collection(endpoint, collection)
+        return list(collection.get_items(recursive=True))
+
+    @staticmethod
     def get_collection(
-        endpoint: str | tuple[str, str] | Path,
+        endpoint: str | tuple[str, str] | Path | None,
+        collection: pystac.Collection | None = None,
     ) -> pystac.Collection:
         """Try to load collection from endpoint.
 
         Raises `EndpointType` if endpoint is not an acceptable type, or `EndpointException` if
         endpoint is not reachable
         """
+        if collection:
+            return collection
+        if not endpoint:
+            raise ValueError("Either a collection or an endpoint must be provided")
         try:
             if isinstance(endpoint, tuple):
                 href, collection_id = endpoint
