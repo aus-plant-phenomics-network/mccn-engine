@@ -176,3 +176,47 @@ def test_raster_month_generation_expects_full_matching(
     # Compare values
     diff = ds["dsm"].values[index, :, :] - ref_ds["dsm"].values[0, :, :]
     assert diff.max() == 0
+
+
+@pytest.mark.parametrize(
+    "start,end,groupby,exp",
+    [
+        (
+            None,
+            None,
+            "year",
+            ["2015-01-01T00:00:00", "2016-01-01T00:00:00"],
+        ),
+        ("2016-01-01T00:00:00Z", None, "year", ["2016-01-01T00:00:00"]),
+        (None, "2016-01-01T00:00:00Z", "year", ["2015-01-01T00:00:00"]),
+        (
+            "2015-11-01T00:00:00Z",
+            "2016-01-01T00:00:00Z",
+            "month",
+            ["2015-11-01T00:00:00"],
+        ),
+        (
+            "2015-11-01T00:00:00Z",
+            "2016-10-30T00:00:00Z",
+            "month",
+            ["2015-11-01T00:00:00", "2016-10-01T00:00:00"],
+        ),
+    ],
+)
+def test_raster_timeslicing(
+    start: str | None,
+    end: str | None,
+    groupby: TimeGroupby,
+    exp: list[pd.Timestamp],
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
+) -> None:
+    client = MCCN(
+        collection=dsm_collection,
+        geobox=dsm_geobox,
+        start_ts=start,
+        end_ts=end,
+        time_groupby=groupby,
+    )
+    ds = client.load_raster()
+    assert all(pd.DatetimeIndex(ds["time"].values) == [pd.Timestamp(t) for t in exp])

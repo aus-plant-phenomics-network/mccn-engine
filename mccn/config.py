@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 from typing import TYPE_CHECKING, Callable
 
-from mccn._types import MergeMethods, Number_T, TimeGroupby
+import pandas as pd
+
+from mccn._types import Number_T, TimeGroupby
 
 if TYPE_CHECKING:
     import datetime
@@ -18,12 +21,50 @@ class FilterConfig:
 
     geobox: GeoBox
     """Spatial extent"""
-    start_ts: datetime.datetime | None = None
+    start_ts: pd.Timestamp | None = None
     """Temporal extent - start"""
-    end_ts: datetime.datetime | None = None
+    end_ts: pd.Timestamp | None = None
     """Temporal extent - end"""
     bands: set[str] | None = None
     """Bands to be loaded"""
+    mask_only: bool = False
+    """If true, will only load the mask layer for vector dtype"""
+    use_all_vectors: bool = True
+    """When loading masks, only use band matching vector items or all. Default to False (use all vectors for MASK layer)"""
+
+    @cached_property
+    def start_utc(self) -> pd.Timestamp:
+        return self.to_timestamp(self.start_ts)
+
+    @cached_property
+    def start_no_tz(self) -> pd.Timestamp:
+        return self.to_timestamp(self.start_ts, utc=False)
+
+    @cached_property
+    def end_utc(self) -> pd.Timestamp:
+        return self.to_timestamp(self.end_ts)
+
+    @cached_property
+    def end_no_tz(self) -> pd.Timestamp:
+        return self.to_timestamp(self.end_ts, utc=False)
+
+    @staticmethod
+    def to_timestamp(
+        ts: datetime.datetime | pd.Timestamp | str | None, utc: bool = True
+    ) -> pd.Timestamp | None:
+        if not ts:
+            return None
+        # Try parsing timestamp information
+        try:
+            ts = pd.Timestamp(ts)
+        except Exception as e:
+            raise ValueError(f"Invalid timestamp value: {ts}") from e
+
+        if ts.tzinfo is not None:
+            ts = ts.tz_convert("utc")
+        else:
+            ts = ts.tz_localize("utc")
+        return ts if utc else ts.tz_localize(None)
 
 
 @dataclass
@@ -40,6 +81,8 @@ class CubeConfig:
     """Name of the z coordinate"""
     use_z: bool = False
     """Whether to use z coordinate"""
+    mask_name: str = "__MASK__"
+    """Name of the mask layer"""
 
 
 @dataclass
@@ -58,8 +101,6 @@ class ProcessConfig:
     """The smallest legend value when converting from categorical values to numerical"""
     time_groupby: TimeGroupby = "time"
     """Time groupby value"""
-    merge_alg: MergeMethods = "replace"
-    """How to resolve merging for layer aggregation"""
 
     def __post_init__(self) -> None:
         if (

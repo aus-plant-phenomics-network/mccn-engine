@@ -104,3 +104,9 @@ ignore_missing_imports = true
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore:.*deprecated.*:DeprecationWarning",
+]

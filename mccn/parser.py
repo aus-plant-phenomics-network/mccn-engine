@@ -143,22 +143,17 @@ def parse_item(item: pystac.Item) -> ParsedItem:
     config = StacGeneratorFactory.extract_item_config(item)
     location = config.location
     bbox = cast(BBox_T, item.bbox)
-    start = cast(
-        datetime.datetime,
-        (
-            pd.Timestamp(item.properties["start_datetime"])
-            if "start_datetime" in item.properties
-            else item.datetime
-        ),
+    start = (
+        pd.Timestamp(item.properties["start_datetime"])
+        if "start_datetime" in item.properties
+        else pd.Timestamp(item.datetime)
     )
-    end = cast(
-        datetime.datetime,
-        (
-            pd.Timestamp(item.properties["end_datetime"])
-            if "end_datetime" in item.properties
-            else item.datetime
-        ),
+    end = (
+        pd.Timestamp(item.properties["end_datetime"])
+        if "end_datetime" in item.properties
+        else pd.Timestamp(item.datetime)
     )
+
     if isinstance(config, PointConfig):
         return _parse_point(config, location, bbox, start, end, item)
     if isinstance(config, VectorConfig):
@@ -217,14 +212,21 @@ def date_filter(
 
 
 def _filter_point(
-    item: ParsedPoint, bands: Sequence[str] | set[str]
+    item: ParsedPoint,
+    bands: Sequence[str] | set[str] | None,
 ) -> ParsedPoint | None:
+    if not bands:
+        return item
+    item.load_bands = set([band for band in bands if band in item.bands])
     if item.load_bands:
         return item
     return None
 
 
-def _update_vector_load_aux_band_hook(item: ParsedVector) -> ParsedVector:
+def update_load_aux_bands(item: ParsedVector) -> ParsedVector:
+    """Add join columns (left on, right on) and date column (if provided) into bands to load
+    Only runs if there is at least one data bands (none of the above) to be loaded from join file
+    """
     if item.config.join_config and item.load_aux_bands:
         join_config = item.config.join_config
         item.load_bands.add(join_config.left_on)
@@ -234,14 +236,39 @@ def _update_vector_load_aux_band_hook(item: ParsedVector) -> ParsedVector:
     return item
 
 
-def _filter_vector(item: ParsedVector, bands: Sequence[str] | set[str]) -> ParsedVector:
+def _filter_vector(
+    item: ParsedVector,
+    bands: Sequence[str] | set[str] | None,
+    filter_config: FilterConfig,
+) -> ParsedVector | None:
+    # handle mask only -> Don't load any band
+    if filter_config.mask_only:
+        item.load_aux_bands.clear()
+        item.load_bands.clear()
+        return item
+    # handle bands being None - load everything
+    if not bands:
+        return update_load_aux_bands(item)
+    # Filter bands
     item.load_aux_bands = set([band for band in bands if band in item.aux_bands])
-    return _update_vector_load_aux_band_hook(item)
+    item.load_bands = set([band for band in bands if band in item.bands])
+    item = update_load_aux_bands(item)
+    # If use all vectors -> load all items
+    if filter_config.use_all_vectors:
+        return item
+    # If use only matching vectors -> remove items that don't match any band
+    if item.load_bands or item.load_aux_bands:
+        return item
+    return None
 
 
 def _filter_raster(
-    item: ParsedRaster, bands: Sequence[str] | set[str]
+    item: ParsedRaster,
+    bands: Sequence[str] | set[str] | None,
 ) -> ParsedRaster | None:
+    if not bands:
+        return item
+    item.load_bands = set([band for band in bands if band in item.bands])
     alias = set([band for band in bands if band in item.alias])
     item.load_bands.update(alias)
     if item.load_bands:
@@ -250,14 +277,16 @@ def _filter_raster(
 
 
 def band_filter(
-    item: ParsedItem | None, bands: Sequence[str] | set[str] | None
+    item: ParsedItem | None,
+    bands: Sequence[str] | set[str] | None,
+    filter_config: FilterConfig,
 ) -> ParsedItem | None:
     """Parse and filter an item based on requested bands
 
     If the bands parameter is None or empty, all items' bands should be loaded. For
     point and raster data, the loaded bands are columns/attributes described
     in column_info and band_info. For raster data, the loaded bands are columns
-    described in column_info and join_column_info is not null.
+    described in column_info and join_config.column_info.
 
     If the bands parameter is not empty, items that contain any sublist of the requested bands
     are selected for loading. Items with no overlapping band will not be loaded.
@@ -282,15 +311,10 @@ def band_filter(
     """
     if not item:
         return None
-    if not bands:
-        if isinstance(item, ParsedVector):
-            item = _update_vector_load_aux_band_hook(item)
-        return item
-    item.load_bands = set([band for band in bands if band in item.bands])
     if isinstance(item, ParsedPoint):
         return _filter_point(item, bands)
     if isinstance(item, ParsedVector):
-        return _filter_vector(item, bands)
+        return _filter_vector(item, bands, filter_config)
     if isinstance(item, ParsedRaster):
         return _filter_raster(item, bands)
     raise ValueError(f"Invalid item type: {type(item)}")
@@ -346,9 +370,11 @@ class Parser:
         parsed_item = parse_item(item)
         parsed_item = bbox_filter(parsed_item, self.bbox)
         parsed_item = date_filter(
-            parsed_item, self.filter_config.start_ts, self.filter_config.end_ts
+            parsed_item,
+            self.filter_config.start_utc,
+            self.filter_config.end_utc,
         )
-        parsed_item = band_filter(parsed_item, self.bands)
+        parsed_item = band_filter(parsed_item, self.bands, self.filter_config)
         # Categorise parsed items
         if parsed_item:
             if isinstance(parsed_item.config, VectorConfig):

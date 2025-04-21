@@ -4,11 +4,10 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable, Literal
 
 import numpy as np
+import pandas as pd
 from pyproj.crs.crs import CRS
 
 if TYPE_CHECKING:
-    import datetime
-
     import pystac
     from stac_generator.core import (
         PointConfig,
@@ -43,9 +42,9 @@ class ParsedItem:
     """Data asset href"""
     bbox: BBox_T
     """Data asset bbox - in WGS84"""
-    start: datetime.datetime
+    start: pd.Timestamp
     """Data asset start_datetime. Defaults to item.datetime if item.start_datetime is null"""
-    end: datetime.datetime
+    end: pd.Timestamp
     """Data asset end_datetime. Defaults to item.datetime if item.end_datetime is null"""
     config: SourceConfig
     """STAC Generator config - used for loading data into datacube"""

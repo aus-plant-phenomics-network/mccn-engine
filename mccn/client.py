@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Mapping, Sequence
 
+import pandas as pd
 import pystac
 import pystac_client
 import xarray as xr
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
         CRS_T,
         AnchorPos_T,
         BBox_T,
-        MergeMethods,
         Number_T,
         Resolution_T,
         Shape_T,
@@ -55,21 +55,23 @@ class MCCN:
         crs: CRS_T = 4326,
         # Filter config
         geobox: GeoBox | None = None,
-        start_ts: datetime.datetime | None = None,
-        end_ts: datetime.datetime | None = None,
+        start_ts: str | pd.Timestamp | datetime.datetime | None = None,
+        end_ts: str | pd.Timestamp | datetime.datetime | None = None,
         bands: set[str] | None = None,
-        nodata: Number_T | Mapping[str, Number_T] = 0,
-        nodata_fallback: Number_T = 0,
-        categorical_encoding_start: int = 1,
-        time_groupby: TimeGroupby = "time",
-        merge_alg: MergeMethods = "replace",
+        mask_only: bool = False,
+        use_all_vectors: bool = True,
         # Cube config
         x_coord: str = "x",
         y_coord: str = "y",
         t_coord: str = "time",
+        mask_name: str = "__MASK__",
         # Process config
         rename_bands: Mapping[str, str] | None = None,
         process_bands: Mapping[str, Callable] | None = None,
+        nodata: Number_T | Mapping[str, Number_T] = 0,
+        nodata_fallback: Number_T = 0,
+        categorical_encoding_start: int = 1,
+        time_groupby: TimeGroupby = "time",
         # Additional configs
         point_load_config: PointLoadConfig | None = None,
         vector_load_config: VectorLoadConfig | None = None,
@@ -82,8 +84,20 @@ class MCCN:
             self.items, shape, resolution, bbox, anchor, crs, geobox
         )
         # Prepare configs
-        self.filter_config = FilterConfig(self.geobox, start_ts, end_ts, bands)
-        self.cube_config = CubeConfig(x_coord, y_coord, t_coord)
+        self.filter_config = FilterConfig(
+            geobox=self.geobox,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            bands=bands,
+            mask_only=mask_only,
+            use_all_vectors=use_all_vectors,
+        )
+        self.cube_config = CubeConfig(
+            x_coord=x_coord,
+            y_coord=y_coord,
+            t_coord=t_coord,
+            mask_name=mask_name,
+        )
         self.process_config = ProcessConfig(
             rename_bands,
             process_bands,
@@ -91,7 +105,6 @@ class MCCN:
             nodata_fallback,
             categorical_encoding_start,
             time_groupby,
-            merge_alg,
         )
         self.point_load_config = point_load_config
         self.vector_load_config = vector_load_config
@@ -155,8 +168,8 @@ class MCCN:
                 )
             return GeoBoxBuilder.from_items(items, shape, anchor)
 
+    @staticmethod
     def get_geobox(
-        self,
         collection: pystac.Collection,
         geobox: GeoBox | None = None,
         shape: int | tuple[int, int] | None = None,

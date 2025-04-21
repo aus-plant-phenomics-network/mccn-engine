@@ -35,10 +35,6 @@ class RasterizeConfig:
 
 @dataclass
 class VectorLoadConfig:
-    load_mask_only: bool = False
-    """If true, will only load the mask layer"""
-    mask_layer_name: str = "__MASK__"
-    """Name of the mask layer"""
     rasterize_config: RasterizeConfig | Mapping[str, RasterizeConfig] = field(
         default_factory=RasterizeConfig
     )

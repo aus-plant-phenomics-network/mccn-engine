@@ -11,13 +11,14 @@ import xarray as xr
 
 from mccn._types import ParsedRaster
 from mccn.loader.base import Loader
-from mccn.loader.raster.config import RasterLoadConfig
+from mccn.loader.raster.config import RasterLoadConfig, set_groupby
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import pystac
     from odc.geo.geobox import GeoBox
+    from odc.stac._stac_load import GroupbyCallback
 
     from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 
@@ -40,12 +41,10 @@ class RasterLoader(Loader[ParsedRaster]):
         load_config: RasterLoadConfig | None = None,
         **kwargs: Any,
     ) -> None:
+        self.load_config = load_config if load_config else RasterLoadConfig()
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
-        self.load_config = (
-            load_config
-            if load_config
-            else RasterLoadConfig.from_process_config(self.process_config)
-        )
+        self.groupby = set_groupby(self.process_config.time_groupby)
+        self.period = self.process_config.period
 
     def _load(self) -> xr.Dataset:
         band_map = groupby_bands(self.items)
@@ -56,8 +55,12 @@ class RasterLoader(Loader[ParsedRaster]):
                     items=band_items,
                     geobox=self.filter_config.geobox,
                     bands=band_info,
-                    cube_config=self.cube_config,
+                    x_coord=self.cube_config.x_coord,
+                    y_coord=self.cube_config.y_coord,
+                    t_coord=self.cube_config.t_coord,
                     raster_config=self.load_config,
+                    period=self.period,
+                    groupby=self.groupby,
                 )
             except Exception as e:
                 raise RuntimeError(
@@ -91,24 +94,30 @@ def read_raster_asset(
     items: Sequence[pystac.Item],
     bands: tuple[str, ...] | None,
     geobox: GeoBox | None,
-    cube_config: CubeConfig,
+    x_coord: str,
+    y_coord: str,
+    t_coord: str,
+    groupby: str | GroupbyCallback,
+    period: str | None,
     raster_config: RasterLoadConfig,
 ) -> xr.Dataset:
-    ds = odc.stac.load(items, bands, geobox=geobox, **asdict(raster_config))
+    ds = odc.stac.load(
+        items,
+        bands,
+        geobox=geobox,
+        groupby=groupby,
+        **asdict(raster_config),
+    )
     # NOTE: odc stac load uses odc.geo.xr.xr_coords to set dimension name
     # it either uses latitude/longitude or y/x depending on the underlying crs
     # so there is no proper way to know which one it uses aside from trying
     if "latitude" in ds.dims and "longitude" in ds.dims:
-        ds = ds.rename(
-            {"longitude": cube_config.x_coord, "latitude": cube_config.y_coord}
-        )
+        ds = ds.rename({"longitude": x_coord, "latitude": y_coord})
     elif "x" in ds.dims and "y" in ds.dims:
-        ds = ds.rename({"x": cube_config.x_coord, "y": cube_config.y_coord})
+        ds = ds.rename({"x": x_coord, "y": y_coord})
     if "time" in ds.dims:
-        ds = ds.rename({"time": cube_config.t_coord})
-    if raster_config.period is not None:
-        ts = pd.DatetimeIndex(ds[cube_config.t_coord].values)
-        ds = ds.assign_coords(
-            {cube_config.t_coord: ts.to_period(raster_config.period).start_time}
-        )
+        ds = ds.rename({"time": t_coord})
+    if period is not None:
+        ts = pd.DatetimeIndex(ds[t_coord].values)
+        ds = ds.assign_coords({t_coord: ts.to_period(period).start_time})
     return ds

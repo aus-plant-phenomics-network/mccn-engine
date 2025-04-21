@@ -7,7 +7,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from rasterio.features import rasterize
+from rasterio.features import rasterize as _rasterize
 from stac_generator.core.base.utils import (
     calculate_timezone,
     read_join_asset,
@@ -68,13 +68,15 @@ def field_rasterize(
     dates: pd.Series,
     geobox: GeoBox,
     rasterize_config: RasterizeConfig,
-    cube_config: CubeConfig,
+    x_coord: str,
+    y_coord: str,
+    t_coord: str,
 ) -> tuple[tuple[str, str, str], np.ndarray]:
     raster: list[np.ndarray] = []
     for date in dates:
-        mask = (gdf[cube_config.t_coord] == date) & (~gdf[field].isna())
+        mask = (gdf[t_coord] == date) & (~gdf[field].isna())
         raster.append(
-            rasterize(
+            _rasterize(
                 (
                     (geom, value)
                     for geom, value in zip(
@@ -91,45 +93,49 @@ def field_rasterize(
     # Stack all date layers to datacube and return result
     ds_data = np.stack(raster, axis=0)
     return (
-        cube_config.t_coord,
-        cube_config.y_coord,
-        cube_config.x_coord,
+        t_coord,
+        y_coord,
+        x_coord,
     ), ds_data
 
 
-def groupby(
+def rasterize(
     data: Mapping[str, gpd.GeoDataFrame],
     coords: Mapping[Hashable, xr.DataArray],
     geobox: GeoBox,
     fields: set[str],
-    cube_config: CubeConfig,
     vector_config: VectorLoadConfig,
-    process_config: ProcessConfig,
+    x_coord: str,
+    y_coord: str,
+    t_coord: str,
+    mask_name: str,
+    nodata: Number_T | Mapping[str, Number_T],
+    nodata_fallback: Number_T,
+    categorical_encoding_start: int,
+    period: str | None,
 ) -> xr.Dataset:
     if not data:
         return xr.Dataset()
     ds_data = {}
     ds_attrs: dict[str, dict[str, Any]] = {}
 
-    # if load as mask - load mask only
-    if vector_config.load_mask_only:
-        fields.clear()
-
     # Add mask layer to field to load
-    fields.add(vector_config.mask_layer_name)
+    fields.add(mask_name)
     # Make mask attrs
-    ds_attrs[vector_config.mask_layer_name] = {}
+    ds_attrs[mask_name] = {}
     # Assign mapping id to each df
-    for idx, (k, v) in enumerate(
-        data.items(), start=process_config.categorical_encoding_start
-    ):
-        v[vector_config.mask_layer_name] = idx
-        ds_attrs[vector_config.mask_layer_name][str(idx)] = k
+    for idx, (k, v) in enumerate(data.items(), start=categorical_encoding_start):
+        v[mask_name] = idx
+        ds_attrs[mask_name][str(idx)] = k
 
     # Concatenate
     gdf = pd.concat(data.values())
+    # Prepare groupby for efficiency
+    # Need to remove timezone information. Xarray time does not use tz
+    if period is not None:
+        gdf[t_coord] = gdf[t_coord].dt.to_period(period).dt.start_time
     # Prepare dates
-    dates = pd.Series(sorted(gdf[cube_config.t_coord].unique()))
+    dates = pd.Series(sorted(gdf[t_coord].unique()))
 
     # Rasterise field by field
     for field in fields:
@@ -137,9 +143,9 @@ def groupby(
             ds_attrs,
             field,
             gdf,
-            process_config.categorical_encoding_start,
-            process_config.nodata,
-            process_config.nodata_fallback,
+            categorical_encoding_start,
+            nodata,
+            nodata_fallback,
         )
         rasterize_config = (
             vector_config.rasterize_config
@@ -147,10 +153,17 @@ def groupby(
             else vector_config.rasterize_config.get(field, RasterizeConfig())
         )
         ds_data[field] = field_rasterize(
-            gdf, field, dates, geobox, rasterize_config, cube_config
+            gdf,
+            field,
+            dates,
+            geobox,
+            rasterize_config,
+            x_coord,
+            y_coord,
+            t_coord,
         )
     ds = xr.Dataset(ds_data, coords=coords, attrs=ds_attrs)
-    ds[cube_config.t_coord] = dates.values
+    ds[t_coord] = dates.values
     return ds
 
 
@@ -163,6 +176,7 @@ def read_asset(
 
     Load vector asset. If a join asset is provided, will load the
     join asset and perform a join operation on common column (Inner Join)
+    Convert all datetime to UTC but strip off timezone information
 
     Args:
         item (ParsedVector): parsed vector item
@@ -204,10 +218,13 @@ def read_asset(
     # Convert CRS
     gdf.to_crs(geobox.crs, inplace=True)
     # Process date
-    if not date_col:
-        gdf[t_coord] = item.item.datetime
-    else:
+    if date_col and date_col in item.load_aux_bands:
         gdf.rename(columns={date_col: t_coord}, inplace=True)
+    else:
+        gdf[t_coord] = item.item.datetime
+
+    # Convert to UTC and remove timezone info
+    gdf[t_coord] = gdf[t_coord].dt.tz_convert("utc").dt.tz_localize(None)
     return gdf
 
 
@@ -246,7 +263,7 @@ class VectorLoader(Loader[ParsedVector]):
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
 
     def _collect_fields_to_load(self) -> set[str]:
-        if self.load_config.load_mask_only:
+        if self.filter_config.mask_only:
             return set()
         fields = set()
         for item in self.items:
@@ -267,12 +284,18 @@ class VectorLoader(Loader[ParsedVector]):
                 read_asset(item, self.filter_config.geobox, self.cube_config.t_coord),
                 self.process_config,
             )
-        return groupby(
-            data,
-            self.coords,
-            self.filter_config.geobox,
-            fields,
-            self.cube_config,
-            self.load_config,
-            self.process_config,
+        return rasterize(
+            data=data,
+            coords=self.coords,
+            geobox=self.filter_config.geobox,
+            fields=fields,
+            vector_config=self.load_config,
+            x_coord=self.cube_config.x_coord,
+            y_coord=self.cube_config.y_coord,
+            t_coord=self.cube_config.t_coord,
+            mask_name=self.cube_config.mask_name,
+            nodata=self.process_config.nodata,
+            nodata_fallback=self.process_config.nodata_fallback,
+            categorical_encoding_start=self.process_config.categorical_encoding_start,
+            period=self.process_config.period,
         )

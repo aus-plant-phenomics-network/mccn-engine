@@ -88,7 +88,11 @@ class Loader(abc.ABC, Generic[T]):
     ) -> xr.Dataset:
         # Filter based on dates and geobox
         data = data.sel(
-            {cube_config.t_coord: slice(filter_config.start_ts, filter_config.end_ts)}
+            {
+                cube_config.t_coord: slice(
+                    filter_config.start_no_tz, filter_config.end_no_tz
+                )
+            }
         )
         return data
 

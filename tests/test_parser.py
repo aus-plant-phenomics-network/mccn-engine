@@ -145,6 +145,15 @@ def test_geobox_filter(
         ),
         ({"ms-red", "dsm"}, {"rgb-alias": {"ms-red"}, "dsm": {"dsm"}}),
         ({"dsm"}, {"dsm": {"dsm"}}),
+        (
+            {"red", "green", "blue", "non_matching"},
+            {
+                "rgb": {"red", "green", "blue"},
+                "rgb-alias": {"red", "green", "blue"},
+            },
+        ),
+        ({"dsm", "non_matching"}, {"dsm": {"dsm"}}),
+        ({"non_matching"}, set()),
     ],
     ids=[
         "None",
@@ -153,6 +162,9 @@ def test_geobox_filter(
         "ms-red, green, blue",
         "ms-red, dsm",
         "dsm",
+        "red, green, blue, non_matching",
+        "dsm, non_matching",
+        "non_matching",
     ],
 )
 def test_raster_band_filter(
@@ -172,88 +184,470 @@ def test_raster_band_filter(
 
 
 @pytest.mark.parametrize(
-    "bands,exp",
+    "bands, mask_only, use_all_vectors, exp",
     [
         (
             None,
+            False,
+            True,
             {
-                "point-cook-mask": set(),
-                "hoppers-crossing-name": {"name"},
-                "werribee-crime": {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
                     "name",
                     "area_sqkm",
                     "lga_name",
                     "crime_incidents",
                     "crime_rate",
                 },
-                "sunbury-crime": {
+                "sunbury_crime": {
                     "name",
                     "area_sqkm",
                     "lga_name",
                     "crime_incidents",
                     "crime_rate",
                 },
-                "sunbury-population": {"name", "area_sqkm", "population", "date"},
+                "sunbury_population": {"name", "area_sqkm", "population", "date"},
+            },
+        ),
+        (
+            None,
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            None,
+            False,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
+                    "name",
+                    "area_sqkm",
+                    "lga_name",
+                    "crime_incidents",
+                    "crime_rate",
+                },
+                "sunbury_crime": {
+                    "name",
+                    "area_sqkm",
+                    "lga_name",
+                    "crime_incidents",
+                    "crime_rate",
+                },
+                "sunbury_population": {"name", "area_sqkm", "population", "date"},
+            },
+        ),
+        (
+            None,
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
             },
         ),
         (
             {"name"},
+            False,
+            True,
             {
-                "point-cook-mask": set(),
-                "hoppers-crossing-name": {"name"},
-                "werribee-crime": {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
                     "name",
                 },
-                "sunbury-crime": {
+                "sunbury_crime": {
                     "name",
                 },
-                "sunbury-population": {"name", "date"},
+                "sunbury_population": {"name", "date"},
+            },
+        ),
+        (
+            {"name"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"name"},
+            False,
+            False,
+            {
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
+                    "name",
+                },
+                "sunbury_crime": {
+                    "name",
+                },
+                "sunbury_population": {"name", "date"},
+            },
+        ),
+        (
+            {"name"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
             },
         ),
         (
             {"area_sqkm"},
+            False,
+            True,
             {
-                "point-cook-mask": set(),
-                "hoppers-crossing-name": set(),
-                "werribee-crime": {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": {
                     "area_sqkm",
                 },
-                "sunbury-crime": {
+                "sunbury_crime": {
                     "area_sqkm",
                 },
-                "sunbury-population": {"area_sqkm"},
+                "sunbury_population": {"area_sqkm"},
+            },
+        ),
+        (
+            {"area_sqkm"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"area_sqkm"},
+            False,
+            False,
+            {
+                "werribee_crime": {
+                    "area_sqkm",
+                },
+                "sunbury_crime": {
+                    "area_sqkm",
+                },
+                "sunbury_population": {"area_sqkm"},
+            },
+        ),
+        (
+            {"area_sqkm"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"population"},
+            False,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": {"population", "date", "name"},
+            },
+        ),
+        (
+            {"population"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"population"},
+            False,
+            False,
+            {
+                "sunbury_population": {"population", "date", "name"},
+            },
+        ),
+        (
+            {"population"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
             },
         ),
         (
             {"lga_name"},
+            False,
+            True,
             {
-                "point-cook-mask": set(),
-                "hoppers-crossing-name": set(),
-                "werribee-crime": {"lga_name", "name"},
-                "sunbury-crime": {"lga_name", "name"},
-                "sunbury-population": set(),
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": {"lga_name", "name"},
+                "sunbury_crime": {"lga_name", "name"},
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"lga_name"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"lga_name"},
+            False,
+            False,
+            {
+                "werribee_crime": {"lga_name", "name"},
+                "sunbury_crime": {"lga_name", "name"},
+            },
+        ),
+        (
+            {"lga_name"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
             },
         ),
         (
             {"name", "area_sqkm"},
+            False,
+            True,
             {
-                "point-cook-mask": set(),
-                "hoppers-crossing-name": {"name"},
-                "werribee-crime": {"name", "area_sqkm"},
-                "sunbury-crime": {"name", "area_sqkm"},
-                "sunbury-population": {"name", "date", "area_sqkm"},
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {"name", "area_sqkm"},
+                "sunbury_crime": {"name", "area_sqkm"},
+                "sunbury_population": {"name", "date", "area_sqkm"},
+            },
+        ),
+        (
+            {"name", "area_sqkm"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"name", "area_sqkm"},
+            False,
+            False,
+            {
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {"name", "area_sqkm"},
+                "sunbury_crime": {"name", "area_sqkm"},
+                "sunbury_population": {"name", "date", "area_sqkm"},
+            },
+        ),
+        (
+            {"name", "area_sqkm"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"non_matching"},
+            False,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"non_matching"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        ({"non_matching"}, False, False, []),
+        (
+            {"non_matching"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"name", "non_matching"},
+            False,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
+                    "name",
+                },
+                "sunbury_crime": {
+                    "name",
+                },
+                "sunbury_population": {"name", "date"},
+            },
+        ),
+        (
+            {"name", "non_matching"},
+            True,
+            True,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
+            },
+        ),
+        (
+            {"name", "non_matching"},
+            False,
+            False,
+            {
+                "hoppers_crossing_name": {"name"},
+                "werribee_crime": {
+                    "name",
+                },
+                "sunbury_crime": {
+                    "name",
+                },
+                "sunbury_population": {"name", "date"},
+            },
+        ),
+        (
+            {"name", "non_matching"},
+            True,
+            False,
+            {
+                "point_cook_mask": set(),
+                "hoppers_crossing_name": set(),
+                "werribee_crime": set(),
+                "sunbury_crime": set(),
+                "sunbury_population": set(),
             },
         ),
     ],
-    ids=["None-all", "name", "area_sqkm", "lga_name", "name, area_sqkm"],
+    ids=[
+        "None-False-True",
+        "None-True-True",
+        "None-False-False",
+        "None-True-False",
+        "name-False-True",
+        "name-True-True",
+        "name-False-False",
+        "name-True-False",
+        "area-False-True",
+        "area-True-True",
+        "area-False-False",
+        "area-True-False",
+        "population-False-True",
+        "population-True-True",
+        "population-False-False",
+        "population-True-False",
+        "lga_name-False-True",
+        "lga_name-True-True",
+        "lga_name-False-False",
+        "lga_name-True-False",
+        "name+area-False-True",
+        "name+area-True-True",
+        "name+area-False-False",
+        "name+area-True-False",
+        "non_matching-False-True",
+        "non_matching-True-True",
+        "non_matching-False-False",
+        "non_matching-True-False",
+        "name+non_matching-False-True",
+        "name+non_matching-True-True",
+        "name+non_matching-False-False",
+        "name+non_matching-True-False",
+    ],
 )
 def test_vector_band_filter(
     area_items: list[pystac.Item],
     area_geobox: GeoBox,
     bands: set[str] | None,
+    mask_only: bool,
+    use_all_vectors: bool,
     exp: dict[str, set[str]],
 ) -> None:
-    parser = Parser(FilterConfig(bands=bands, geobox=area_geobox), area_items)
+    parser = Parser(
+        FilterConfig(
+            bands=bands,
+            geobox=area_geobox,
+            mask_only=mask_only,
+            use_all_vectors=use_all_vectors,
+        ),
+        area_items,
+    )
     parser()
     assert len(parser.vector) == len(exp)
     for item in parser.vector:

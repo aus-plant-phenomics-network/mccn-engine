@@ -5,12 +5,12 @@ import pytest
 from odc.stac.model import ParsedItem
 
 from mccn.loader.raster.config import (
-    RasterLoadConfig,
     _groupby_day,
     _groupby_hour,
     _groupby_minute,
     _groupby_month,
     _groupby_year,
+    set_groupby,
 )
 from tests.utils import RASTER_FIXTURE_PATH
 
@@ -58,5 +58,5 @@ def test_groupby_result(
     ids=["time", "id", "day", "hour", "minute", "month", "year", "callable"],
 )
 def test_set_groupby(param: Any, exp_value: str | Callable) -> None:
-    config = RasterLoadConfig(groupby=param)
-    assert config.groupby == exp_value
+    value = set_groupby(param)
+    assert value == exp_value
