@@ -13,17 +13,17 @@ jobs:
     needs: validate
     uses: ./.github/workflows/analysis_ci.yml
 
-  # test:
-  #   needs: validate
-  #   name: "test (${{ matrix.python-version }})"
-  #   strategy:
-  #     fail-fast: true
-  #     matrix:
-  #       python-version: [ "3.11", "3.12" ]
-  #   uses: ./.github/workflows/test_ci.yml
-  #   with:
-  #     python-version: ${{ matrix.python-version }}
-  #     do-coverage: ${{ matrix.python-version == 3.11 }}
+  test:
+    needs: validate
+    name: "test (${{ matrix.python-version }})"
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: [ "3.11", "3.12" ]
+    uses: ./.github/workflows/test_ci.yml
+    with:
+      python-version: ${{ matrix.python-version }}
+      do-coverage: ${{ matrix.python-version == 3.11 }}
 
   # sonar:
   #   needs:
