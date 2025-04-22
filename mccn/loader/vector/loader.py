@@ -19,47 +19,13 @@ from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 from mccn.loader.base import Loader
 from mccn.loader.utils import (
     bbox_from_geobox,
+    select_by_key,
+    update_attr_legend,
 )
 from mccn.loader.vector.config import RasterizeConfig, VectorLoadConfig
 
 if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
-
-
-def update_attr_legend(
-    attr_dict: dict[str, Any],
-    field: str,
-    frame: gpd.GeoDataFrame,
-    start: int = 1,
-    nodata: Number_T | Mapping[str, Number_T] = 0,
-    nodata_fallback: Number_T = 0,
-) -> None:
-    """Update attribute dict with legend for non numeric fields.
-
-    If the field is non-numeric - i.e. string, values will be categoricalised
-    i.e. 1, 2, 3, ...
-    The mapping will be updated in attr_dict under field name
-
-    Args:
-        attr_dict (dict[str, Any]): attribute dict
-        field (str): field name
-        frame (gpd.GeoDataFrame): input data frame
-        start (int): starting value
-    """
-    nodata_value = (
-        nodata if not isinstance(nodata, dict) else nodata.get(field, nodata_fallback)
-    )
-    if not pd.api.types.is_numeric_dtype(frame[field]):
-        curr = start
-        cat_map = {}
-        # Category map - original -> mapped value
-        for name in frame[field].unique():
-            if name != nodata_value and not pd.isna(name):
-                cat_map[name] = curr
-                curr += 1
-        # Attr dict - mapped value -> original
-        attr_dict[field] = {v: k for k, v in cat_map.items()}
-        frame[field] = frame[field].map(cat_map)
 
 
 def field_rasterize(
@@ -112,7 +78,6 @@ def rasterize(
     nodata: Number_T | Mapping[str, Number_T],
     nodata_fallback: Number_T,
     categorical_encoding_start: int,
-    period: str | None,
 ) -> xr.Dataset:
     if not data:
         return xr.Dataset()
@@ -130,10 +95,7 @@ def rasterize(
 
     # Concatenate
     gdf = pd.concat(data.values())
-    # Prepare groupby for efficiency
-    # Need to remove timezone information. Xarray time does not use tz
-    if period is not None:
-        gdf[t_coord] = gdf[t_coord].dt.to_period(period).dt.start_time
+
     # Prepare dates
     dates = pd.Series(sorted(gdf[t_coord].unique()))
 
@@ -147,11 +109,10 @@ def rasterize(
             nodata,
             nodata_fallback,
         )
-        rasterize_config = (
-            vector_config.rasterize_config
-            if isinstance(vector_config.rasterize_config, RasterizeConfig)
-            else vector_config.rasterize_config.get(field, RasterizeConfig())
+        rasterize_config = select_by_key(
+            field, vector_config.rasterize_config, RasterizeConfig()
         )
+
         ds_data[field] = field_rasterize(
             gdf,
             field,
@@ -170,7 +131,8 @@ def rasterize(
 def read_asset(
     item: ParsedVector,
     geobox: GeoBox,
-    t_coord: str = "time",
+    t_coord: str,
+    period: str | None,
 ) -> gpd.GeoDataFrame:
     """Load a single vector item
 
@@ -225,6 +187,10 @@ def read_asset(
 
     # Convert to UTC and remove timezone info
     gdf[t_coord] = gdf[t_coord].dt.tz_convert("utc").dt.tz_localize(None)
+    # Prepare groupby for efficiency
+    # Need to remove timezone information. Xarray time does not use tz
+    if period is not None:
+        gdf[t_coord] = gdf[t_coord].dt.to_period(period).dt.start_time
     return gdf
 
 
@@ -281,7 +247,12 @@ class VectorLoader(Loader[ParsedVector]):
         for item in self.items:
             item_id = item.item.id
             data[item_id] = self.apply_process(
-                read_asset(item, self.filter_config.geobox, self.cube_config.t_coord),
+                read_asset(
+                    item,
+                    self.filter_config.geobox,
+                    self.cube_config.t_coord,
+                    self.process_config.period,
+                ),
                 self.process_config,
             )
         return rasterize(
@@ -297,5 +268,4 @@ class VectorLoader(Loader[ParsedVector]):
             nodata=self.process_config.nodata,
             nodata_fallback=self.process_config.nodata_fallback,
             categorical_encoding_start=self.process_config.categorical_encoding_start,
-            period=self.process_config.period,
         )

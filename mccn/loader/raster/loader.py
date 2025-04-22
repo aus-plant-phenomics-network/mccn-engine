@@ -51,7 +51,7 @@ class RasterLoader(Loader[ParsedRaster]):
         ds = []
         for band_info, band_items in band_map.items():
             try:
-                item_ds = read_raster_asset(
+                item_ds = read_asset(
                     items=band_items,
                     geobox=self.filter_config.geobox,
                     bands=band_info,
@@ -90,7 +90,7 @@ def groupby_bands(
     return result
 
 
-def read_raster_asset(
+def read_asset(
     items: Sequence[pystac.Item],
     bands: tuple[str, ...] | None,
     geobox: GeoBox | None,

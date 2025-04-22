@@ -3,12 +3,15 @@ from __future__ import annotations
 import json
 import logging
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Mapping, TypeVar
 
+import geopandas as gpd
+import pandas as pd
+from attrs import has
 from pyproj import CRS
 from pyproj.transformer import Transformer
 
-from mccn._types import BBox_T
+from mccn._types import BBox_T, Number_T
 
 if TYPE_CHECKING:
     import pystac
@@ -95,3 +98,60 @@ def get_item_crs(item: pystac.Item) -> CRS:
         return CRS(int(item.properties.get("epsg")))  # type: ignore[arg-type]
     else:
         raise StacExtensionError("Missing CRS information in item properties")
+
+
+T = TypeVar("T")
+
+
+class UNSET_T: ...
+
+
+UNSET = UNSET_T()
+
+
+def select_by_key(
+    key: str,
+    value: T | Mapping[str, T],
+    fallback_value: T | UNSET_T = UNSET,
+) -> T:
+    if isinstance(value, Mapping):
+        if key in value:
+            return value[key]
+        if isinstance(fallback_value, UNSET_T):
+            raise KeyError("Undefined fallback value")
+        return fallback_value
+    return value
+
+
+def update_attr_legend(
+    attr_dict: dict[str, Any],
+    field: str,
+    frame: gpd.GeoDataFrame,
+    start: int = 1,
+    nodata: Number_T | Mapping[str, Number_T] = 0,
+    nodata_fallback: Number_T = 0,
+) -> None:
+    """Update attribute dict with legend for non numeric fields.
+
+    If the field is non-numeric - i.e. string, values will be categoricalised
+    i.e. 1, 2, 3, ...
+    The mapping will be updated in attr_dict under field name
+
+    Args:
+        attr_dict (dict[str, Any]): attribute dict
+        field (str): field name
+        frame (gpd.GeoDataFrame): input data frame
+        start (int): starting value
+    """
+    nodata_value = select_by_key(field, nodata, nodata_fallback)
+    if not pd.api.types.is_numeric_dtype(frame[field]):
+        curr = start
+        cat_map = {}
+        # Category map - original -> mapped value
+        for name in frame[field].unique():
+            if name != nodata_value and not pd.isna(name):
+                cat_map[name] = curr
+                curr += 1
+        # Attr dict - mapped value -> original
+        attr_dict[field] = {v: k for k, v in cat_map.items()}
+        frame[field] = frame[field].map(cat_map)
