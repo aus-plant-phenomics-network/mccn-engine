@@ -4,8 +4,10 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import pytest
+import xarray as xr
 
 from mccn.client import MCCN
+from tests.utils import RASTER_FIXTURE_PATH
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -33,6 +35,112 @@ def test_cube_axis_renamed(
     assert Y_COORD in ds.dims
     assert T_COORD in ds.dims
     assert len(ds.dims) == 3
+
+
+@pytest.fixture(scope="module")
+def year_dsm_loaded(
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
+) -> xr.Dataset:
+    engine = MCCN(
+        collection=dsm_collection,
+        geobox=dsm_geobox,
+        time_groupby="year",
+        t_coord=T_COORD,
+    )
+    return engine.load_raster()
+
+
+@pytest.fixture(scope="module")
+def month_dsm_loaded(
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
+) -> xr.Dataset:
+    engine = MCCN(
+        collection=dsm_collection,
+        geobox=dsm_geobox,
+        time_groupby="month",
+        t_coord=T_COORD,
+    )
+    return engine.load_raster()
+
+
+@pytest.fixture(scope="module")
+def day_dsm_loaded(
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
+) -> xr.Dataset:
+    engine = MCCN(
+        collection=dsm_collection,
+        geobox=dsm_geobox,
+        time_groupby="day",
+        t_coord=T_COORD,
+    )
+    return engine.load_raster()
+
+
+@pytest.fixture(scope="module")
+def hour_dsm_loaded(
+    dsm_collection: pystac.Collection,
+    dsm_geobox: GeoBox,
+) -> xr.Dataset:
+    engine = MCCN(
+        collection=dsm_collection,
+        geobox=dsm_geobox,
+        time_groupby="hour",
+        t_coord=T_COORD,
+    )
+    return engine.load_raster()
+
+
+@pytest.fixture(scope="module")
+def top_left_dsm_loaded(
+    multibands_collection: pystac.Collection, multiband_geobox: GeoBox
+) -> xr.Dataset:
+    client = MCCN(
+        items=[
+            item
+            for item in multibands_collection.get_items(recursive=True)
+            if item.id == "dsm"
+        ],
+        geobox=multiband_geobox,
+    )
+    return client.load_raster()
+
+
+@pytest.fixture(scope="module")
+def top_left_rgb_loaded(
+    multibands_collection: pystac.Collection, multiband_geobox: GeoBox
+) -> xr.Dataset:
+    client = MCCN(
+        items=[
+            item
+            for item in multibands_collection.get_items(recursive=True)
+            if item.id == "rgb"
+        ],
+        geobox=multiband_geobox,
+    )
+    return client.load_raster()
+
+
+@pytest.fixture(scope="module")
+def top_left_ms_loaded(
+    multibands_collection: pystac.Collection, multiband_geobox: GeoBox
+) -> xr.Dataset:
+    client = MCCN(
+        items=[
+            item
+            for item in multibands_collection.get_items(recursive=True)
+            if item.id == "rgb-alias"
+        ],
+        geobox=multiband_geobox,
+    )
+    return client.load_raster()
+
+
+@pytest.fixture(scope="module")
+def multibands_ds() -> xr.Dataset:
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "multibands.cd")
 
 
 @pytest.mark.parametrize(
@@ -84,23 +192,18 @@ def test_cube_axis_renamed(
     ids=["year", "month", "day", "hour"],
 )
 def test_raster_generation_expects_correct_time_rounded_ts(
-    dsm_collection: pystac.Collection,
-    dsm_geobox: GeoBox,
     groupby: TimeGroupby,
     exp_ts: list[pd.Timestamp],
+    request: pytest.FixtureRequest,
 ) -> None:
-    engine = MCCN(
-        collection=dsm_collection,
-        geobox=dsm_geobox,
-        time_groupby=groupby,
-        t_coord=T_COORD,
-    )
-    ds = engine.load_raster()
-
+    ds = request.getfixturevalue(f"{groupby}_dsm_loaded")
     # Verify dates
     assert len(ds[T_COORD]) == len(exp_ts)  # 2 Years - 2015 and 2016
     timestamps = pd.DatetimeIndex(ds[T_COORD].values)
     assert all(timestamps == exp_ts)
+    # Compare against ref ds
+    ref_ds = request.getfixturevalue(f"{groupby}_dsm")
+    xr.testing.assert_equal(ds, ref_ds)
 
 
 @pytest.mark.parametrize(
@@ -112,20 +215,17 @@ def test_raster_generation_expects_correct_time_rounded_ts(
     ids=["2015", "2016"],
 )
 def test_raster_year_generation_expects_full_matching(
+    year_dsm_loaded: xr.Dataset,
     dsm_items: list[pystac.Item],
     dsm_geobox: GeoBox,
     filter_logic: Callable,
     index: int,
 ) -> None:
-    groupby: TimeGroupby = "year"
-    client = MCCN(
-        items=dsm_items, geobox=dsm_geobox, time_groupby=groupby, t_coord=T_COORD
-    )
-    ds = client.load_raster()
+    ds = year_dsm_loaded
 
     # Prepare ref clients - 2015
     ref_items = list(filter(filter_logic, dsm_items))
-    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby=groupby)
+    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby="year")
     ref_ds = ref_client.load_raster()
 
     # Compare values
@@ -159,18 +259,14 @@ def test_raster_year_generation_expects_full_matching(
 def test_raster_month_generation_expects_full_matching(
     dsm_items: list[pystac.Item],
     dsm_geobox: GeoBox,
+    month_dsm_loaded: xr.Dataset,
     filter_logic: Callable,
     index: int,
 ) -> None:
-    groupby: TimeGroupby = "month"
-    client = MCCN(
-        items=dsm_items, geobox=dsm_geobox, time_groupby=groupby, t_coord=T_COORD
-    )
-    ds = client.load_raster()
-
+    ds = month_dsm_loaded
     # Prepare ref clients - 2015
     ref_items = list(filter(filter_logic, dsm_items))
-    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby=groupby)
+    ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby="month")
     ref_ds = ref_client.load_raster()
 
     # Compare values
@@ -178,6 +274,7 @@ def test_raster_month_generation_expects_full_matching(
     assert diff.max() == 0
 
 
+# FILTER BY DATE FEATURE TESTING
 @pytest.mark.parametrize(
     "start,end,groupby,exp",
     [
@@ -220,3 +317,118 @@ def test_raster_timeslicing(
     )
     ds = client.load_raster()
     assert all(pd.DatetimeIndex(ds["time"].values) == [pd.Timestamp(t) for t in exp])
+
+
+# FILTER BY BAND
+@pytest.mark.parametrize(
+    "bands, exp",
+    [
+        (
+            None,
+            {
+                "dsm": "top_left_dsm_loaded",
+                "red": "top_left_rgb_loaded",
+                "green": "top_left_rgb_loaded",
+                "blue": "top_left_rgb_loaded",
+                "ms-red": "top_left_ms_loaded",
+                "ms-green": "top_left_ms_loaded",
+                "ms-blue": "top_left_ms_loaded",
+            },
+        ),
+        (
+            {"dsm"},
+            {
+                "dsm": "top_left_dsm_loaded",
+            },
+        ),
+        (
+            {"dsm", "red"},
+            {
+                "dsm": "top_left_dsm_loaded",
+                "red": "top_left_rgb_loaded",
+            },
+        ),
+        (
+            {"dsm", "ms-red"},
+            {
+                "dsm": "top_left_dsm_loaded",
+                "ms-red": "top_left_ms_loaded",
+            },
+        ),
+        (
+            {"non-matching"},
+            {},
+        ),
+        (
+            {"non-matching", "ms-blue", "green"},
+            {
+                "ms-blue": "top_left_ms_loaded",
+                "green": "top_left_rgb_loaded",
+            },
+        ),
+    ],
+)
+def test_raster_band_filter(
+    bands: set[str] | None,
+    exp: dict[str, str],
+    multibands_collection: pystac.Collection,
+    multiband_geobox: GeoBox,
+    request: pytest.FixtureRequest,
+) -> None:
+    client = MCCN(
+        collection=multibands_collection,
+        geobox=multiband_geobox,
+        bands=bands,
+    )
+    ds = client.load_raster()
+    assert set(exp.keys()) == set(ds.data_vars.keys())
+    for k, fixture_name in exp.items():
+        ref_ds = request.getfixturevalue(fixture_name)
+        xr.testing.assert_equal(ds[k], ref_ds[k])
+
+
+@pytest.mark.parametrize(
+    "bands, exp",
+    [
+        (
+            None,
+            {"dsm", "red", "green", "blue", "ms-red", "ms-green", "ms-blue"},
+        ),
+        (
+            {"dsm"},
+            {"dsm"},
+        ),
+        (
+            {"dsm", "red"},
+            {"dsm", "red"},
+        ),
+        (
+            {"dsm", "ms-red"},
+            {"dsm", "ms-red"},
+        ),
+        (
+            {"non-matching"},
+            set(),
+        ),
+        (
+            {"non-matching", "ms-blue", "green"},
+            {"ms-blue", "green"},
+        ),
+    ],
+)
+def test_raster_band_filter_ref_against_file(
+    bands: set[str] | None,
+    exp: set[str],
+    multibands_collection: pystac.Collection,
+    multiband_geobox: GeoBox,
+    multibands_ds: xr.Dataset,
+) -> None:
+    client = MCCN(
+        collection=multibands_collection,
+        geobox=multiband_geobox,
+        bands=bands,
+    )
+    ds = client.load_raster()
+    assert exp == set(ds.data_vars.keys())
+    for k in exp:
+        xr.testing.assert_equal(ds[k], multibands_ds[k])

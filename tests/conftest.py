@@ -4,6 +4,7 @@ from typing import cast
 
 import pystac
 import pytest
+import xarray as xr
 from odc.geo.geobox import GeoBox
 from stac_generator.core import StacCollectionConfig
 from stac_generator.factory import StacGeneratorFactory
@@ -21,6 +22,29 @@ def load_collection(path: Path | str) -> pystac.Collection:
         config, StacCollectionConfig(id="Collection")
     )
     return factory.create_collection()
+
+
+# RASTER FIXTURES
+
+
+@pytest.fixture(scope="module")
+def year_dsm() -> xr.Dataset:
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "year_dsm.cd")
+
+
+@pytest.fixture(scope="module")
+def month_dsm() -> xr.Dataset:
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "month_dsm.cd")
+
+
+@pytest.fixture(scope="module")
+def day_dsm() -> xr.Dataset:
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "day_dsm.cd")
+
+
+@pytest.fixture(scope="module")
+def hour_dsm() -> xr.Dataset:
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "hour_dsm.cd")
 
 
 @pytest.fixture(scope="module")
@@ -41,6 +65,9 @@ def multibands_collection() -> pystac.Collection:
 @pytest.fixture(scope="module")
 def multibands_items(multibands_collection: pystac.Collection) -> list[pystac.Item]:
     return list(multibands_collection.get_items(recursive=True))
+
+
+# AREA FIXTURES
 
 
 @pytest.fixture(scope="module")
