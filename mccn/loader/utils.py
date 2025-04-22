@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Mapping, TypeVar
 
 import geopandas as gpd
 import pandas as pd
-from attrs import has
 from pyproj import CRS
 from pyproj.transformer import Transformer
 
