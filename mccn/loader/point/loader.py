@@ -68,6 +68,8 @@ class PointLoader(Loader[ParsedPoint]):
         self.rasteriser = Rasteriser(self.canvas, self.load_config.radius)
 
     def _load(self) -> xr.Dataset:
+        if not self.items:
+            return xr.Dataset()
         for item in self.items:
             df = read_asset(
                 item,
