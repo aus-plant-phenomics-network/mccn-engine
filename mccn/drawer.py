@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, cast
+from typing import Any, Callable, Sequence, cast
 
+import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray as xr
 from numpy.typing import DTypeLike
+from odc.geo.geobox import GeoBox
 
 from mccn._types import (
     DType_Map_T,
@@ -14,8 +17,16 @@ from mccn._types import (
     MergeMethod_T,
     Nodata_Map_T,
     Nodata_T,
+    Number_T,
 )
-from mccn.loader.utils import select_by_key
+from mccn.loader.utils import (
+    coords_from_geobox,
+    get_neighbor_mask,
+    mask_aggregate,
+    query_by_key,
+    query_if_null,
+)
+from mccn.parser import ParsedItem
 
 
 class Drawer(abc.ABC):
@@ -156,7 +167,7 @@ class ReplaceDrawer(Drawer):
         self.data[index][valid_mask] = layer[valid_mask]
 
 
-DRAWERS: dict[MergeMethod_T, type[Drawer]] = {
+DRAWERS: dict[MergeMethod_T | str, type[Drawer]] = {
     "mean": MeanDrawer,
     "max": MaxDrawer,
     "min": MinDrawer,
@@ -171,7 +182,6 @@ class Canvas:
         x_coords: np.ndarray,
         y_coords: np.ndarray,
         t_coords: np.ndarray,
-        bands: set[str],
         x_dim: str = "x",
         y_dim: str = "y",
         t_dim: str = "t",
@@ -180,13 +190,12 @@ class Canvas:
         nodata: Nodata_Map_T = 0,
         nodata_fallback: Nodata_T = 0,
         is_sorted: bool = False,
-        merge_method: MergeMethod_Map_T = None,
-        merge_method_fallback: MergeMethod_T = "replace",
+        merge: MergeMethod_Map_T = None,
+        merge_fallback: MergeMethod_T = "replace",
     ) -> None:
-        self.x_coords = self.sort_coord(x_coords, is_sorted)
-        self.y_coords = self.sort_coord(y_coords, is_sorted)
-        self.t_coords = self.sort_coord(t_coords, is_sorted)
-        self.bands = bands
+        self.x_coords = self._sort_coord(x_coords, is_sorted)
+        self.y_coords = self._sort_coord(y_coords, is_sorted)
+        self.t_coords = self._sort_coord(t_coords, is_sorted)
         self.x_dim = x_dim
         self.y_dim = y_dim
         self.t_dim = t_dim
@@ -203,51 +212,181 @@ class Canvas:
         self.nodata = nodata
         self.nodata_fallback = nodata_fallback
         self.is_sorted = is_sorted
-        self.merge_method = merge_method
-        self.merge_method_fallback = merge_method_fallback
-        self._drawers = self._init_drawers()
+        self.merge = merge
+        self.merge_fallback = merge_fallback
+        self._drawers: dict[str, Drawer] = {}
 
-    def sort_coord(self, coords: np.ndarray, is_sorted: bool) -> np.ndarray:
+    def _sort_coord(self, coords: np.ndarray, is_sorted: bool) -> np.ndarray:
         if not is_sorted:
             coords = np.sort(coords)
         return coords
 
-    def _get_draw_handler(self, method: MergeMethod_T) -> type[Drawer]:
-        if method in DRAWERS:
-            return DRAWERS[method]
-        raise KeyError(f"Invalid merge method: {method}")
+    def has_band(self, band: str) -> bool:
+        return band in self._drawers
 
-    def _init_drawers(self) -> dict[str, Drawer]:
-        drawers = {}
-        for band in self.bands:
-            method = select_by_key(band, self.merge_method, self.merge_method_fallback)
-            handler = self._get_draw_handler(cast(MergeMethod_T, method))
-            dtype = select_by_key(band, self.dtype, self.dtype_fallback)
-            nodata = select_by_key(band, self.nodata, self.nodata_fallback)
-            drawers[band] = handler(
-                x_coords=self.x_coords,
-                y_coords=self.y_coords,
-                t_coords=self.t_coords,
-                shape=self.shape,
-                dtype=cast(Dtype_T, dtype),
-                nodata=nodata,
-            )
-        return drawers
-
-    def get_band_drawer(self, band: str) -> Drawer:
+    def add_band(
+        self,
+        band: str,
+        merge: MergeMethod_T | None = None,
+        dtype: Dtype_T | None = None,
+        nodata: Nodata_T | None = None,
+    ) -> None:
         if band not in self._drawers:
-            raise KeyError(f"Uninitialised band: {band}")
-        return self._drawers[band]
+            _method = query_if_null(merge, band, self.merge, self.merge_fallback)
+            _nodata = query_if_null(nodata, band, self.nodata, self.nodata_fallback)
+            _dtype = cast(
+                Dtype_T, query_if_null(dtype, band, self.dtype, self.dtype_fallback)
+            )
+            handler = DRAWERS[_method]
+            self._drawers[band] = handler(
+                self.x_coords,
+                self.y_coords,
+                self.t_coords,
+                self.shape,
+                _dtype,
+                _nodata,
+            )
 
     def draw(self, t_value: Any, band: str, layer: np.ndarray) -> None:
-        drawer = self.get_band_drawer(band)
+        if band not in self._drawers:
+            raise KeyError(f"Unallocated band: {band}")
+        drawer = self._drawers[band]
         drawer.draw(t_value, layer)
 
-    def build_cube(self, attrs: dict[str, Any]) -> xr.Dataset:
+    def compile(self, attrs: dict[str, Any]) -> xr.Dataset:
         return xr.Dataset(
             data_vars={
-                band: (self.dims, self._drawers[band].data) for band in self.bands
+                band: (self.dims, drawer.data) for band, drawer in self._drawers.items()
             },
             coords=self.coords,
             attrs=attrs,
         )
+
+    @classmethod
+    def from_items(
+        cls,
+        items: Sequence[ParsedItem],
+        x_dim: str,
+        y_dim: str,
+        t_dim: str,
+        geobox: GeoBox,
+        period: str | None,
+        dtype: DType_Map_T,
+        dtype_fallback: Dtype_T,
+        nodata: Nodata_Map_T,
+        nodata_fallback: Nodata_T,
+        merge: MergeMethod_Map_T,
+        merge_fallback: MergeMethod_T,
+    ) -> Canvas:
+        coords = coords_from_geobox(geobox, y_dim, x_dim)
+        x_coords = coords[x_dim].values
+        y_coords = coords[y_dim].values
+
+        # Build t_coords
+        timestamps = []
+        for item in items:
+            timestamps.extend(item.item.properties["timestamps"])
+        # Remove tzinfo - everything should be utc by default
+        time_index = pd.Series(pd.to_datetime(timestamps).tz_localize(None))
+        # Convert to period for groupby
+        if period is not None:
+            time_index = time_index.dt.to_period(period).dt.start_time
+        t_coords = np.sort(time_index.unique())
+
+        return Canvas(
+            x_coords,
+            y_coords,
+            t_coords,
+            x_dim,
+            y_dim,
+            t_dim,
+            dtype,
+            dtype_fallback,
+            nodata,
+            nodata_fallback,
+            True,
+            merge,
+            merge_fallback,
+        )
+
+
+class Rasteriser:
+    def __init__(
+        self,
+        canvas: Canvas,
+        radius: Number_T = 1.0,
+        categorical_prefix: str = "__cat_",
+    ) -> None:
+        self.attrs: dict[str, dict[int, Any]] = {}
+        self.rev_attrs: dict[str, dict[Any, int]] = {}
+        self.canvas = canvas
+        self.x_dim = canvas.x_dim
+        self.y_dim = canvas.y_dim
+        self.t_dim = canvas.t_dim
+        self.nodata = canvas.nodata
+        self.nodata_fallback = canvas.nodata_fallback
+        self.dims = (self.x_dim, self.y_dim)
+        self.gx = self.canvas.x_coords
+        self.gy = self.canvas.y_coords
+        self.radius = radius
+        self.categorical_prefix = categorical_prefix
+
+    def is_categorical(self, series: pd.Series) -> bool:
+        return not pd.api.types.is_numeric_dtype(series)
+
+    def encode(self, series: pd.Series, nodata: int, band: str) -> pd.Series:
+        curr = 0 if nodata != 0 else 1
+        if band not in self.attrs:
+            self.attrs[band] = {nodata: "nodata"}
+            self.rev_attrs[band] = {"nodata": nodata}
+        # Update attr map and rev attrs map
+        for name in series.unique():
+            if curr == nodata:
+                curr += 1
+            if name not in self.rev_attrs[band]:
+                self.attrs[band][curr] = name
+                self.rev_attrs[band][name] = curr
+                curr += 1
+        # Attr dict - mapped value -> original
+        series = series.map(self.rev_attrs[band])
+        return series
+
+    def handle_categorical(self, series: pd.Series, band: str) -> tuple[pd.Series, str]:
+        nodata = int(query_by_key(band, self.nodata, self.nodata_fallback))
+        band = self.categorical_prefix + band
+        series = self.encode(series, nodata, band)
+        if not self.canvas.has_band(band):
+            self.canvas.add_band(band, merge="replace", dtype="int8", nodata=nodata)
+        return series, band
+
+    def handle_numeric(self, series: pd.Series, band: str) -> tuple[pd.Series, str]:
+        if not self.canvas.has_band(band):
+            self.canvas.add_band(band)
+        return series, band
+
+    def rasterise_band(
+        self,
+        data: gpd.GeoDataFrame,
+        band: str,
+    ) -> None:
+        for date in data[self.t_dim].unique():
+            series = data.loc[data[self.t_dim] == date, [*self.dims, band]]
+            series = series.drop_duplicates().dropna()
+            dims = series.loc[:, [*self.dims]].values
+            band_series = series.loc[:, band]
+            if self.is_categorical(band_series):
+                band_series, band = self.handle_categorical(band_series, band)
+                op: Callable = np.nanmax
+            else:
+                band_series, band = self.handle_numeric(band_series, band)
+                op = np.nanmean
+            mask = get_neighbor_mask(self.gx, self.gy, dims, self.radius)
+            raster = mask_aggregate(band_series.values, mask, op)
+            self.canvas.draw(date, band, raster)
+
+    def rasterise(self, data: pd.DataFrame, bands: set[str]) -> None:
+        for band in bands:
+            self.rasterise_band(data, band)
+
+    def compile(self) -> xr.Dataset:
+        return self.canvas.compile(self.attrs)

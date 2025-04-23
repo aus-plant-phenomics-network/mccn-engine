@@ -61,9 +61,9 @@ class MCCN:
         mask_only: bool = False,
         use_all_vectors: bool = True,
         # Cube config
-        x_coord: str = "x",
-        y_coord: str = "y",
-        t_coord: str = "time",
+        x_dim: str = "x",
+        y_dim: str = "y",
+        t_dim: str = "time",
         mask_name: str = "__MASK__",
         # Process config
         rename_bands: Mapping[str, str] | None = None,
@@ -92,9 +92,9 @@ class MCCN:
             use_all_vectors=use_all_vectors,
         )
         self.cube_config = CubeConfig(
-            x_coord=x_coord,
-            y_coord=y_coord,
-            t_coord=t_coord,
+            x_dim=x_dim,
+            y_dim=y_dim,
+            t_dim=t_dim,
             mask_name=mask_name,
         )
         self.process_config = ProcessConfig(

@@ -14,12 +14,12 @@ from stac_generator.core.base.utils import (
     read_vector_asset,
 )
 
-from mccn._types import Number_T
+from mccn._types import Nodata_Map_T, Nodata_T
 from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 from mccn.loader.base import Loader
 from mccn.loader.utils import (
     bbox_from_geobox,
-    select_by_key,
+    query_by_key,
     update_attr_legend,
 )
 from mccn.loader.vector.config import RasterizeConfig, VectorLoadConfig
@@ -35,13 +35,13 @@ def field_rasterize(
     dates: pd.Series,
     geobox: GeoBox,
     rasterize_config: RasterizeConfig,
-    x_coord: str,
-    y_coord: str,
-    t_coord: str,
+    x_dim: str,
+    y_dim: str,
+    t_dim: str,
 ) -> tuple[tuple[str, str, str], np.ndarray]:
     raster: list[np.ndarray] = []
     for date in dates:
-        mask = (gdf[t_coord] == date) & (~gdf[field].isna())
+        mask = (gdf[t_dim] == date) & (~gdf[field].isna())
         raster.append(
             _rasterize(
                 (
@@ -60,9 +60,9 @@ def field_rasterize(
     # Stack all date layers to datacube and return result
     ds_data = np.stack(raster, axis=0)
     return (
-        t_coord,
-        y_coord,
-        x_coord,
+        t_dim,
+        y_dim,
+        x_dim,
     ), ds_data
 
 
@@ -72,12 +72,12 @@ def rasterize(
     geobox: GeoBox,
     fields: set[str],
     vector_config: VectorLoadConfig,
-    x_coord: str,
-    y_coord: str,
-    t_coord: str,
+    x_dim: str,
+    y_dim: str,
+    t_dim: str,
     mask_name: str,
-    nodata: Number_T | Mapping[str, Number_T],
-    nodata_fallback: Number_T,
+    nodata: Nodata_Map_T,
+    nodata_fallback: Nodata_T,
     categorical_encoding_start: int,
 ) -> xr.Dataset:
     if not data:
@@ -98,7 +98,7 @@ def rasterize(
     gdf = pd.concat(data.values())
 
     # Prepare dates
-    dates = pd.Series(sorted(gdf[t_coord].unique()))
+    dates = pd.Series(sorted(gdf[t_dim].unique()))
 
     # Rasterise field by field
     for field in fields:
@@ -110,7 +110,7 @@ def rasterize(
             nodata,
             nodata_fallback,
         )
-        rasterize_config = select_by_key(
+        rasterize_config = query_by_key(
             field, vector_config.rasterize_config, RasterizeConfig()
         )
 
@@ -120,19 +120,19 @@ def rasterize(
             dates,
             geobox,
             rasterize_config,
-            x_coord,
-            y_coord,
-            t_coord,
+            x_dim,
+            y_dim,
+            t_dim,
         )
     ds = xr.Dataset(ds_data, coords=coords, attrs=ds_attrs)
-    ds[t_coord] = dates.values
+    ds[t_dim] = dates.values
     return ds
 
 
 def read_asset(
     item: ParsedVector,
     geobox: GeoBox,
-    t_coord: str,
+    t_dim: str,
     period: str | None,
 ) -> gpd.GeoDataFrame:
     """Load a single vector item
@@ -144,7 +144,7 @@ def read_asset(
     Args:
         item (ParsedVector): parsed vector item
         geobox (GeoBox): target geobox
-        t_coord (str): name of the time dimension if valid
+        t_dim (str): name of the time dimension if valid
 
     Returns:
         gpd.GeoDataFrame: vector geodataframe
@@ -182,16 +182,16 @@ def read_asset(
     gdf.to_crs(geobox.crs, inplace=True)
     # Process date
     if date_col and date_col in item.load_aux_bands:
-        gdf.rename(columns={date_col: t_coord}, inplace=True)
+        gdf.rename(columns={date_col: t_dim}, inplace=True)
     else:
-        gdf[t_coord] = item.item.datetime
+        gdf[t_dim] = item.item.datetime
 
     # Convert to UTC and remove timezone info
-    gdf[t_coord] = gdf[t_coord].dt.tz_convert("utc").dt.tz_localize(None)
+    gdf[t_dim] = gdf[t_dim].dt.tz_convert("utc").dt.tz_localize(None)
     # Prepare groupby for efficiency
     # Need to remove timezone information. Xarray time does not use tz
     if period is not None:
-        gdf[t_coord] = gdf[t_coord].dt.to_period(period).dt.start_time
+        gdf[t_dim] = gdf[t_dim].dt.to_period(period).dt.start_time
     return gdf
 
 
@@ -251,7 +251,7 @@ class VectorLoader(Loader[ParsedVector]):
                 read_asset(
                     item,
                     self.filter_config.geobox,
-                    self.cube_config.t_coord,
+                    self.cube_config.t_dim,
                     self.process_config.period,
                 ),
                 self.process_config,
@@ -262,9 +262,9 @@ class VectorLoader(Loader[ParsedVector]):
             geobox=self.filter_config.geobox,
             fields=fields,
             vector_config=self.load_config,
-            x_coord=self.cube_config.x_coord,
-            y_coord=self.cube_config.y_coord,
-            t_coord=self.cube_config.t_coord,
+            x_dim=self.cube_config.x_dim,
+            y_dim=self.cube_config.y_dim,
+            t_dim=self.cube_config.t_dim,
             mask_name=self.cube_config.mask_name,
             nodata=self.process_config.nodata,
             nodata_fallback=self.process_config.nodata_fallback,

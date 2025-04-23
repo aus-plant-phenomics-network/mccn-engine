@@ -12,9 +12,9 @@ from typing import (
 
 import pandas as pd
 import xarray as xr
-from odc.geo.xr import xr_coords
 
 from mccn.config import CubeConfig, FilterConfig, ProcessConfig
+from mccn.loader.utils import coords_from_geobox
 from mccn.parser import ParsedItem
 
 T = TypeVar("T", bound=ParsedItem)
@@ -61,9 +61,10 @@ class Loader(abc.ABC, Generic[T]):
         Returns:
             dict[Hashable, xr.DataArray]: coordinate dict
         """
-        return xr_coords(
+        return coords_from_geobox(
             self.filter_config.geobox,
-            dims=(self.cube_config.y_coord, self.cube_config.x_coord),
+            self.cube_config.y_dim,
+            self.cube_config.x_dim,
         )
 
     def load(self) -> xr.Dataset:
@@ -89,7 +90,7 @@ class Loader(abc.ABC, Generic[T]):
         # Filter based on dates and geobox
         data = data.sel(
             {
-                cube_config.t_coord: slice(
+                cube_config.t_dim: slice(
                     filter_config.start_no_tz, filter_config.end_no_tz
                 )
             }

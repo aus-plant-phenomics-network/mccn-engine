@@ -55,9 +55,9 @@ class RasterLoader(Loader[ParsedRaster]):
                     items=band_items,
                     geobox=self.filter_config.geobox,
                     bands=band_info,
-                    x_coord=self.cube_config.x_coord,
-                    y_coord=self.cube_config.y_coord,
-                    t_coord=self.cube_config.t_coord,
+                    x_dim=self.cube_config.x_dim,
+                    y_dim=self.cube_config.y_dim,
+                    t_dim=self.cube_config.t_dim,
                     raster_config=self.load_config,
                     period=self.period,
                     groupby=self.groupby,
@@ -94,9 +94,9 @@ def read_asset(
     items: Sequence[pystac.Item],
     bands: tuple[str, ...] | None,
     geobox: GeoBox | None,
-    x_coord: str,
-    y_coord: str,
-    t_coord: str,
+    x_dim: str,
+    y_dim: str,
+    t_dim: str,
     groupby: str | GroupbyCallback,
     period: str | None,
     raster_config: RasterLoadConfig,
@@ -112,12 +112,12 @@ def read_asset(
     # it either uses latitude/longitude or y/x depending on the underlying crs
     # so there is no proper way to know which one it uses aside from trying
     if "latitude" in ds.dims and "longitude" in ds.dims:
-        ds = ds.rename({"longitude": x_coord, "latitude": y_coord})
+        ds = ds.rename({"longitude": x_dim, "latitude": y_dim})
     elif "x" in ds.dims and "y" in ds.dims:
-        ds = ds.rename({"x": x_coord, "y": y_coord})
+        ds = ds.rename({"x": x_dim, "y": y_dim})
     if "time" in ds.dims:
-        ds = ds.rename({"time": t_coord})
+        ds = ds.rename({"time": t_dim})
     if period is not None:
-        ts = pd.DatetimeIndex(ds[t_coord].values)
-        ds = ds.assign_coords({t_coord: ts.to_period(period).start_time})
+        ts = pd.to_datetime(ds[t_dim].values)
+        ds = ds.assign_coords({t_dim: ts.to_period(period).start_time})
     return ds

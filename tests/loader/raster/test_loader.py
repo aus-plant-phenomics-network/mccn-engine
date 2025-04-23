@@ -26,9 +26,9 @@ def test_cube_axis_renamed(
     engine = MCCN(
         collection=dsm_collection,
         geobox=dsm_geobox,
-        x_coord=X_COORD,
-        y_coord=Y_COORD,
-        t_coord=T_COORD,
+        x_dim=X_COORD,
+        y_dim=Y_COORD,
+        t_dim=T_COORD,
     )
     ds = engine.load_raster()
     assert X_COORD in ds.dims
@@ -46,7 +46,7 @@ def year_dsm_loaded(
         collection=dsm_collection,
         geobox=dsm_geobox,
         time_groupby="year",
-        t_coord=T_COORD,
+        t_dim=T_COORD,
     )
     return engine.load_raster()
 
@@ -60,7 +60,7 @@ def month_dsm_loaded(
         collection=dsm_collection,
         geobox=dsm_geobox,
         time_groupby="month",
-        t_coord=T_COORD,
+        t_dim=T_COORD,
     )
     return engine.load_raster()
 
@@ -74,7 +74,7 @@ def day_dsm_loaded(
         collection=dsm_collection,
         geobox=dsm_geobox,
         time_groupby="day",
-        t_coord=T_COORD,
+        t_dim=T_COORD,
     )
     return engine.load_raster()
 
@@ -88,7 +88,7 @@ def hour_dsm_loaded(
         collection=dsm_collection,
         geobox=dsm_geobox,
         time_groupby="hour",
-        t_coord=T_COORD,
+        t_dim=T_COORD,
     )
     return engine.load_raster()
 

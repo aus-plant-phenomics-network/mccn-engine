@@ -77,13 +77,13 @@ class FilterConfig:
 class CubeConfig:
     """The config that describes the datacube coordinates"""
 
-    x_coord: str = "lon"
+    x_dim: str = "lon"
     """Name of the x coordinate in the datacube"""
-    y_coord: str = "lat"
+    y_dim: str = "lat"
     """Name of the y coordinate in the datacube"""
-    t_coord: str = "time"
+    t_dim: str = "time"
     """Name of the time coordinate in the datacube"""
-    z_coord: str = "z"
+    z_dim: str = "z"
     """Name of the z coordinate"""
     use_z: bool = False
     """Whether to use z coordinate"""

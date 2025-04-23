@@ -3,18 +3,20 @@ from __future__ import annotations
 import json
 import logging
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Hashable, Mapping, TypeVar
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from odc.geo.xr import xr_coords
 from pyproj import CRS
 from pyproj.transformer import Transformer
 
-from mccn._types import BBox_T, Number_T
+from mccn._types import BBox_T, Nodata_Map_T, Nodata_T
 
 if TYPE_CHECKING:
     import pystac
+    import xarray as xr
     from odc.geo.geobox import GeoBox
 
 ASSET_KEY = "data"
@@ -103,17 +105,24 @@ def get_item_crs(item: pystac.Item) -> CRS:
 T = TypeVar("T")
 
 
-def select_by_key(
+def query_by_key(
     key: str,
-    value: T | Mapping[str, T] | None,
-    fallback_value: T,
+    query_src: T | Mapping[str, T] | None,
+    query_fallback: T,
+) -> T:
+    if isinstance(query_src, Mapping):
+        return query_src.get(key, query_fallback)
+    return query_src if query_src is not None else query_fallback
+
+
+def query_if_null(
+    value: T | None,
+    key: str,
+    query_src: T | Mapping[str, T] | None,
+    query_fallback: T,
 ) -> T:
     if value is None:
-        return fallback_value
-    if isinstance(value, Mapping):
-        if key in value:
-            return value[key]
-        return fallback_value
+        return query_by_key(key, query_src, query_fallback)
     return value
 
 
@@ -122,8 +131,8 @@ def update_attr_legend(
     field: str,
     frame: gpd.GeoDataFrame,
     start: int = 1,
-    nodata: Number_T | Mapping[str, Number_T] = 0,
-    nodata_fallback: Number_T = 0,
+    nodata: Nodata_Map_T = 0,
+    nodata_fallback: Nodata_T = 0,
 ) -> None:
     """Update attribute dict with legend for non numeric fields.
 
@@ -137,7 +146,7 @@ def update_attr_legend(
         frame (gpd.GeoDataFrame): input data frame
         start (int): starting value
     """
-    nodata_value = select_by_key(field, nodata, nodata_fallback)
+    nodata_value = query_by_key(field, nodata, nodata_fallback)
     if not pd.api.types.is_numeric_dtype(frame[field]):
         curr = start
         cat_map = {}
@@ -185,7 +194,7 @@ def get_neighbor_mask(
     return distances < radius
 
 
-def mask_aggregate(values: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def mask_aggregate(values: np.ndarray, mask: np.ndarray, op: Callable) -> np.ndarray:
     """Aggregate values using neighbor mask
 
     Neighbor mask parameter mask is obtained from the function `get_neighbor_mask`.
@@ -201,10 +210,22 @@ def mask_aggregate(values: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     # Apply mask - non masked values assigned nan to make calc simpler
     # masked_temp - (|gx|, |gy|, |points|)
+    layer = np.full(mask.shape[:2], fill_value=np.nan)
+    if mask.shape[2] == 0:
+        return layer
     masked_temp = np.where(mask, values, np.nan)
     valid_mask = np.sum(mask, axis=2) > 0
-
-    # Allocate means layer
-    layer = np.zeros(mask.shape[:2])
-    layer[valid_mask] = np.nanmean(masked_temp[valid_mask], axis=1)
+    layer[valid_mask] = op(masked_temp[valid_mask], axis=1)
     return layer
+
+
+def coords_from_geobox(
+    geobox: GeoBox,
+    x_dim: str,
+    y_dim: str,
+) -> dict[Hashable, xr.DataArray]:
+    return xr_coords(
+        geobox,
+        dims=(y_dim, x_dim),
+        always_yx=True,
+    )

@@ -83,8 +83,8 @@ def nonzero_sum_drawer() -> SumDrawer:
     return SumDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        shape=(2, 3, 4),
+        t_coords=np.arange(1),
+        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -94,8 +94,8 @@ def nonzero_min_drawer() -> MinDrawer:
     return MinDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        shape=(2, 3, 4),
+        t_coords=np.arange(1),
+        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -105,8 +105,8 @@ def max_drawer() -> MaxDrawer:
     return MaxDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        shape=(2, 3, 4),
+        t_coords=np.arange(1),
+        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -116,8 +116,8 @@ def replace_drawer() -> ReplaceDrawer:
     return ReplaceDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        shape=(2, 3, 4),
+        t_coords=np.arange(1),
+        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -127,8 +127,8 @@ def nonzero_mean_drawer() -> MeanDrawer:
     return MeanDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        shape=(2, 3, 4),
+        t_coords=np.arange(1),
+        shape=(1, 3, 4),
         nodata=-9999,
     )
 
