@@ -56,6 +56,7 @@ class PointLoader(Loader[ParsedPoint]):
             self.cube_config.x_dim,
             self.cube_config.y_dim,
             self.cube_config.t_dim,
+            self.cube_config.spatial_ref_dim,
             self.filter_config.geobox,
             self.process_config.period,
             self.process_config.dtype,

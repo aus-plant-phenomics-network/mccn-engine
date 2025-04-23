@@ -227,5 +227,4 @@ def coords_from_geobox(
     return xr_coords(
         geobox,
         dims=(y_dim, x_dim),
-        always_yx=True,
     )

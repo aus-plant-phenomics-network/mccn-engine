@@ -87,6 +87,7 @@ class CubeConfig:
     """Name of the time coordinate in the datacube"""
     z_dim: str = "z"
     """Name of the z coordinate"""
+    spatial_ref_dim: str = "spatial_ref"
     use_z: bool = False
     """Whether to use z coordinate"""
     mask_name: str = "__MASK__"

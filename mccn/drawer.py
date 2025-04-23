@@ -185,6 +185,8 @@ class Canvas:
         x_dim: str = "x",
         y_dim: str = "y",
         t_dim: str = "t",
+        spatial_ref: xr.DataArray | None = None,
+        spatial_ref_dim: str = "spatial_ref",
         dtype: DType_Map_T = None,
         dtype_fallback: Dtype_T = "float64",
         nodata: Nodata_Map_T = 0,
@@ -193,19 +195,22 @@ class Canvas:
         merge: MergeMethod_Map_T = None,
         merge_fallback: MergeMethod_T = "replace",
     ) -> None:
+        self.spatial_ref = spatial_ref
         self.x_coords = self._sort_coord(x_coords, is_sorted)
         self.y_coords = self._sort_coord(y_coords, is_sorted)
         self.t_coords = self._sort_coord(t_coords, is_sorted)
         self.x_dim = x_dim
         self.y_dim = y_dim
         self.t_dim = t_dim
+        self.spatial_ref_dim = spatial_ref_dim
         # Cube parameters
-        self.shape = (len(self.t_coords), len(self.x_coords), len(self.y_coords))
-        self.dims = (self.t_dim, self.x_dim, self.y_dim)
+        self.shape = (len(self.t_coords), len(self.y_coords), len(self.x_coords))
+        self.dims = (self.t_dim, self.y_dim, self.x_dim)
         self.coords = {
-            self.t_dim: self.t_coords,
-            self.x_dim: self.x_coords,
             self.y_dim: self.y_coords,
+            self.x_dim: self.x_coords,
+            self.spatial_ref_dim: self.spatial_ref,
+            self.t_dim: self.t_coords,
         }
         self.dtype = dtype
         self.dtype_fallback = dtype_fallback
@@ -269,6 +274,7 @@ class Canvas:
         x_dim: str,
         y_dim: str,
         t_dim: str,
+        spatial_ref_dim: str,
         geobox: GeoBox,
         period: str | None,
         dtype: DType_Map_T,
@@ -278,10 +284,10 @@ class Canvas:
         merge: MergeMethod_Map_T,
         merge_fallback: MergeMethod_T,
     ) -> Canvas:
-        coords = coords_from_geobox(geobox, y_dim, x_dim)
+        coords = coords_from_geobox(geobox, x_dim, y_dim)
         x_coords = coords[x_dim].values
         y_coords = coords[y_dim].values
-
+        spatial_ref = coords[spatial_ref_dim]
         # Build t_coords
         timestamps = []
         for item in items:
@@ -300,6 +306,8 @@ class Canvas:
             x_dim,
             y_dim,
             t_dim,
+            spatial_ref,
+            spatial_ref_dim,
             dtype,
             dtype_fallback,
             nodata,

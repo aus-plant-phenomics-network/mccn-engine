@@ -63,8 +63,8 @@ class Loader(abc.ABC, Generic[T]):
         """
         return coords_from_geobox(
             self.filter_config.geobox,
-            self.cube_config.y_dim,
             self.cube_config.x_dim,
+            self.cube_config.y_dim,
         )
 
     def load(self) -> xr.Dataset:
