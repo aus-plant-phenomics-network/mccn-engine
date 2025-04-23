@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Callable
 import pandas as pd
 
 from mccn._types import (
+    DType_Map_T,
+    Dtype_T,
     MergeMethod_Map_T,
     MergeMethod_T,
     Nodata_Map_T,
@@ -107,6 +109,8 @@ class ProcessConfig:
     """Time groupby value"""
     merge_method: MergeMethod_Map_T = None
     merge_method_fallback: MergeMethod_T = "replace"
+    dtype: DType_Map_T = None
+    dtype_fallback: Dtype_T = "float64"
 
     @property
     def period(self) -> str | None:

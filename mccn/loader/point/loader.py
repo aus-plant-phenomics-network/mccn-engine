@@ -7,6 +7,7 @@ import xarray as xr
 from stac_generator.core.base.utils import read_point_asset
 
 from mccn._types import CRS_T
+from mccn.drawer import Canvas, Rasteriser
 from mccn.loader.base import Loader
 from mccn.loader.point.config import PointLoadConfig
 from mccn.parser import ParsedPoint
@@ -50,17 +51,41 @@ class PointLoader(Loader[ParsedPoint]):
         self.load_config = load_config if load_config else PointLoadConfig()
         self.attr_map: dict[str, Any] = {}
         super().__init__(items, filter_config, cube_config, process_config, **kwargs)
+        self.canvas = Canvas.from_items(
+            self.items,
+            self.cube_config.x_dim,
+            self.cube_config.y_dim,
+            self.cube_config.t_dim,
+            self.filter_config.geobox,
+            self.process_config.period,
+            self.process_config.dtype,
+            self.process_config.dtype_fallback,
+            self.process_config.nodata,
+            self.process_config.nodata_fallback,
+            self.process_config.merge_method,
+            self.process_config.merge_method_fallback,
+        )
+        self.rasteriser = Rasteriser(self.canvas, self.load_config.radius)
 
     def _load(self) -> xr.Dataset:
-        return xr.Dataset()
-        # frames = []
-        # for item in self.items:
-        #     frames.append(self.load_item(item))
-        # return xr.merge(frames)
+        for item in self.items:
+            df = read_asset(
+                item,
+                self.cube_config.x_dim,
+                self.cube_config.y_dim,
+                self.cube_config.t_dim,
+                self.cube_config.z_dim,
+                cast(CRS_T, self.filter_config.geobox.crs),
+            )
+            df = self.apply_process(df, self.process_config)
+            self.rasteriser.rasterise(df, item.load_bands)
+        return self.rasteriser.compile()
 
 
 def read_asset(
     item: ParsedPoint,
+    x_dim: str,
+    y_dim: str,
     t_dim: str,
     z_dim: str,
     crs: CRS_T,
@@ -85,15 +110,15 @@ def read_asset(
         frame[t_dim] = item.item.datetime
     if item.config.Z:
         rename_dict[item.config.Z] = z_dim
-
-    # Convert to geobox crs
-    frame = frame.to_crs(crs)
-
-    # Rename indices
-    frame.rename(columns=rename_dict, inplace=True)
     # Drop X and Y columns since we will repopulate them after changing crs
     frame.drop(columns=[item.config.X, item.config.Y], inplace=True)
-
+    # Convert to geobox crs
+    frame = frame.to_crs(crs)
+    # Rename indices
+    frame.rename(columns=rename_dict, inplace=True)
+    # X, Y columns:
+    frame[x_dim] = frame.geometry.x
+    frame[y_dim] = frame.geometry.y
     # Convert datetime to UTC and remove timezone information
     frame[t_dim] = frame[t_dim].dt.tz_convert("utc").dt.tz_localize(None)
     return frame

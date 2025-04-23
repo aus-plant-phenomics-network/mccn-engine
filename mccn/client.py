@@ -27,7 +27,12 @@ if TYPE_CHECKING:
         CRS_T,
         AnchorPos_T,
         BBox_T,
-        Number_T,
+        DType_Map_T,
+        Dtype_T,
+        MergeMethod_Map_T,
+        MergeMethod_T,
+        Nodata_Map_T,
+        Nodata_T,
         Resolution_T,
         Shape_T,
         TimeGroupby,
@@ -68,9 +73,13 @@ class MCCN:
         # Process config
         rename_bands: Mapping[str, str] | None = None,
         process_bands: Mapping[str, Callable] | None = None,
-        nodata: Number_T | Mapping[str, Number_T] = 0,
-        nodata_fallback: Number_T = 0,
+        nodata: Nodata_Map_T = 0,
+        nodata_fallback: Nodata_T = 0,
         time_groupby: TimeGroupby = "time",
+        merge_method: MergeMethod_Map_T = None,
+        merge_method_fallback: MergeMethod_T = "replace",
+        dtype: DType_Map_T = None,
+        dtype_fallback: Dtype_T = "float64",
         # Additional configs
         point_load_config: PointLoadConfig | None = None,
         vector_load_config: VectorLoadConfig | None = None,
@@ -103,6 +112,10 @@ class MCCN:
             nodata,
             nodata_fallback,
             time_groupby,
+            merge_method,
+            merge_method_fallback,
+            dtype,
+            dtype_fallback,
         )
         self.point_load_config = point_load_config
         self.vector_load_config = vector_load_config
