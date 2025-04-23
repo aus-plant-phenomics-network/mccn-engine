@@ -7,13 +7,14 @@ import pandas as pd
 import xarray as xr
 from stac_generator.core.base.utils import read_point_asset
 
-from mccn._types import CRS_T, ParsedPoint
+from mccn._types import CRS_T
 from mccn.loader.base import Loader
 from mccn.loader.point.config import PointLoadConfig
 from mccn.loader.utils import update_attr_legend
+from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
-    from mccn._types import MergeMethods
+    from mccn._types import MergeMethod_Map_T
     from mccn.config import (
         CubeConfig,
         FilterConfig,
@@ -109,7 +110,7 @@ def groupby(
     z_coord: str,
     use_z: bool,
     period: str | None,
-    merge_method: MergeMethods,
+    merge_method: MergeMethod_Map_T,
 ) -> gpd.GeoDataFrame:
     # Prepare groupby for efficiency
     # Need to remove timezone information. Xarray time does not use tz
@@ -176,31 +177,3 @@ def groupby(
     if z_coord in frame.columns:
         grouped.drop(columns=[z_coord], inplace=True)
     return grouped
-
-
-# def rasterize(
-#     frame: pd.DataFrame, t_coord: str, coords: dict[Hashable, xr.DataArray]
-# ) -> xr.Dataset:
-#     ds: xr.Dataset = frame.to_xarray()
-#     # Sometime to_xarray bugs out with datetime index so need explicit conversion
-#     ds[t_coord] = pd.DatetimeIndex(ds.coords[t_coord].values)
-#     ds = ds.assign_coords(spatial_ref=coords["spatial_ref"])
-
-
-# def get_neighbor_mask(
-#     gx: np.ndarray,
-#     gy: np.ndarray,
-#     x: np.ndarray,
-#     y: np.ndarray,
-#     radius: float,
-# ) -> Mask_T:
-#     grid_x, grid_y = np.meshgrid(gx, gy)
-#     grid_coords = np.stack((grid_x.ravel(), grid_y.ravel()), axis=-1)
-#     points = np.stack((x, y), axis=-1)
-
-#     # Compute distances between each point and each grid coordinate
-#     distances = np.linalg.norm(grid_coords[:, np.newaxis] - points, axis=2)
-
-#     # Find mask
-#     mask = [np.where(d < radius) for d in distances]
-#     return mask

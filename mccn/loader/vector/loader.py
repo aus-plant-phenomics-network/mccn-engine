@@ -14,7 +14,7 @@ from stac_generator.core.base.utils import (
     read_vector_asset,
 )
 
-from mccn._types import Number_T, ParsedVector
+from mccn._types import Number_T
 from mccn.config import CubeConfig, FilterConfig, ProcessConfig
 from mccn.loader.base import Loader
 from mccn.loader.utils import (
@@ -23,6 +23,7 @@ from mccn.loader.utils import (
     update_attr_legend,
 )
 from mccn.loader.vector.config import RasterizeConfig, VectorLoadConfig
+from mccn.parser import ParsedVector
 
 if TYPE_CHECKING:
     from odc.geo.geobox import GeoBox
@@ -267,5 +268,5 @@ class VectorLoader(Loader[ParsedVector]):
             mask_name=self.cube_config.mask_name,
             nodata=self.process_config.nodata,
             nodata_fallback=self.process_config.nodata_fallback,
-            categorical_encoding_start=self.process_config.categorical_encoding_start,
+            categorical_encoding_start=1,
         )

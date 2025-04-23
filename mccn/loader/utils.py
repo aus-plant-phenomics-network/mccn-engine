@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from pyproj import CRS
 from pyproj.transformer import Transformer
@@ -154,3 +155,62 @@ def update_attr_legend(
         # Attr dict - mapped value -> original
         attr_dict[field] = {v: k for k, v in cat_map.items()}
         frame[field] = frame[field].map(cat_map)
+
+
+def get_neighbor_mask(
+    gx: np.ndarray,
+    gy: np.ndarray,
+    points: np.ndarray,
+    radius: float,
+) -> Any:
+    """Determine for each grid point the nearest neighbors based on the
+    radius cut-off.
+
+    Produce a mask matrix of shape (|gx|, |gy|, |points|), where |gx|,
+    |gy|, |points| are the length of gx, gy, and points. Each mask entry
+    index by x and y - i.e. mask[x,y,:] is a boolean array of the same length
+    as points, where if mask[x,y,i] = True, then point[i] satisfies the condition
+    to be the neighbor of (gx[x],gy[y]). For two points to be considered neighbors,
+    their L2 distance must be less than radius.
+
+    Args:
+        gx (np.ndarray): grid x coordinates. Shape (|gx|,)
+        gy (np.ndarray): grid y coordinates. Shape (|gy|,)
+        points (np.ndarray): points coordinates. Shape (|points|, 2)
+        radius (float): cut-off radius. Radius unit is based on the units of
+        gx, gy, and points. Note for WGS84, radius of 0.05 degree ~ 5.5km
+
+    Returns:
+        Any: mask array. Shape (|gx|, |gy|, |points|)
+    """
+    # Build meshgrid and compute distance matrix
+    grid_x, grid_y = np.meshgrid(gx, gy, indexing="ij")
+    grid_coords = np.stack((grid_x, grid_y), axis=-1)
+    distances = np.linalg.norm(grid_coords[..., np.newaxis, :] - points, axis=-1)
+    # Render mask based on radius
+    return distances < radius
+
+
+def mask_aggregate(values: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Aggregate values using neighbor mask
+
+    Neighbor mask parameter mask is obtained from the function `get_neighbor_mask`.
+    Mask (|gx|, |gy|, |point|) describes the neighbor mask for a grid of dimenion (|gx|, |gy|).
+    For each grid point, aggregation is performed by applying mean over True values.
+
+    Args:
+        values (np.ndarray): value array. Shape (|points|,)
+        mask (np.ndarray): neighbor mask. Shape(|gx|, |gy|, |points|)
+
+    Returns:
+        np.ndarray: aggregation result. Shape (|gx|, |gy|)
+    """
+    # Apply mask - non masked values assigned nan to make calc simpler
+    # masked_temp - (|gx|, |gy|, |points|)
+    masked_temp = np.where(mask, values, np.nan)
+    valid_mask = np.sum(mask, axis=2) > 0
+
+    # Allocate means layer
+    layer = np.zeros(mask.shape[:2])
+    layer[valid_mask] = np.nanmean(masked_temp[valid_mask], axis=1)
+    return layer

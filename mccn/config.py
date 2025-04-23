@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable
 
 import pandas as pd
 
-from mccn._types import Number_T, TimeGroupby
+from mccn._types import Nodata_Map_T, Nodata_T, TimeGroupby
 
 if TYPE_CHECKING:
     import datetime
@@ -93,23 +93,12 @@ class ProcessConfig:
     """Mapping between original to renamed bands"""
     process_bands: Mapping[str, Callable] | None = None
     """Mapping between band name and transformation to be applied to the band"""
-    nodata: Number_T | Mapping[str, Number_T] = 0
+    nodata: Nodata_Map_T = 0
     """Value used to represent nodata value. Will also be used for filling nan data"""
-    nodata_fallback: Number_T = 0
+    nodata_fallback: Nodata_T = 0
     """Value used for nodata when nodata is specified as as dict"""
-    categorical_encoding_start: int = 1
-    """The smallest legend value when converting from categorical values to numerical"""
     time_groupby: TimeGroupby = "time"
     """Time groupby value"""
-
-    def __post_init__(self) -> None:
-        if (
-            self.categorical_encoding_start == self.nodata
-            or self.categorical_encoding_start == self.nodata_fallback
-        ):
-            raise ValueError(
-                "nodata value in categorical_encoding_start value must be different"
-            )
 
     @property
     def period(self) -> str | None:

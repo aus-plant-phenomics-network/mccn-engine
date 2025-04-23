@@ -5,9 +5,8 @@ import pystac
 import pytest
 from odc.geo.geobox import GeoBox
 
-from mccn._types import ParsedItem, ParsedVector
 from mccn.config import FilterConfig
-from mccn.parser import Parser
+from mccn.parser import ParsedItem, ParsedVector, Parser
 
 
 def get_items_id(items: Sequence[ParsedItem]) -> set[str]:

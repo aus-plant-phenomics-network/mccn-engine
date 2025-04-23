@@ -5,12 +5,13 @@ from typing import (
     TYPE_CHECKING,
 )
 
+from mccn._types import DType_Map_T
+
 if TYPE_CHECKING:
     from concurrent.futures import ThreadPoolExecutor
-    from typing import Literal, Mapping
+    from typing import Literal
 
     import pystac
-    from numpy.typing import DTypeLike
     from odc.stac._stac_load import GroupbyCallback
     from odc.stac.model import ParsedItem
 
@@ -67,4 +68,4 @@ class RasterLoadConfig:
     resampling: str | dict[str, str] | None = None
     chunks: dict[str, int | Literal["auto"]] | None = None
     pool: ThreadPoolExecutor | int | None = None
-    dtype: DTypeLike | Mapping[str, DTypeLike] = None
+    dtype: DType_Map_T = None

@@ -14,8 +14,8 @@ import pandas as pd
 import xarray as xr
 from odc.geo.xr import xr_coords
 
-from mccn._types import ParsedItem
 from mccn.config import CubeConfig, FilterConfig, ProcessConfig
+from mccn.parser import ParsedItem
 
 T = TypeVar("T", bound=ParsedItem)
 

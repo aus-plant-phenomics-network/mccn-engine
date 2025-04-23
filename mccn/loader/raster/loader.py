@@ -9,9 +9,9 @@ import odc.stac
 import pandas as pd
 import xarray as xr
 
-from mccn._types import ParsedRaster
 from mccn.loader.base import Loader
 from mccn.loader.raster.config import RasterLoadConfig, set_groupby
+from mccn.parser import ParsedRaster
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -70,7 +70,6 @@ class MCCN:
         process_bands: Mapping[str, Callable] | None = None,
         nodata: Number_T | Mapping[str, Number_T] = 0,
         nodata_fallback: Number_T = 0,
-        categorical_encoding_start: int = 1,
         time_groupby: TimeGroupby = "time",
         # Additional configs
         point_load_config: PointLoadConfig | None = None,
@@ -103,7 +102,6 @@ class MCCN:
             process_bands,
             nodata,
             nodata_fallback,
-            categorical_encoding_start,
             time_groupby,
         )
         self.point_load_config = point_load_config

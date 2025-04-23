@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Mapping, cast
+from typing import Any, cast
 
 import numpy as np
 import xarray as xr
 from numpy.typing import DTypeLike
 
-from mccn._types import MergeMethod, MergeMethods, Number_T
+from mccn._types import (
+    DType_Map_T,
+    Dtype_T,
+    MergeMethod_Map_T,
+    MergeMethod_T,
+    Nodata_Map_T,
+    Nodata_T,
+)
 from mccn.loader.utils import select_by_key
 
 
@@ -18,8 +25,8 @@ class Drawer(abc.ABC):
         y_coords: np.ndarray,
         t_coords: np.ndarray,
         shape: tuple[int, int, int],
-        dtype: DTypeLike = "float32",
-        nodata: Number_T = 0,
+        dtype: Dtype_T = "float32",
+        nodata: Nodata_T = 0,
         **kwargs: Any,
     ) -> None:
         # Set up xarray dimensions and shape
@@ -39,7 +46,7 @@ class Drawer(abc.ABC):
         self.data = self.alloc()
         self.__post_init__(kwargs)
 
-    def _alloc(self, dtype: DTypeLike, fill_value: Number_T) -> np.ndarray:
+    def _alloc(self, dtype: DTypeLike, fill_value: Nodata_T) -> np.ndarray:
         return np.full(shape=self.shape, fill_value=fill_value, dtype=dtype)
 
     def alloc(self) -> np.ndarray:
@@ -149,7 +156,7 @@ class ReplaceDrawer(Drawer):
         self.data[index][valid_mask] = layer[valid_mask]
 
 
-DRAWERS: dict[str, type[Drawer]] = {
+DRAWERS: dict[MergeMethod_T, type[Drawer]] = {
     "mean": MeanDrawer,
     "max": MaxDrawer,
     "min": MinDrawer,
@@ -168,12 +175,12 @@ class Canvas:
         x_dim: str = "x",
         y_dim: str = "y",
         t_dim: str = "t",
-        dtype: Mapping[str, DTypeLike] | DTypeLike = "float32",
-        nodata: Number_T | Mapping[str, Number_T] = 0,
-        nodata_fallback: Number_T = 0,
+        dtype: DType_Map_T = "float32",
+        nodata: Nodata_Map_T = 0,
+        nodata_fallback: Nodata_T = 0,
         is_sorted: bool = False,
-        merge_method: MergeMethods = "replace",
-        merge_method_fallback: MergeMethod = "replace",
+        merge_method: MergeMethod_Map_T = "replace",
+        merge_method_fallback: MergeMethod_T = "replace",
     ) -> None:
         self.x_coords = self.sort_coord(x_coords, is_sorted)
         self.y_coords = self.sort_coord(y_coords, is_sorted)
@@ -203,7 +210,7 @@ class Canvas:
             coords = np.sort(coords)
         return coords
 
-    def _get_draw_handler(self, method: MergeMethod) -> type[Drawer]:
+    def _get_draw_handler(self, method: MergeMethod_T) -> type[Drawer]:
         if method in DRAWERS:
             return DRAWERS[method]
         raise KeyError(f"Invalid merge method: {method}")
@@ -212,7 +219,7 @@ class Canvas:
         drawers = {}
         for band in self.bands:
             method = select_by_key(band, self.merge_method, self.merge_method_fallback)
-            handler = self._get_draw_handler(cast(MergeMethod, method))
+            handler = self._get_draw_handler(cast(MergeMethod_T, method))
             dtype = select_by_key(band, self.dtype, "float32")  # type: ignore[arg-type]
             nodata = select_by_key(band, self.nodata, self.nodata_fallback)
             drawers[band] = handler(
