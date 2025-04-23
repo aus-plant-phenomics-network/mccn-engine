@@ -103,15 +103,9 @@ def get_item_crs(item: pystac.Item) -> CRS:
 T = TypeVar("T")
 
 
-class UNSET_T: ...
-
-
-UNSET = UNSET_T()
-
-
 def select_by_key(
     key: str,
-    value: T | Mapping[str, T],
+    value: T | Mapping[str, T] | None,
     fallback_value: T,
 ) -> T:
     if value is None:

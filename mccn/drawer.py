@@ -180,7 +180,7 @@ class Canvas:
         nodata: Nodata_Map_T = 0,
         nodata_fallback: Nodata_T = 0,
         is_sorted: bool = False,
-        merge_method: MergeMethod_Map_T | None = None,
+        merge_method: MergeMethod_Map_T = None,
         merge_method_fallback: MergeMethod_T = "replace",
     ) -> None:
         self.x_coords = self.sort_coord(x_coords, is_sorted)
@@ -225,7 +225,12 @@ class Canvas:
             dtype = select_by_key(band, self.dtype, self.dtype_fallback)
             nodata = select_by_key(band, self.nodata, self.nodata_fallback)
             drawers[band] = handler(
-                self.x_coords, self.y_coords, self.t_coords, self.shape, dtype, nodata
+                x_coords=self.x_coords,
+                y_coords=self.y_coords,
+                t_coords=self.t_coords,
+                shape=self.shape,
+                dtype=cast(Dtype_T, dtype),
+                nodata=nodata,
             )
         return drawers
 

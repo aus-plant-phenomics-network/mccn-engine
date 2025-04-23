@@ -6,7 +6,13 @@ from typing import TYPE_CHECKING, Callable
 
 import pandas as pd
 
-from mccn._types import Nodata_Map_T, Nodata_T, TimeGroupby
+from mccn._types import (
+    MergeMethod_Map_T,
+    MergeMethod_T,
+    Nodata_Map_T,
+    Nodata_T,
+    TimeGroupby,
+)
 
 if TYPE_CHECKING:
     import datetime
@@ -99,6 +105,8 @@ class ProcessConfig:
     """Value used for nodata when nodata is specified as as dict"""
     time_groupby: TimeGroupby = "time"
     """Time groupby value"""
+    merge_method: MergeMethod_Map_T = None
+    merge_method_fallback: MergeMethod_T = "replace"
 
     @property
     def period(self) -> str | None:
