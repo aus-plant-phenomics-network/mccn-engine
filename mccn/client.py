@@ -225,6 +225,7 @@ class MCCN:
         try:
             if isinstance(endpoint, tuple):
                 href, collection_id = endpoint
+                print(href, collection_id)
                 return pystac_client.Client.open(href).get_collection(collection_id)
             if isinstance(endpoint, Path | str):
                 return pystac.Collection.from_file(str(endpoint))

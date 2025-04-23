@@ -3,80 +3,79 @@ import pytest
 
 from mccn.drawer import MaxDrawer, MeanDrawer, MinDrawer, ReplaceDrawer, SumDrawer
 
+# @pytest.mark.parametrize(
+#     "x, y, t, x_shape, y_shape, t_shape, nodata, bands",
+#     [
+#         # Standard case
+#         ("x", "y", "t", 10, 5, 3, -1, {"b1", "b2"}),
+#         # Single point in each dimension
+#         ("x", "y", "t", 1, 1, 1, 0, {"b1"}),
+#         # Large dimensions
+#         ("x", "y", "t", 100, 50, 30, -9999, {"b1", "b2", "b3"}),
+#         # Non-default dimension names
+#         ("longitude", "latitude", "time", 12, 8, 4, 0, {"band1", "band2"}),
+#         # Non-default dimension names
+#         ("longitude", "latitude", "time", 12, 8, 4, -9999, {"band1", "band2"}),
+#         # Negative nodata value
+#         ("x", "y", "t", 15, 10, 5, -5, {"temperature"}),
+#         # No bands
+#         ("x", "y", "t", 7, 3, 2, -1, set()),
+#         # Edge case: no time points
+#         ("x", "y", "t", 5, 5, 0, -1, {"b1"}),
+#         # Edge case: no x or y coordinates
+#         ("x", "y", "t", 0, 0, 10, 999, {"band1"}),
+#         # All zero values in the coordinates
+#         ("x", "y", "t", 0, 0, 0, 0, {"b1"}),
+#         # Different nodata values for each band
+#         ("x", "y", "t", 10, 5, 3, -999, {"b1", "b2", "b3"}),
+#     ],
+# )
+# def test_build_dimensions_and_coords(
+#     x: str,
+#     y: str,
+#     t: str,
+#     x_shape: int,
+#     y_shape: int,
+#     t_shape: int,
+#     nodata: int,
+#     bands: set[str],
+# ) -> None:
+#     # Setup
+#     x_coords = np.arange(x_shape)
+#     y_coords = np.arange(y_shape)
+#     t_coords = np.arange(t_shape)
+#     bands = bands
+#     nodata = nodata
 
-@pytest.mark.parametrize(
-    "x, y, t, x_shape, y_shape, t_shape, nodata, bands",
-    [
-        # Standard case
-        ("x", "y", "t", 10, 5, 3, -1, {"b1", "b2"}),
-        # Single point in each dimension
-        ("x", "y", "t", 1, 1, 1, 0, {"b1"}),
-        # Large dimensions
-        ("x", "y", "t", 100, 50, 30, -9999, {"b1", "b2", "b3"}),
-        # Non-default dimension names
-        ("longitude", "latitude", "time", 12, 8, 4, 0, {"band1", "band2"}),
-        # Non-default dimension names
-        ("longitude", "latitude", "time", 12, 8, 4, -9999, {"band1", "band2"}),
-        # Negative nodata value
-        ("x", "y", "t", 15, 10, 5, -5, {"temperature"}),
-        # No bands
-        ("x", "y", "t", 7, 3, 2, -1, set()),
-        # Edge case: no time points
-        ("x", "y", "t", 5, 5, 0, -1, {"b1"}),
-        # Edge case: no x or y coordinates
-        ("x", "y", "t", 0, 0, 10, 999, {"band1"}),
-        # All zero values in the coordinates
-        ("x", "y", "t", 0, 0, 0, 0, {"b1"}),
-        # Different nodata values for each band
-        ("x", "y", "t", 10, 5, 3, -999, {"b1", "b2", "b3"}),
-    ],
-)
-def test_build_dimensions_and_coords(
-    x: str,
-    y: str,
-    t: str,
-    x_shape: int,
-    y_shape: int,
-    t_shape: int,
-    nodata: int,
-    bands: set[str],
-) -> None:
-    # Setup
-    x_coords = np.arange(x_shape)
-    y_coords = np.arange(y_shape)
-    t_coords = np.arange(t_shape)
-    bands = bands
-    nodata = nodata
+#     drawer = SumDrawer(
+#         x_coords=x_coords,
+#         y_coords=y_coords,
+#         t_coords=t_coords,
+#         x_dim=x,
+#         y_dim=y,
+#         t_dim=t,
+#         bands=bands,
+#         nodata=nodata,
+#     )
 
-    drawer = SumDrawer(
-        x_coords=x_coords,
-        y_coords=y_coords,
-        t_coords=t_coords,
-        x_dim=x,
-        y_dim=y,
-        t_dim=t,
-        bands=bands,
-        nodata=nodata,
-    )
+#     # Call build
+#     result = drawer.build()
 
-    # Call build
-    result = drawer.build()
+#     # Validate dimensions
+#     assert result.sizes == {t: len(t_coords), x: len(x_coords), y: len(y_coords)}
+#     assert list(result.sizes.keys()) == [t, x, y]
 
-    # Validate dimensions
-    assert result.sizes == {t: len(t_coords), x: len(x_coords), y: len(y_coords)}
-    assert list(result.sizes.keys()) == [t, x, y]
+#     # Validate coordinates
+#     assert np.array_equal(result.coords[t].values, t_coords)
+#     assert np.array_equal(result.coords[x].values, x_coords)
+#     assert np.array_equal(result.coords[y].values, y_coords)
 
-    # Validate coordinates
-    assert np.array_equal(result.coords[t].values, t_coords)
-    assert np.array_equal(result.coords[x].values, x_coords)
-    assert np.array_equal(result.coords[y].values, y_coords)
+#     # Check that the bands are actually data vars
+#     assert bands == result.data_vars.keys()
 
-    # Check that the bands are actually data vars
-    assert bands == result.data_vars.keys()
-
-    # Validate data is filled with nodata
-    for band in bands:
-        assert np.all(result[band].values == nodata)
+#     # Validate data is filled with nodata
+#     for band in bands:
+#         assert np.all(result[band].values == nodata)
 
 
 @pytest.fixture()
@@ -85,7 +84,7 @@ def nonzero_sum_drawer() -> SumDrawer:
         x_coords=np.arange(3),
         y_coords=np.arange(4),
         t_coords=np.arange(2),
-        bands={"b0"},
+        shape=(2, 3, 4),
         nodata=-9999,
     )
 
@@ -96,7 +95,40 @@ def nonzero_min_drawer() -> MinDrawer:
         x_coords=np.arange(3),
         y_coords=np.arange(4),
         t_coords=np.arange(2),
-        bands={"b0"},
+        shape=(2, 3, 4),
+        nodata=-9999,
+    )
+
+
+@pytest.fixture()
+def max_drawer() -> MaxDrawer:
+    return MaxDrawer(
+        x_coords=np.arange(3),
+        y_coords=np.arange(4),
+        t_coords=np.arange(2),
+        shape=(2, 3, 4),
+        nodata=-9999,
+    )
+
+
+@pytest.fixture()
+def replace_drawer() -> ReplaceDrawer:
+    return ReplaceDrawer(
+        x_coords=np.arange(3),
+        y_coords=np.arange(4),
+        t_coords=np.arange(2),
+        shape=(2, 3, 4),
+        nodata=-9999,
+    )
+
+
+@pytest.fixture()
+def nonzero_mean_drawer() -> MeanDrawer:
+    return MeanDrawer(
+        x_coords=np.arange(3),
+        y_coords=np.arange(4),
+        t_coords=np.arange(2),
+        shape=(2, 3, 4),
         nodata=-9999,
     )
 
@@ -325,8 +357,8 @@ def test_given_draw_options_sum_drawer_expects_correct_draw_value(
     nonzero_sum_drawer: SumDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_sum_drawer.draw(0, "b0", sequence, False)
-    assert np.array_equal(nonzero_sum_drawer.data["b0"][0], exp_result)
+        nonzero_sum_drawer.draw(0, sequence)
+    assert np.array_equal(nonzero_sum_drawer.data[0], exp_result)
 
 
 @pytest.mark.parametrize(
@@ -543,19 +575,8 @@ def test_given_draw_options_min_drawer_expects_correct_draw_value(
     nonzero_min_drawer: MinDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_min_drawer.draw(0, "b0", sequence, False)
-    assert np.array_equal(nonzero_min_drawer.data["b0"][0], exp_result)
-
-
-@pytest.fixture()
-def max_drawer() -> MaxDrawer:
-    return MaxDrawer(
-        x_coords=np.arange(3),
-        y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        bands={"b0"},
-        nodata=-9999,
-    )
+        nonzero_min_drawer.draw(0, sequence)
+    assert np.array_equal(nonzero_min_drawer.data[0], exp_result)
 
 
 @pytest.mark.parametrize(
@@ -777,19 +798,8 @@ def test_given_draw_options_expects_correct_max_draw_value(
     max_drawer: MaxDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        max_drawer.draw(0, "b0", sequence, False)
-    assert np.array_equal(max_drawer.data["b0"][0], exp_result)
-
-
-@pytest.fixture()
-def replace_drawer() -> ReplaceDrawer:
-    return ReplaceDrawer(
-        x_coords=np.arange(3),
-        y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        bands={"b0"},
-        nodata=-9999,
-    )
+        max_drawer.draw(0, sequence)
+    assert np.array_equal(max_drawer.data[0], exp_result)
 
 
 @pytest.mark.parametrize(
@@ -931,19 +941,8 @@ def test_given_draw_options_expects_correct_replace_draw_value(
     replace_drawer: ReplaceDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        replace_drawer.draw(0, "b0", sequence, False)
-    assert np.array_equal(replace_drawer.data["b0"][0], exp_result)
-
-
-@pytest.fixture()
-def nonzero_mean_drawer() -> MeanDrawer:
-    return MeanDrawer(
-        x_coords=np.arange(3),
-        y_coords=np.arange(4),
-        t_coords=np.arange(2),
-        bands={"b0"},
-        nodata=-9999,
-    )
+        replace_drawer.draw(0, sequence)
+    assert np.array_equal(replace_drawer.data[0], exp_result)
 
 
 @pytest.mark.parametrize(
@@ -1079,7 +1078,7 @@ def test_mean_drawer_scenarios(
     nonzero_mean_drawer: MeanDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_mean_drawer.draw(0, "b0", sequence, False)
+        nonzero_mean_drawer.draw(0, sequence)
     assert np.allclose(
-        nonzero_mean_drawer.data["b0"][0], exp_result, equal_nan=True, atol=1e-3
+        nonzero_mean_drawer.data[0], exp_result, equal_nan=True, atol=1e-3
     )

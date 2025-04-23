@@ -1,0 +1,190 @@
+[
+    {
+        "id": "C1_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C1_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "C2_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C2_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "C3_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C3_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "C4_5_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C4_5_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "C6_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C6_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "C7_8_9_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "C7_8_9_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "L1_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L1_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "L2_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L2_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "L3_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L3_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "L4_boundary",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/boundary_wgs84.zip",
+        "layer": "L4_poly",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 4326
+    },
+    {
+        "id": "Campey_ECa_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_ECa_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "Krigged_ECa",
+                "description": "Krigged_ECa data"
+            }
+        ]
+    },
+    {
+        "id": "Campey_Gamma_K_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_Gamma_K_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "Krigged_Gamma_K",
+                "description": "Krigged_Gamma_K data"
+            }
+        ]
+    },
+    {
+        "id": "Llara_ECa_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_ECa_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "Krigged_ECa",
+                "description": "Krigged_ECa data"
+            }
+        ]
+    },
+    {
+        "id": "Llara_Gamma_K_Krigged_Harmonized",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_Gamma_K_all_kriged_harmonized.tif",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "epsg": 32755,
+        "band_info": [
+            {
+                "name": "Krigged_Gamma_K",
+                "description": "Krigged_Gamma_K data"
+            }
+        ]
+    },
+    {
+        "id": "soil_measurement",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/soil_data.csv",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "X": "Long",
+        "Y": "Lat",
+        "Z": "mid-depth",
+        "epsg": 4326,
+        "column_info": [
+            {
+                "name": "ECa",
+                "description": "ECa"
+            },
+            {
+                "name": "GammaK",
+                "description": "GammaK"
+            },
+            {
+                "name": "DEM",
+                "description": "DEM"
+            },
+            {
+                "name": "NDVI10",
+                "description": "NDVI10"
+            },
+            {
+                "name": "NDVImed",
+                "description": "NDVImed"
+            },
+            {
+                "name": "NDVI90",
+                "description": "NDVI90"
+            },
+            {
+                "name": "Clay",
+                "description": "Clay"
+            },
+            {
+                "name": "Silt",
+                "description": "Silt"
+            },
+            {
+                "name": "Sand",
+                "description": "Sand"
+            },
+            {
+                "name": "pH",
+                "description": "pH"
+            },
+            {
+                "name": "EC",
+                "description": "EC"
+            }
+        ]
+    }
+]

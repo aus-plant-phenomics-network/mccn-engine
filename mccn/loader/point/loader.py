@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Hashable, Sequence, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import xarray as xr
-from odc.geo.xr import xr_coords
 from stac_generator.core.base.utils import read_point_asset
 
 from mccn._types import CRS_T, ParsedPoint

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
-import numpy as np
 import pandas as pd
 from pyproj.crs.crs import CRS
 
@@ -21,13 +20,8 @@ InterpMethods = (
     Literal["linear", "nearest", "zero", "slinear", "quadratic", "cubic", "polynomial"]
     | Literal["barycentric", "krogh", "pchip", "spline", "akima", "makima"]
 )
-_MergeMethods = (
-    Literal[
-        "add", "replace", "min", "max", "median", "mean", "sum", "prod", "var", "std"
-    ]
-    | Callable[[np.ndarray], float]
-)
-MergeMethods = _MergeMethods | dict[str, _MergeMethods]
+MergeMethod = Literal["replace", "min", "max", "mean", "sum"]
+MergeMethods = MergeMethod | dict[str, MergeMethod]
 Number_T = int | float
 Resolution_T = Number_T | tuple[Number_T, Number_T]
 Shape_T = int | tuple[int, int]
