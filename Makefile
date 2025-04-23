@@ -120,17 +120,22 @@ gryfn:
 .PHONY: llara_campey_raster
 llara_campey_raster:
 	@echo running config from $(CONFIG_PATH)/llara_campey/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_config.json --id Llara_Campey_Raster --dst $(SERVER_PATH) -v
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_config.json --id Llara_Campey_Raster -v
+
+.PHONY: llara_campey_raster_vector
+llara_campey_raster_vector:
+	@echo running config from $(CONFIG_PATH)/llara_campey/raster_vector_config.json
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_vector_config.json --id Llara_Campey_Raster_Vector -v
 
 .PHONY: case-study-1-raster
 case-study-1-raster:
 	@echo running config from $(CONFIG_PATH)/case-study-1/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster --dst $(SERVER_PATH) -v
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster -v
 
 .PHONY: test-geotiff
 test-geotiff:
 	@echo running config from $(CONFIG_PATH)/test-geotiff/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster --dst $(SERVER_PATH) -v
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster -v
 
 .PHONY: case-study-7-llara
 case-study-7-llara:
