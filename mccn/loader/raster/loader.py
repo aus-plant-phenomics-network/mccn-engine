@@ -9,6 +9,7 @@ import odc.stac
 import pandas as pd
 import xarray as xr
 
+from mccn._types import DType_Map_T
 from mccn.loader.base import Loader
 from mccn.loader.raster.config import RasterLoadConfig, set_groupby
 from mccn.parser import ParsedRaster
@@ -61,6 +62,7 @@ class RasterLoader(Loader[ParsedRaster]):
                     raster_config=self.load_config,
                     period=self.period,
                     groupby=self.groupby,
+                    dtype=self.process_config.dtype,
                 )
             except Exception as e:
                 raise RuntimeError(
@@ -100,12 +102,14 @@ def read_asset(
     groupby: str | GroupbyCallback,
     period: str | None,
     raster_config: RasterLoadConfig,
+    dtype: DType_Map_T,
 ) -> xr.Dataset:
     ds = odc.stac.load(
         items,
         bands,
         geobox=geobox,
         groupby=groupby,
+        dtype=dtype,
         **asdict(raster_config),
     )
     # NOTE: odc stac load uses odc.geo.xr.xr_coords to set dimension name

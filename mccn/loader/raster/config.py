@@ -5,8 +5,6 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from mccn._types import DType_Map_T
-
 if TYPE_CHECKING:
     from concurrent.futures import ThreadPoolExecutor
     from typing import Literal
@@ -68,4 +66,3 @@ class RasterLoadConfig:
     resampling: str | dict[str, str] | None = None
     chunks: dict[str, int | Literal["auto"]] | None = None
     pool: ThreadPoolExecutor | int | None = None
-    dtype: DType_Map_T = None
