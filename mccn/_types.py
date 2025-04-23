@@ -9,12 +9,12 @@ from pyproj.crs.crs import CRS
 TimeGroupby = Literal["time", "day", "hour", "minute", "year", "month"]
 
 MergeMethod_T = Literal["replace", "min", "max", "mean", "sum"]
-MergeMethod_Map_T = MergeMethod_T | Mapping[str, MergeMethod_T]
+MergeMethod_Map_T = MergeMethod_T | Mapping[str, MergeMethod_T] | None
 
 Number_T = int | float
 
 Nodata_T = Number_T
-Nodata_Map_T = Number_T | Mapping[str, Number_T]
+Nodata_Map_T = Number_T | Mapping[str, Number_T] | None
 
 Resolution_T = Number_T | tuple[Number_T, Number_T]
 Shape_T = int | tuple[int, int]

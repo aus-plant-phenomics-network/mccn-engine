@@ -93,7 +93,7 @@ class ProcessConfig:
     """Mapping between original to renamed bands"""
     process_bands: Mapping[str, Callable] | None = None
     """Mapping between band name and transformation to be applied to the band"""
-    nodata: Nodata_Map_T = 0
+    nodata: Nodata_Map_T = None
     """Value used to represent nodata value. Will also be used for filling nan data"""
     nodata_fallback: Nodata_T = 0
     """Value used for nodata when nodata is specified as as dict"""

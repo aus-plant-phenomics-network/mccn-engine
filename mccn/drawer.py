@@ -25,7 +25,7 @@ class Drawer(abc.ABC):
         y_coords: np.ndarray,
         t_coords: np.ndarray,
         shape: tuple[int, int, int],
-        dtype: Dtype_T = "float32",
+        dtype: Dtype_T = "float64",
         nodata: Nodata_T = 0,
         **kwargs: Any,
     ) -> None:
@@ -175,11 +175,12 @@ class Canvas:
         x_dim: str = "x",
         y_dim: str = "y",
         t_dim: str = "t",
-        dtype: DType_Map_T = "float32",
+        dtype: DType_Map_T = None,
+        dtype_fallback: Dtype_T = "float64",
         nodata: Nodata_Map_T = 0,
         nodata_fallback: Nodata_T = 0,
         is_sorted: bool = False,
-        merge_method: MergeMethod_Map_T = "replace",
+        merge_method: MergeMethod_Map_T | None = None,
         merge_method_fallback: MergeMethod_T = "replace",
     ) -> None:
         self.x_coords = self.sort_coord(x_coords, is_sorted)
@@ -198,6 +199,7 @@ class Canvas:
             self.y_dim: self.y_coords,
         }
         self.dtype = dtype
+        self.dtype_fallback = dtype_fallback
         self.nodata = nodata
         self.nodata_fallback = nodata_fallback
         self.is_sorted = is_sorted
@@ -220,7 +222,7 @@ class Canvas:
         for band in self.bands:
             method = select_by_key(band, self.merge_method, self.merge_method_fallback)
             handler = self._get_draw_handler(cast(MergeMethod_T, method))
-            dtype = select_by_key(band, self.dtype, "float32")  # type: ignore[arg-type]
+            dtype = select_by_key(band, self.dtype, self.dtype_fallback)
             nodata = select_by_key(band, self.nodata, self.nodata_fallback)
             drawers[band] = handler(
                 self.x_coords, self.y_coords, self.t_coords, self.shape, dtype, nodata

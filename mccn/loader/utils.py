@@ -112,13 +112,13 @@ UNSET = UNSET_T()
 def select_by_key(
     key: str,
     value: T | Mapping[str, T],
-    fallback_value: T | UNSET_T = UNSET,
+    fallback_value: T,
 ) -> T:
+    if value is None:
+        return fallback_value
     if isinstance(value, Mapping):
         if key in value:
             return value[key]
-        if isinstance(fallback_value, UNSET_T):
-            raise KeyError("Undefined fallback value")
         return fallback_value
     return value
 
