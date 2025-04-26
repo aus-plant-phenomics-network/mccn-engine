@@ -17,8 +17,6 @@ class RasterizeConfig:
     """nodata value to use in output file or masked array."""
     merge_alg: Literal["REPLACE", "ADD"] | MergeAlg = "REPLACE"
     """Merge algorithm to use. One of: MergeAlg.replace (default): the new value will overwrite the existing value. MergeAlg.add: the new value will be added to the existing raster."""
-    dtype: Any | None = None
-    """Used as data type for results, if out is not provided."""
 
     def __post_init__(self) -> None:
         # Instantiate merge_alg enum from string
