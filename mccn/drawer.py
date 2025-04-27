@@ -339,9 +339,6 @@ class Rasteriser:
         self.radius = radius
         self.categorical_prefix = categorical_prefix
 
-    def is_categorical(self, series: pd.Series) -> bool:
-        return not pd.api.types.is_numeric_dtype(series)
-
     def encode(self, series: pd.Series, nodata: int, band: str) -> pd.Series:
         curr = 0 if nodata != 0 else 1
         if band not in self.attrs:
@@ -382,15 +379,16 @@ class Rasteriser:
             series = series.drop_duplicates().dropna()
             dims = series.loc[:, [*self.dims]].values
             band_series = series.loc[:, band]
-            if self.is_categorical(band_series):
-                band_series, band = self.handle_categorical(band_series, band)
-                op: Callable = np.nanmax
-            else:
-                band_series, band = self.handle_numeric(band_series, band)
-                op = np.nanmean
+            try:
+                band_series = pd.to_numeric(band_series)
+                band_series, band_name = self.handle_numeric(band_series, band)
+                op: Callable = np.nanmean
+            except ValueError:
+                band_series, band_name = self.handle_categorical(band_series, band)
+                op = np.nanmax
             mask = get_neighbor_mask(self.gx, self.gy, dims, self.radius)
             raster = mask_aggregate(band_series.values, mask, op)
-            self.canvas.draw(date, band, raster)
+            self.canvas.draw(date, band_name, raster)
 
     def rasterise(self, data: pd.DataFrame, bands: set[str]) -> None:
         for band in bands:
