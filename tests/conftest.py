@@ -18,10 +18,10 @@ def load_collection(path: Path | str) -> pystac.Collection:
         config = json.load(file)
     for i in range(len(config)):
         config[i]["location"] = Path(config[i]["location"]).absolute().as_uri()
-    factory = StacGeneratorFactory.get_stac_generator(
+    factory = StacGeneratorFactory.get_collection_generator(
         config, StacCollectionConfig(id="Collection")
     )
-    return factory.create_collection()
+    return factory()
 
 
 # RASTER FIXTURES
