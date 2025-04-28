@@ -4,14 +4,16 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "PointCook",
         "collection_date": "2026-01-01",
-        "collection_time": "09:40"
+        "collection_time": "00:00",
+        "timezone": "utc"
     },
     {
         "id": "hoppers_crossing_name",
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "HoppersCrossing",
         "collection_date": "2026-01-01",
-        "collection_time": "09:40",
+        "collection_time": "00:00",
+        "timezone": "utc",
         "column_info": [
             {
                 "name": "name"
@@ -23,7 +25,8 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Werribee",
         "collection_date": "2026-01-01",
-        "collection_time": "09:40",
+        "collection_time": "00:00",
+        "timezone": "utc",
         "column_info": [
             {
                 "name": "name"
@@ -61,7 +64,8 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Sunbury",
         "collection_date": "2026-01-01",
-        "collection_time": "09:40",
+        "collection_time": "00:00",
+        "timezone": "utc",
         "column_info": [
             {
                 "name": "name"
@@ -99,7 +103,8 @@
         "location": "tests/loader/vector/fixture/area.zip",
         "layer": "Sunbury",
         "collection_date": "2026-01-01",
-        "collection_time": "09:40",
+        "collection_time": "00:00",
+        "timezone": "utc",
         "column_info": [
             {
                 "name": "name"

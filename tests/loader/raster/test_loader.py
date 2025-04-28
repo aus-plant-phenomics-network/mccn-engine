@@ -30,7 +30,7 @@ def test_cube_axis_renamed(
         y_dim=Y_COORD,
         t_dim=T_COORD,
     )
-    ds = engine.load_raster()
+    ds = engine.load()
     assert X_COORD in ds.dims
     assert Y_COORD in ds.dims
     assert T_COORD in ds.dims
@@ -48,7 +48,7 @@ def year_dsm_loaded(
         time_groupby="year",
         t_dim=T_COORD,
     )
-    return engine.load_raster()
+    return engine.load()
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +62,7 @@ def month_dsm_loaded(
         time_groupby="month",
         t_dim=T_COORD,
     )
-    return engine.load_raster()
+    return engine.load()
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +76,7 @@ def day_dsm_loaded(
         time_groupby="day",
         t_dim=T_COORD,
     )
-    return engine.load_raster()
+    return engine.load()
 
 
 @pytest.fixture(scope="module")
@@ -90,7 +90,7 @@ def hour_dsm_loaded(
         time_groupby="hour",
         t_dim=T_COORD,
     )
-    return engine.load_raster()
+    return engine.load()
 
 
 @pytest.fixture(scope="module")
@@ -105,7 +105,7 @@ def top_left_dsm_loaded(
         ],
         geobox=multiband_geobox,
     )
-    return client.load_raster()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -120,7 +120,7 @@ def top_left_rgb_loaded(
         ],
         geobox=multiband_geobox,
     )
-    return client.load_raster()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -135,7 +135,7 @@ def top_left_ms_loaded(
         ],
         geobox=multiband_geobox,
     )
-    return client.load_raster()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -226,7 +226,7 @@ def test_raster_year_generation_expects_full_matching(
     # Prepare ref clients - 2015
     ref_items = list(filter(filter_logic, dsm_items))
     ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby="year")
-    ref_ds = ref_client.load_raster()
+    ref_ds = ref_client.load()
 
     # Compare values
     diff = ds["dsm"].values[index, :, :] - ref_ds["dsm"].values[0, :, :]
@@ -267,7 +267,7 @@ def test_raster_month_generation_expects_full_matching(
     # Prepare ref clients - 2015
     ref_items = list(filter(filter_logic, dsm_items))
     ref_client = MCCN(items=ref_items, geobox=dsm_geobox, time_groupby="month")
-    ref_ds = ref_client.load_raster()
+    ref_ds = ref_client.load()
 
     # Compare values
     diff = ds["dsm"].values[index, :, :] - ref_ds["dsm"].values[0, :, :]
@@ -315,7 +315,7 @@ def test_raster_timeslicing(
         end_ts=end,
         time_groupby=groupby,
     )
-    ds = client.load_raster()
+    ds = client.load()
     assert all(pd.DatetimeIndex(ds["time"].values) == [pd.Timestamp(t) for t in exp])
 
 
@@ -380,7 +380,7 @@ def test_raster_band_filter(
         geobox=multiband_geobox,
         bands=bands,
     )
-    ds = client.load_raster()
+    ds = client.load()
     assert set(exp.keys()) == set(ds.data_vars.keys())
     for k, fixture_name in exp.items():
         ref_ds = request.getfixturevalue(fixture_name)
@@ -428,7 +428,7 @@ def test_raster_band_filter_ref_against_file(
         geobox=multiband_geobox,
         bands=bands,
     )
-    ds = client.load_raster()
+    ds = client.load()
     assert exp == set(ds.data_vars.keys())
     for k in exp:
         xr.testing.assert_equal(ds[k], multibands_ds[k])

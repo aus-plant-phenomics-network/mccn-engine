@@ -125,9 +125,9 @@ case-study-1-raster:
 .PHONY: case-study-7-scenario-1
 case-study-7-scenario-1:
 	@cd configs/case-study-7
-	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_1_config.json --id CaseStudy7Scenario1 --dst generated
+	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_1_config.json --id CaseStudy7Scenario1 --dst generated --num_workers 4
 
 .PHONY: case-study-7-scenario-2
 case-study-7-scenario-2:
 	@cd configs/case-study-7
-	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_2_config.json --id CaseStudy7Scenario2 --dst generated
+	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_2_config.json --id CaseStudy7Scenario2 --dst generated --num_workers 4

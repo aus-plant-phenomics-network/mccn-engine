@@ -83,8 +83,6 @@ def nonzero_sum_drawer() -> SumDrawer:
     return SumDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(1),
-        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -94,8 +92,6 @@ def nonzero_min_drawer() -> MinDrawer:
     return MinDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(1),
-        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -105,8 +101,6 @@ def max_drawer() -> MaxDrawer:
     return MaxDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(1),
-        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -116,8 +110,6 @@ def replace_drawer() -> ReplaceDrawer:
     return ReplaceDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(1),
-        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -127,8 +119,6 @@ def nonzero_mean_drawer() -> MeanDrawer:
     return MeanDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
-        t_coords=np.arange(1),
-        shape=(1, 3, 4),
         nodata=-9999,
     )
 
@@ -357,8 +347,8 @@ def test_given_draw_options_sum_drawer_expects_correct_draw_value(
     nonzero_sum_drawer: SumDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_sum_drawer.draw(0, sequence)
-    assert np.array_equal(nonzero_sum_drawer.data[0], exp_result)
+        nonzero_sum_drawer.draw(0, sequence.T)
+    assert np.array_equal(nonzero_sum_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -575,8 +565,8 @@ def test_given_draw_options_min_drawer_expects_correct_draw_value(
     nonzero_min_drawer: MinDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_min_drawer.draw(0, sequence)
-    assert np.array_equal(nonzero_min_drawer.data[0], exp_result)
+        nonzero_min_drawer.draw(0, sequence.T)
+    assert np.array_equal(nonzero_min_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -798,8 +788,8 @@ def test_given_draw_options_expects_correct_max_draw_value(
     max_drawer: MaxDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        max_drawer.draw(0, sequence)
-    assert np.array_equal(max_drawer.data[0], exp_result)
+        max_drawer.draw(0, sequence.T)
+    assert np.array_equal(max_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -941,8 +931,8 @@ def test_given_draw_options_expects_correct_replace_draw_value(
     replace_drawer: ReplaceDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        replace_drawer.draw(0, sequence)
-    assert np.array_equal(replace_drawer.data[0], exp_result)
+        replace_drawer.draw(0, sequence.T)
+    assert np.array_equal(replace_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -1078,7 +1068,7 @@ def test_mean_drawer_scenarios(
     nonzero_mean_drawer: MeanDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_mean_drawer.draw(0, sequence)
+        nonzero_mean_drawer.draw(0, sequence.T)
     assert np.allclose(
-        nonzero_mean_drawer.data[0], exp_result, equal_nan=True, atol=1e-3
+        nonzero_mean_drawer.data[0], exp_result.T, equal_nan=True, atol=1e-3
     )

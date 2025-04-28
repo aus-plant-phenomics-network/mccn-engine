@@ -4,7 +4,6 @@ import abc
 from typing import (
     Any,
     Generic,
-    Hashable,
     Sequence,
     TypeVar,
     overload,
@@ -14,7 +13,7 @@ import pandas as pd
 import xarray as xr
 
 from mccn.config import CubeConfig, FilterConfig, ProcessConfig
-from mccn.loader.utils import coords_from_geobox
+from mccn.drawer import Rasteriser
 from mccn.parser import ParsedItem
 
 T = TypeVar("T", bound=ParsedItem)
@@ -24,6 +23,7 @@ class Loader(abc.ABC, Generic[T]):
     def __init__(
         self,
         items: Sequence[T],
+        rasteriser: Rasteriser,
         filter_config: FilterConfig,
         cube_config: CubeConfig | None = None,
         process_config: ProcessConfig | None = None,
@@ -50,35 +50,16 @@ class Loader(abc.ABC, Generic[T]):
             process_config (ProcessConfig | None, optional): data cube processing config. Defaults to None.
         """
         self.items = items
+        self.rasteriser = rasteriser
         self.filter_config = filter_config
         self.cube_config = cube_config if cube_config else CubeConfig()
         self.process_config = process_config if process_config else ProcessConfig()
+        self.__post_init__()
 
-    @property
-    def coords(self) -> dict[Hashable, xr.DataArray]:
-        """Coordinates of the datacube in y, x coordinates.
-
-        Returns:
-            dict[Hashable, xr.DataArray]: coordinate dict
-        """
-        return coords_from_geobox(
-            self.filter_config.geobox,
-            self.cube_config.x_dim,
-            self.cube_config.y_dim,
-        )
-
-    def load(self) -> xr.Dataset:
-        ds = self._load()
-        if ds:
-            return self.apply_filter(
-                ds,
-                self.filter_config,
-                self.cube_config,
-            )
-        return ds
+    def __post_init__(self) -> None: ...
 
     @abc.abstractmethod
-    def _load(self) -> xr.Dataset:
+    def load(self) -> None:
         raise NotImplementedError
 
     @staticmethod

@@ -1,23 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 import geopandas as gpd
-import xarray as xr
 from stac_generator.core.base.utils import read_point_asset
 
 from mccn._types import CRS_T
-from mccn.drawer import Canvas, Rasteriser
 from mccn.loader.base import Loader
-from mccn.loader.point.config import PointLoadConfig
 from mccn.parser import ParsedPoint
 
 if TYPE_CHECKING:
-    from mccn.config import (
-        CubeConfig,
-        FilterConfig,
-        ProcessConfig,
-    )
+    pass
 
 
 class PointLoader(Loader[ParsedPoint]):
@@ -39,38 +32,7 @@ class PointLoader(Loader[ParsedPoint]):
 
     """
 
-    def __init__(
-        self,
-        items: Sequence[ParsedPoint],
-        filter_config: FilterConfig,
-        cube_config: CubeConfig | None = None,
-        process_config: ProcessConfig | None = None,
-        load_config: PointLoadConfig | None = None,
-        **kwargs: Any,
-    ) -> None:
-        self.load_config = load_config if load_config else PointLoadConfig()
-        self.attr_map: dict[str, Any] = {}
-        super().__init__(items, filter_config, cube_config, process_config, **kwargs)
-        self.canvas = Canvas.from_items(
-            self.items,
-            self.cube_config.x_dim,
-            self.cube_config.y_dim,
-            self.cube_config.t_dim,
-            self.cube_config.spatial_ref_dim,
-            self.filter_config.geobox,
-            self.process_config.period,
-            self.process_config.dtype,
-            self.process_config.dtype_fallback,
-            self.process_config.nodata,
-            self.process_config.nodata_fallback,
-            self.process_config.merge_method,
-            self.process_config.merge_method_fallback,
-        )
-        self.rasteriser = Rasteriser(self.canvas, self.load_config.radius)
-
-    def _load(self) -> xr.Dataset:
-        if not self.items:
-            return xr.Dataset()
+    def load(self) -> None:
         for item in self.items:
             df = read_asset(
                 item,
@@ -82,8 +44,7 @@ class PointLoader(Loader[ParsedPoint]):
                 self.process_config.period,
             )
             df = self.apply_process(df, self.process_config)
-            self.rasteriser.rasterise(df, item.load_bands)
-        return self.rasteriser.compile()
+            self.rasteriser.rasterise_point(df, item.load_bands)
 
 
 def read_asset(

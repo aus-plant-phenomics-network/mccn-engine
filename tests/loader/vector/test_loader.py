@@ -20,7 +20,7 @@ def verify_mask_value(
     ds: xr.Dataset,
     request: pytest.FixtureRequest,
 ) -> None:
-    targets = ds.attrs[MASK_NAME].values()
+    targets = [k for k in ds.attrs[MASK_NAME].values() if k != "nodata"]
     for target in targets:
         ref_ds: xr.Dataset = request.getfixturevalue(target)
         for date in ref_ds["time"].values:  # type: ignore[operator]
@@ -53,8 +53,9 @@ def point_cook_mask(
         items=[item for item in area_items if item.id == "point_cook_mask"],
         geobox=area_geobox,
         mask_name=MASK_NAME,
+        combine_mask=True,
     )
-    return client.load_vector()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -66,8 +67,9 @@ def hoppers_crossing_name(
         items=[item for item in area_items if item.id == "hoppers_crossing_name"],
         geobox=area_geobox,
         mask_name=MASK_NAME,
+        combine_mask=True,
     )
-    return client.load_vector()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -79,8 +81,9 @@ def werribee_crime(
         items=[item for item in area_items if item.id == "werribee_crime"],
         geobox=area_geobox,
         mask_name=MASK_NAME,
+        combine_mask=True,
     )
-    return client.load_vector()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -92,8 +95,9 @@ def sunbury_crime(
         items=[item for item in area_items if item.id == "sunbury_crime"],
         geobox=area_geobox,
         mask_name=MASK_NAME,
+        combine_mask=True,
     )
-    return client.load_vector()
+    return client.load()
 
 
 @pytest.fixture(scope="module")
@@ -105,8 +109,9 @@ def sunbury_population(
         items=[item for item in area_items if item.id == "sunbury_population"],
         geobox=area_geobox,
         mask_name=MASK_NAME,
+        combine_mask=True,
     )
-    return client.load_vector()
+    return client.load()
 
 
 @pytest.mark.parametrize(
@@ -150,11 +155,12 @@ def test_given_mask_only_load_only_mask(
         mask_name=MASK_NAME,
         bands=bands,
         use_all_vectors=use_all_vectors,
+        combine_mask=True,
     )
-    ds = client.load_vector()
+    ds = client.load()
     assert len(ds.data_vars) == 1
     assert MASK_NAME in ds.data_vars
-    map_targets = set(ds.attrs[MASK_NAME].values())
+    map_targets = {k for k in ds.attrs[MASK_NAME].values() if k != "nodata"}
     items = {item.id for item in area_items}
     assert map_targets == items
     verify_mask_value(ds, request)
@@ -224,9 +230,10 @@ def test_given_bands_and_use_all_vectors_TRUE_load_masks_and_matched_layers(
         mask_name=MASK_NAME,
         bands=bands,
         use_all_vectors=True,
+        combine_mask=True,
     )
-    ds = client.load_vector()
-    assert len(ds.attrs[MASK_NAME]) == 5
+    ds = client.load()
+    assert len(ds.attrs[MASK_NAME]) == 6
     verify_mask_value(ds, request)
     for field, target in exp.items():
         verify_layer_value(ds, request, field, target)

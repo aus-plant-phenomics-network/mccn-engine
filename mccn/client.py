@@ -14,10 +14,11 @@ from mccn.config import (
     FilterConfig,
     ProcessConfig,
 )
+from mccn.drawer import Canvas, Rasteriser
 from mccn.extent import GeoBoxBuilder
-from mccn.loader.point import PointLoadConfig, PointLoader
-from mccn.loader.raster import RasterLoadConfig, RasterLoader
-from mccn.loader.vector import VectorLoadConfig, VectorLoader
+from mccn.loader.point import PointLoader
+from mccn.loader.raster import RasterLoader
+from mccn.loader.vector import VectorLoader
 from mccn.parser import Parser
 
 if TYPE_CHECKING:
@@ -70,6 +71,7 @@ class MCCN:
         y_dim: str = "y",
         t_dim: str = "time",
         mask_name: str = "__MASK__",
+        combine_mask: bool = False,
         # Process config
         rename_bands: Mapping[str, str] | None = None,
         process_bands: Mapping[str, Callable] | None = None,
@@ -80,10 +82,6 @@ class MCCN:
         merge_method_fallback: MergeMethod_T = "replace",
         dtype: DType_Map_T = None,
         dtype_fallback: Dtype_T = "float64",
-        # Additional configs
-        point_load_config: PointLoadConfig | None = None,
-        vector_load_config: VectorLoadConfig | None = None,
-        raster_load_config: RasterLoadConfig | None = None,
     ) -> None:
         # Fetch Collection
         self.items = self.get_items(items, collection, endpoint)
@@ -105,6 +103,7 @@ class MCCN:
             y_dim=y_dim,
             t_dim=t_dim,
             mask_name=mask_name,
+            combine_mask=combine_mask,
         )
         self.process_config = ProcessConfig(
             rename_bands,
@@ -117,34 +116,52 @@ class MCCN:
             dtype,
             dtype_fallback,
         )
-        self.point_load_config = point_load_config
-        self.vector_load_config = vector_load_config
-        self.raster_load_config = raster_load_config
 
         # Parse items
         self.parser = Parser(self.filter_config, self.items)
         self.parser()
+        # Prepare canvas
+        self.canvas = Canvas.from_geobox(
+            self.cube_config.x_dim,
+            self.cube_config.y_dim,
+            self.cube_config.t_dim,
+            self.cube_config.spatial_ref_dim,
+            self.geobox,
+            self.process_config.dtype,
+            self.process_config.dtype_fallback,
+            self.process_config.nodata,
+            self.process_config.nodata_fallback,
+            self.process_config.merge_method,
+            self.process_config.merge_method_fallback,
+        )
+        self.rasteriser = Rasteriser(canvas=self.canvas)
         self.point_loader: PointLoader = PointLoader(
             self.parser.point,
+            self.rasteriser,
             self.filter_config,
             self.cube_config,
             self.process_config,
-            self.point_load_config,
         )
         self.vector_loader = VectorLoader(
             self.parser.vector,
+            self.rasteriser,
             self.filter_config,
             self.cube_config,
             self.process_config,
-            self.vector_load_config,
         )
         self.raster_loader: RasterLoader = RasterLoader(
             self.parser.raster,
+            self.rasteriser,
             self.filter_config,
             self.cube_config,
             self.process_config,
-            self.raster_load_config,
         )
+
+    def load(self) -> xr.Dataset:
+        self.raster_loader.load()
+        self.vector_loader.load()
+        self.point_loader.load()
+        return self.rasteriser.compile()
 
     @staticmethod
     def build_geobox(
@@ -192,21 +209,6 @@ class MCCN:
                 "If geobox is not defined, shape must be provided to calculate geobox from collection"
             )
         return GeoBoxBuilder.from_collection(collection, shape)
-
-    def load_point(self) -> xr.Dataset:
-        return self.point_loader.load()
-
-    def load_vector(self) -> xr.Dataset:
-        return self.vector_loader.load()
-
-    def load_raster(self) -> xr.Dataset:
-        return self.raster_loader.load()
-
-    def load(self) -> xr.Dataset:
-        return xr.merge(
-            [self.load_point(), self.load_vector(), self.load_raster()],
-            combine_attrs="drop_conflicts",
-        )
 
     @staticmethod
     def get_items(

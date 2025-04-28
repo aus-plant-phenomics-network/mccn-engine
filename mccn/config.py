@@ -92,6 +92,7 @@ class CubeConfig:
     """Whether to use z coordinate"""
     mask_name: str = "__MASK__"
     """Name of the mask layer"""
+    combine_mask: bool = False
 
 
 @dataclass
@@ -111,7 +112,7 @@ class ProcessConfig:
     merge_method: MergeMethod_Map_T = None
     merge_method_fallback: MergeMethod_T = "replace"
     dtype: DType_Map_T = None
-    dtype_fallback: Dtype_T = "float64"
+    dtype_fallback: Dtype_T = "float32"
 
     @property
     def period(self) -> str | None:

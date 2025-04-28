@@ -396,6 +396,14 @@ class Parser:
         self._raster_items: list[ParsedRaster] = list()
 
     @property
+    def parsed_items(self) -> list[ParsedItem]:
+        result: list[ParsedItem] = []
+        result.extend(self.point)
+        result.extend(self.vector)
+        result.extend(self.raster)
+        return result
+
+    @property
     def point(self) -> list[ParsedPoint]:
         return self._point_items
 
