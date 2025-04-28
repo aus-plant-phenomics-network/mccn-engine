@@ -116,7 +116,6 @@ class MCCN:
             dtype,
             dtype_fallback,
         )
-
         # Parse items
         self.parser = Parser(self.filter_config, self.items)
         self.parser()

@@ -79,7 +79,7 @@ from mccn.drawer import MaxDrawer, MeanDrawer, MinDrawer, ReplaceDrawer, SumDraw
 
 
 @pytest.fixture()
-def nonzero_sum_drawer() -> SumDrawer:
+def sum_drawer() -> SumDrawer:
     return SumDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
@@ -88,7 +88,7 @@ def nonzero_sum_drawer() -> SumDrawer:
 
 
 @pytest.fixture()
-def nonzero_min_drawer() -> MinDrawer:
+def min_drawer() -> MinDrawer:
     return MinDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
@@ -115,7 +115,7 @@ def replace_drawer() -> ReplaceDrawer:
 
 
 @pytest.fixture()
-def nonzero_mean_drawer() -> MeanDrawer:
+def mean_drawer() -> MeanDrawer:
     return MeanDrawer(
         x_coords=np.arange(3),
         y_coords=np.arange(4),
@@ -341,14 +341,14 @@ def nonzero_mean_drawer() -> MeanDrawer:
         ),
     ],
 )
-def test_given_draw_options_sum_drawer_expects_correct_draw_value(
+def test_sum_drawer(
     draw_sequence: list[np.ndarray],
     exp_result: np.ndarray,
-    nonzero_sum_drawer: SumDrawer,
+    sum_drawer: SumDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_sum_drawer.draw(0, sequence.T)
-    assert np.array_equal(nonzero_sum_drawer.data[0], exp_result.T)
+        sum_drawer.draw(0, sequence.T)
+    assert np.array_equal(sum_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -559,14 +559,14 @@ def test_given_draw_options_sum_drawer_expects_correct_draw_value(
         ),
     ],
 )
-def test_given_draw_options_min_drawer_expects_correct_draw_value(
+def test_min_drawer(
     draw_sequence: list[np.ndarray],
     exp_result: np.ndarray,
-    nonzero_min_drawer: MinDrawer,
+    min_drawer: MinDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_min_drawer.draw(0, sequence.T)
-    assert np.array_equal(nonzero_min_drawer.data[0], exp_result.T)
+        min_drawer.draw(0, sequence.T)
+    assert np.array_equal(min_drawer.data[0], exp_result.T)
 
 
 @pytest.mark.parametrize(
@@ -782,7 +782,7 @@ def test_given_draw_options_min_drawer_expects_correct_draw_value(
         ),
     ],
 )
-def test_given_draw_options_expects_correct_max_draw_value(
+def test_max_drawer(
     draw_sequence: list[np.ndarray],
     exp_result: np.ndarray,
     max_drawer: MaxDrawer,
@@ -925,7 +925,7 @@ def test_given_draw_options_expects_correct_max_draw_value(
         ),
     ],
 )
-def test_given_draw_options_expects_correct_replace_draw_value(
+def test_replace_drawer(
     draw_sequence: list[np.ndarray],
     exp_result: np.ndarray,
     replace_drawer: ReplaceDrawer,
@@ -1062,13 +1062,156 @@ def test_given_draw_options_expects_correct_replace_draw_value(
         ),
     ],
 )
-def test_mean_drawer_scenarios(
+def test_mean_drawer(
     draw_sequence: list[np.ndarray],
     exp_result: np.ndarray,
-    nonzero_mean_drawer: MeanDrawer,
+    mean_drawer: MeanDrawer,
 ) -> None:
     for sequence in draw_sequence:
-        nonzero_mean_drawer.draw(0, sequence.T)
-    assert np.allclose(
-        nonzero_mean_drawer.data[0], exp_result.T, equal_nan=True, atol=1e-3
-    )
+        mean_drawer.draw(0, sequence.T)
+    assert np.allclose(mean_drawer.data[0], exp_result.T, equal_nan=True, atol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "draw_sequence, exp_result",
+    [
+        # Single draw with no valid values
+        ([np.nan, -9999], -9999),
+        # Multiple draws with mixed valid and invalid values
+        ([1, np.nan, -9999, 3], 4),
+        # Single draw fully overwrites the nodata layer
+        ([np.nan, -10], -10),
+        # Three sequential draws with compounding values
+        ([1, 2, 3], 6),
+        # Draw with all `nodata` values followed by valid layer
+        ([-9999, -9999, 1], 1),
+        # 4 draw sequences
+        ([-9999, 1, 2, np.nan], 3),
+        # 5 draw sequences
+        ([-9999, 1, 2, np.nan, 3], 6),
+    ],
+)
+def test_sum_drawer_point(
+    draw_sequence: list[int], exp_result: int, sum_drawer: SumDrawer
+) -> None:
+    sum_drawer.draw_point(0, 3, 2, 100)
+    for sequence in draw_sequence:
+        sum_drawer.draw_point(0, 0, 0, sequence)
+    assert sum_drawer.data[0][3, 2] == 100
+    assert sum_drawer.data[0][0, 0] == exp_result
+
+
+@pytest.mark.parametrize(
+    "draw_sequence, exp_result",
+    [
+        # Single draw with no valid values
+        ([np.nan, -9999], -9999),
+        # Multiple draws with mixed valid and invalid values
+        ([1, np.nan, -9999, 3], 3),
+        # Single draw fully overwrites the nodata layer
+        ([np.nan, -10], -10),
+        # Three sequential draws with compounding values
+        ([1, 2, 3], 3),
+        # Draw with all `nodata` values followed by valid layer
+        ([-9999, -9999, 1], 1),
+        # 4 draw sequences
+        ([-9999, 1, 2, np.nan], 2),
+        # 5 draw sequences
+        ([-9999, 1, 2, np.nan, 3], 3),
+    ],
+)
+def test_max_drawer_point(
+    draw_sequence: list[int], exp_result: int, max_drawer: MaxDrawer
+) -> None:
+    max_drawer.draw_point(0, 3, 2, 100)
+    for sequence in draw_sequence:
+        max_drawer.draw_point(0, 0, 0, sequence)
+    assert max_drawer.data[0][3, 2] == 100
+    assert max_drawer.data[0][0, 0] == exp_result
+
+
+@pytest.mark.parametrize(
+    "draw_sequence, exp_result",
+    [
+        # Single draw with no valid values
+        ([np.nan, -9999], -9999),
+        # Multiple draws with mixed valid and invalid values
+        ([1, np.nan, -9999, 3], 1),
+        # Single draw fully overwrites the nodata layer
+        ([np.nan, -10], -10),
+        # Three sequential draws with compounding values
+        ([1, 2, 3], 1),
+        # Draw with all `nodata` values followed by valid layer
+        ([-9999, -9999, 1], 1),
+        # 4 draw sequences
+        ([-9999, 1, 2, np.nan], 1),
+        # 5 draw sequences
+        ([-9999, 1, 2, np.nan, 3], 1),
+    ],
+)
+def test_min_drawer_point(
+    draw_sequence: list[int], exp_result: int, min_drawer: MinDrawer
+) -> None:
+    min_drawer.draw_point(0, 3, 2, 100)
+    for sequence in draw_sequence:
+        min_drawer.draw_point(0, 0, 0, sequence)
+    assert min_drawer.data[0][3, 2] == 100
+    assert min_drawer.data[0][0, 0] == exp_result
+
+
+@pytest.mark.parametrize(
+    "draw_sequence, exp_result",
+    [
+        # Single draw with no valid values
+        ([np.nan, -9999], -9999),
+        # Multiple draws with mixed valid and invalid values
+        ([1, np.nan, -9999, 3], 3),
+        # Single draw fully overwrites the nodata layer
+        ([np.nan, -10], -10),
+        # Three sequential draws with compounding values
+        ([1, 2, 3], 3),
+        # Draw with all `nodata` values followed by valid layer
+        ([-9999, -9999, 1], 1),
+        # 4 draw sequences
+        ([-9999, 1, 2, np.nan], 2),
+        # 5 draw sequences
+        ([-9999, 1, 2, np.nan, 3], 3),
+    ],
+)
+def test_replace_drawer_point(
+    draw_sequence: list[int], exp_result: int, replace_drawer: ReplaceDrawer
+) -> None:
+    replace_drawer.draw_point(0, 3, 2, 100)
+    for sequence in draw_sequence:
+        replace_drawer.draw_point(0, 0, 0, sequence)
+    assert replace_drawer.data[0][3, 2] == 100
+    assert replace_drawer.data[0][0, 0] == exp_result
+
+
+@pytest.mark.parametrize(
+    "draw_sequence, exp_result",
+    [
+        # Single draw with no valid values
+        ([np.nan, -9999], -9999),
+        # Multiple draws with mixed valid and invalid values
+        ([1, np.nan, -9999, 3], 2.0),
+        # Single draw fully overwrites the nodata layer
+        ([np.nan, -10], -10),
+        # Three sequential draws with compounding values
+        ([1, 2, 3], 2),
+        # Draw with all `nodata` values followed by valid layer
+        ([-9999, -9999, 1], 1),
+        # 4 draw sequences
+        ([-9999, 1, 2, np.nan], 1.5),
+        # 5 draw sequences
+        ([-9999, 1, 2, np.nan, 3], 2),
+    ],
+)
+def test_mean_drawer_point(
+    draw_sequence: list[int], exp_result: int, mean_drawer: MeanDrawer
+) -> None:
+    mean_drawer.draw_point(0, 3, 2, 100)
+    for sequence in draw_sequence:
+        mean_drawer.draw_point(0, 0, 0, sequence)
+    assert mean_drawer.data[0][3, 2] == 100
+    assert mean_drawer.data[0][0, 0] == exp_result

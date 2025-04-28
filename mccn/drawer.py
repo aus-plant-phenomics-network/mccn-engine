@@ -19,12 +19,10 @@ from mccn._types import (
     MergeMethod_T,
     Nodata_Map_T,
     Nodata_T,
+    Number_T,
 )
 from mccn.loader.utils import (
     coords_from_geobox,
-    get_neighbor_mask,
-    mask_aggregate,
-    query_by_key,
     query_if_null,
 )
 
@@ -79,6 +77,27 @@ class Drawer(abc.ABC):
     ) -> None:
         self.data[t_value][nodata_mask & valid_mask] = layer[nodata_mask & valid_mask]
 
+    @abc.abstractmethod
+    def _draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        raise NotImplementedError
+
+    def draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        if t_value not in self.data:
+            self.data[t_value] = self.alloc()
+        if not (0 <= y_value < self.shape[0] and 0 <= x_value < self.shape[1]):
+            raise ValueError(f"Out of bound: {y_value, x_value, self.shape}")
+        if value != self.nodata and not np.isnan(value):
+            if self.data[t_value][y_value, x_value] == self.nodata or np.isnan(
+                self.data[t_value][y_value, x_value]
+            ):
+                self.data[t_value][y_value, x_value] = value
+            else:
+                self._draw_point(t_value, y_value, x_value, value)
+
     def valid_mask(self, layer: np.ndarray) -> Any:
         return (layer != self.nodata) & ~(np.isnan(layer))
 
@@ -95,6 +114,11 @@ class SumDrawer(Drawer):
         self.data[t_value][valid_mask & ~nodata_mask] += layer[
             valid_mask & ~nodata_mask
         ]
+
+    def _draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        self.data[t_value][y_value, x_value] += value
 
 
 class MinMaxDrawer(Drawer):
@@ -114,6 +138,13 @@ class MinMaxDrawer(Drawer):
         data = self.data[t_value]
         data = self.op(layer, data, out=data, where=valid_mask & ~nodata_mask)
         self.data[t_value] = data
+
+    def _draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        self.data[t_value][y_value, x_value] = self.op(
+            value, self.data[t_value][y_value, x_value]
+        )
 
 
 class MinDrawer(MinMaxDrawer):
@@ -152,8 +183,39 @@ class MeanDrawer(Drawer):
         self.count[t_value] = count
         self.data[t_value] = data
 
+    def draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        if t_value not in self.count:
+            self.count[t_value] = self._alloc(dtype="uint8", fill_value=0)
+        if t_value not in self.data:
+            self.data[t_value] = self.alloc()
+        if not (0 <= y_value < self.shape[0] and 0 <= x_value < self.shape[1]):
+            raise ValueError(f"Out of bound: {y_value, x_value, self.shape}")
+        if value != self.nodata and not np.isnan(value):
+            if self.data[t_value][y_value, x_value] == self.nodata or np.isnan(
+                self.data[t_value][y_value, x_value]
+            ):
+                self.count[t_value][y_value, x_value] += 1
+                self.data[t_value][y_value, x_value] = value
+            else:
+                self._draw_point(t_value, y_value, x_value, value)
+
+    def _draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        count = self.count[t_value][y_value, x_value]
+        data = self.data[t_value][y_value, x_value]
+        self.count[t_value][y_value, x_value] += 1
+        self.data[t_value][y_value, x_value] = (data * count + value) / (count + 1)
+
 
 class ReplaceDrawer(Drawer):
+    def _draw_point(
+        self, t_value: Any, y_value: int, x_value: int, value: Number_T
+    ) -> None:
+        self.data[t_value][y_value, x_value] = value
+
     def _draw(
         self,
         t_value: Any,
@@ -212,6 +274,9 @@ class Canvas:
         self._t_set: set[Any] = set()
         self._time_sorted: bool = False
 
+    def get_drawer(self, band: str) -> Drawer:
+        return self._drawers[band]
+
     @property
     def t_coords(self) -> np.ndarray:
         if not self._time_sorted:
@@ -244,6 +309,19 @@ class Canvas:
     def has_band(self, band: str) -> bool:
         return band in self._drawers
 
+    def get_method(
+        self, band: str, merge: MergeMethod_T | None = None
+    ) -> MergeMethod_T:
+        return query_if_null(merge, band, self.merge, self.merge_fallback)
+
+    def get_dtype(self, band: str, dtype: Dtype_T | None = None) -> Dtype_T:
+        return cast(
+            Dtype_T, query_if_null(dtype, band, self.dtype, self.dtype_fallback)
+        )
+
+    def get_nodata(self, band: str, nodata: Nodata_T | None = None) -> Nodata_T:
+        return query_if_null(nodata, band, self.nodata, self.nodata_fallback)
+
     def add_band(
         self,
         band: str,
@@ -252,11 +330,9 @@ class Canvas:
         nodata: Nodata_T | None = None,
     ) -> None:
         if band not in self._drawers:
-            _method = query_if_null(merge, band, self.merge, self.merge_fallback)
-            _nodata = query_if_null(nodata, band, self.nodata, self.nodata_fallback)
-            _dtype = cast(
-                Dtype_T, query_if_null(dtype, band, self.dtype, self.dtype_fallback)
-            )
+            _method = self.get_method(band, merge)
+            _nodata = self.get_nodata(band, nodata)
+            _dtype = self.get_dtype(band, dtype)
             handler = DRAWERS[_method]
             self._drawers[band] = handler(
                 self.x_coords,
@@ -365,9 +441,7 @@ class Rasteriser:
         return series
 
     def handle_categorical(self, series: pd.Series, band: str) -> pd.Series:
-        nodata = int(
-            query_by_key(band, self.canvas.nodata, self.canvas.nodata_fallback)
-        )
+        nodata = int(self.canvas.get_nodata(band))
         series = self.encode(series, nodata, band)
         if not self.canvas.has_band(band):
             self.canvas.add_band(band, merge="replace", dtype="int8", nodata=nodata)
@@ -376,43 +450,80 @@ class Rasteriser:
     def handle_numeric(self, series: pd.Series, band: str) -> pd.Series:
         if not self.canvas.has_band(band):
             self.canvas.add_band(band)
-        return series
+        nodata = self.canvas.get_nodata(band)
+        return series.replace(nodata, np.nan)
 
     def rasterise_raster(self, raster: xr.Dataset) -> None:
         for index, date in enumerate(raster[self.t_dim].values):
             for band in list(raster.data_vars.keys()):
+                if not self.canvas.has_band(band):
+                    self.canvas.add_band(band)
                 raster_layer = raster[cast(str, band)].values[index, :, :]
-                raster_layer = self.handle_numeric(raster_layer, cast(str, band))
                 self.canvas.draw(date, cast(str, band), raster_layer)
 
+    @staticmethod
+    def last_nodata(nodata: Nodata_T) -> Callable:
+        def fn(s: pd.Series) -> Number_T:
+            s = [item for item in s if item != nodata]
+            return s[-1] if s else nodata
+
+        return fn
+
+    def get_op(self, band: str) -> Callable:
+        nodata = self.canvas.get_nodata(band)
+        method = self.canvas.get_method(band)
+        match method:
+            case "max":
+                return np.nanmax
+            case "min":
+                return np.nanmin
+            case "mean":
+                return np.nanmean
+            case "sum":
+                return np.nansum
+            case _:
+                return self.last_nodata(nodata)
+
     def rasterise_point(self, data: pd.DataFrame, bands: set[str]) -> None:
+        gy = self.canvas.y_coords
+        gx = self.canvas.x_coords
+        dy, dx = gy[1] - gy[0], gx[1] - gx[0]
+        data["grid_x"] = (data[self.canvas.x_dim] - gx[0]) // dx
+        data["grid_y"] = (data[self.canvas.y_dim] - gy[0]) // dy
+        mask_x = (data["grid_x"] < 0) | (data["grid_x"] >= len(gx))
+        mask_y = (data["grid_y"] < 0) | (data["grid_y"] >= len(gy))
+
+        data["grid_x"] = data["grid_x"].where(~mask_x).astype("int")
+        data["grid_y"] = data["grid_y"].where(~mask_y).astype("int")
         for band in bands:
-            for date in data[self.t_dim].values:
+            for date in data[self.t_dim].unique():
                 dim_series, band_series = self.prepare_df(
                     data,
                     band,
                     date,
-                    [self.canvas.x_dim, self.canvas.y_dim],
+                    ["grid_x", "grid_y"],
                 )
                 try:
                     band_series = pd.to_numeric(band_series)
                     band_series = self.handle_numeric(band_series, band)
-                    op: Callable = np.nanmean
+                    op = self.get_op(band)
                 except ValueError:
-                    band_series, band_name = self.handle_categorical(band_series, band)
-                    op = np.nanmax
-                mask = get_neighbor_mask(
-                    self.canvas.x_coords, self.canvas.y_coords, dim_series.values, 0.005
-                )
-                raster = mask_aggregate(band_series.values, mask, op).T
-                self.canvas.draw(date, band_name, raster)
+                    band_series = self.handle_categorical(band_series, band)
+                    op = self.last_nodata(self.canvas.get_nodata(band))
+                dim_series[band] = band_series
+                grid_data = dim_series.groupby(["grid_x", "grid_y"]).agg(op)
+                grid_x = grid_data.index.get_level_values("grid_x").values
+                grid_y = grid_data.index.get_level_values("grid_y").values
+                raster = self.canvas.get_drawer(band).alloc()
+                raster[grid_y, grid_x] = grid_data.values.reshape(-1)
+                self.canvas.draw(date, band, raster)
 
     def prepare_df(
         self, data: pd.DataFrame, band: str, date: str, dims: Sequence[str]
     ) -> tuple[pd.Series, pd.Series]:
         series = data.loc[data[self.t_dim] == date, [*dims, band]]
         series = series.drop_duplicates().dropna()
-        dims_series = series.loc[:, *dims]
+        dims_series = series.loc[:, dims]
         band_series = series.loc[:, band]
         return dims_series, band_series
 
@@ -436,14 +547,14 @@ class Rasteriser:
                     (
                         (geom, value)
                         for geom, value in zip(
-                            dim_series.values,
+                            dim_series["geometry"].values,
                             band_series.values,
                         )
                     ),
                     out_shape=geobox.shape,
                     transform=geobox.transform,
                 )
-                self.canvas.draw(date, band, raster.T)
+                self.canvas.draw(date, band, raster)
 
     def compile(self) -> xr.Dataset:
         return self.canvas.compile(self.attrs)
