@@ -79,6 +79,7 @@ class PointLoader(Loader[ParsedPoint]):
                 self.cube_config.t_dim,
                 self.cube_config.z_dim,
                 cast(CRS_T, self.filter_config.geobox.crs),
+                self.process_config.period,
             )
             df = self.apply_process(df, self.process_config)
             self.rasteriser.rasterise(df, item.load_bands)
@@ -92,6 +93,7 @@ def read_asset(
     t_dim: str,
     z_dim: str,
     crs: CRS_T,
+    period: str | None,
 ) -> gpd.GeoDataFrame:
     # Read csv
     frame = read_point_asset(
@@ -124,4 +126,7 @@ def read_asset(
     frame[y_dim] = frame.geometry.y
     # Convert datetime to UTC and remove timezone information
     frame[t_dim] = frame[t_dim].dt.tz_convert("utc").dt.tz_localize(None)
+    # Need to remove timezone information. Xarray time does not use tz
+    if period is not None:
+        frame[t_dim] = frame[t_dim].dt.to_period(period).dt.start_time
     return frame
