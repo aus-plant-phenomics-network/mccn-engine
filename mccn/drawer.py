@@ -387,7 +387,7 @@ class Rasteriser:
                 band_series, band_name = self.handle_categorical(band_series, band)
                 op = np.nanmax
             mask = get_neighbor_mask(self.gx, self.gy, dims, self.radius)
-            raster = mask_aggregate(band_series.values, mask, op)
+            raster = mask_aggregate(band_series.values, mask, op).T
             self.canvas.draw(date, band_name, raster)
 
     def rasterise(self, data: pd.DataFrame, bands: set[str]) -> None:
