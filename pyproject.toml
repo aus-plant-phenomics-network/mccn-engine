@@ -10,6 +10,7 @@ dependencies = [
     "matplotlib>=3.10.1",
     "pystac-client>=0.8.6",
     "dask==2024.10.0",
+    "scipy>=1.15.2",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -110,4 +111,3 @@ filterwarnings = [
     "ignore::UserWarning",
     "ignore:.*deprecated.*:DeprecationWarning",
 ]
-
