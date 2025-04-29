@@ -40,7 +40,7 @@ class PointLoader(Loader[ParsedPoint]):
                 cast(CRS_T, self.filter_config.geobox.crs),
                 self.process_config.period,
             )
-            df = self.apply_process(df, self.process_config)
+            df = self.apply_process(df, item.load_bands)
             self.rasteriser.rasterise_point(df, item.load_bands)
 
 

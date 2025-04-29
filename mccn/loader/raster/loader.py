@@ -53,7 +53,7 @@ class RasterLoader(Loader[ParsedRaster]):
                 raise RuntimeError(
                     f"Fail to load items: {[item.id for item in band_items]} with bands: {band_info}"
                 ) from e
-            item_ds = self.apply_process(item_ds, self.process_config)
+            item_ds = self.apply_process(item_ds, band_info)
             self.rasteriser.rasterise_raster(item_ds)
 
 

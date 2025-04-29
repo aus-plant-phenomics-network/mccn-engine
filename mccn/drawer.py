@@ -23,6 +23,7 @@ from mccn._types import (
 )
 from mccn.loader.utils import (
     coords_from_geobox,
+    query_by_key,
     query_if_null,
 )
 
@@ -441,10 +442,17 @@ class Rasteriser:
         return series
 
     def handle_categorical(self, series: pd.Series, band: str) -> pd.Series:
-        nodata = int(self.canvas.get_nodata(band))
+        nodata = self.canvas.get_nodata(band)
+        dtype = cast(Dtype_T, query_by_key(band, self.canvas.dtype, "int8"))
+        try:
+            nodata = int(nodata)
+        except ValueError:
+            raise ValueError(
+                f"nodata value for categorical band ({band}) must be integers or int-convertible. Received: {nodata}"
+            )
         series = self.encode(series, nodata, band)
         if not self.canvas.has_band(band):
-            self.canvas.add_band(band, merge="replace", dtype="int8", nodata=nodata)
+            self.canvas.add_band(band, merge="replace", dtype=dtype, nodata=nodata)
         return series
 
     def handle_numeric(self, series: pd.Series, band: str) -> pd.Series:

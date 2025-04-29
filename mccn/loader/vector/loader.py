@@ -98,6 +98,13 @@ class VectorLoader(Loader[ParsedVector]):
             mask_name = (
                 self.cube_config.mask_name if self.cube_config.combine_mask else id
             )
+            bands = {mask_name} | item.load_bands | item.load_aux_bands
+            if (
+                item.config.join_config
+                and item.config.join_config.date_column
+                and item.config.join_config.date_column in bands
+            ):
+                bands.remove(item.config.join_config.date_column)
             gdf = self.apply_process(
                 read_asset(
                     id,
@@ -107,17 +114,11 @@ class VectorLoader(Loader[ParsedVector]):
                     self.process_config.period,
                     mask_name,
                 ),
-                self.process_config,
+                bands,
             )
-            fields = {mask_name} | item.load_bands | item.load_aux_bands
-            if (
-                item.config.join_config
-                and item.config.join_config.date_column
-                and item.config.join_config.date_column in fields
-            ):
-                fields.remove(item.config.join_config.date_column)
+
             self.rasteriser.rasterise_vector(
                 data=gdf,
-                bands=fields,
+                bands=bands,
                 geobox=self.filter_config.geobox,
             )
