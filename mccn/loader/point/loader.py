@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import geopandas as gpd
 from stac_generator.core.base.utils import read_point_asset
@@ -8,9 +8,6 @@ from stac_generator.core.base.utils import read_point_asset
 from mccn._types import CRS_T
 from mccn.loader.base import Loader
 from mccn.parser import ParsedPoint
-
-if TYPE_CHECKING:
-    pass
 
 
 class PointLoader(Loader[ParsedPoint]):

@@ -10,8 +10,6 @@ dependencies = [
     "matplotlib>=3.10.1",
     "pystac-client>=0.8.6",
     "dask==2024.10.0",
-    "scipy>=1.15.2",
-    "duckdb>=1.2.2",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -88,6 +86,7 @@ module = "rasterio.*,tqdm.*,owslib.*,affine.*,geopandas.*,pandas.*"
 ignore_missing_imports = true
 
 
+
 [tool.pdm]
 distribution = true
 [tool.pdm.version]
@@ -101,9 +100,6 @@ jupyter = [
     "ipykernel>=6.29.5",
     "jupyter>=1.1.1",
 ]
-dev = [
-    "-e file:///${PROJECT_ROOT}/../stac-generator#egg=pystac-generator",
-]
 
 [build-system]
 requires = ["pdm-backend"]
@@ -115,7 +111,3 @@ filterwarnings = [
     "ignore:.*deprecated.*:DeprecationWarning",
 ]
 
-[dependency-groups]
-dev = [
-    "pystac-generator>=0.3.31",
-]
