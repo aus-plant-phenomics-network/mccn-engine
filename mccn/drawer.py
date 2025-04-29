@@ -488,13 +488,13 @@ class Rasteriser:
         gy = self.canvas.y_coords
         gx = self.canvas.x_coords
         dy, dx = gy[1] - gy[0], gx[1] - gx[0]
-        data["grid_x"] = (data[self.canvas.x_dim] - gx[0]) // dx
-        data["grid_y"] = (data[self.canvas.y_dim] - gy[0]) // dy
-        mask_x = (data["grid_x"] < 0) | (data["grid_x"] >= len(gx))
-        mask_y = (data["grid_y"] < 0) | (data["grid_y"] >= len(gy))
+        sx = data["grid_x"] = (data[self.canvas.x_dim] - gx[0]) // dx
+        sy = data["grid_y"] = (data[self.canvas.y_dim] - gy[0]) // dy
+        mask_x = (sx.isna()) | (sx < 0) | (sx >= len(gx))
+        mask_y = (sy.isna()) | (sy < 0) | (sy >= len(gy))
 
-        data["grid_x"] = data["grid_x"].where(~mask_x).astype("int")
-        data["grid_y"] = data["grid_y"].where(~mask_y).astype("int")
+        data["grid_x"] = data["grid_x"].where(~mask_x)
+        data["grid_y"] = data["grid_y"].where(~mask_y)
         for band in bands:
             for date in data[self.t_dim].unique():
                 dim_series, band_series = self.prepare_df(
@@ -512,8 +512,8 @@ class Rasteriser:
                     op = self.last_nodata(self.canvas.get_nodata(band))
                 dim_series[band] = band_series
                 grid_data = dim_series.groupby(["grid_x", "grid_y"]).agg(op)
-                grid_x = grid_data.index.get_level_values("grid_x").values
-                grid_y = grid_data.index.get_level_values("grid_y").values
+                grid_x = grid_data.index.get_level_values("grid_x").values.astype("int")
+                grid_y = grid_data.index.get_level_values("grid_y").values.astype("int")
                 raster = self.canvas.get_drawer(band).alloc()
                 raster[grid_y, grid_x] = grid_data.values.reshape(-1)
                 self.canvas.draw(date, band, raster)
