@@ -82,6 +82,8 @@ class MCCN:
         merge_method_fallback: MergeMethod_T = "replace",
         dtype: DType_Map_T = None,
         dtype_fallback: Dtype_T = "float64",
+        # Multi-processing
+        num_workers: int = 4,
     ) -> None:
         # Fetch Collection
         self.items = self.get_items(items, collection, endpoint)
@@ -155,6 +157,7 @@ class MCCN:
             self.cube_config,
             self.process_config,
         )
+        self.num_workers = num_workers
 
     def load(self) -> xr.Dataset:
         self.raster_loader.load()

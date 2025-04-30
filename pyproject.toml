@@ -87,7 +87,6 @@ module = "rasterio.*,tqdm.*,owslib.*,affine.*,geopandas.*,pandas.*"
 ignore_missing_imports = true
 
 
-
 [tool.pdm]
 distribution = true
 [tool.pdm.version]
@@ -110,4 +109,9 @@ build-backend = "pdm.backend"
 filterwarnings = [
     "ignore::UserWarning",
     "ignore:.*deprecated.*:DeprecationWarning",
+]
+
+[dependency-groups]
+dev = [
+    "pystac-generator @ file:///${PROJECT_ROOT}/../stac-generator",
 ]
