@@ -119,14 +119,8 @@ def _parse_raster(
         bands - bands described in band_info
         alias - eo:bands' common names
     """
-    bands = set([band["name"] for band in config.band_info])
-    alias = set(
-        [
-            band["common_name"]
-            for band in config.band_info
-            if band.get("common_name", None)
-        ]
-    )
+    bands = set([band.name for band in config.band_info])
+    alias = set([band.common_name for band in config.band_info if band.common_name])
     return ParsedRaster(
         location=location,
         bbox=bbox,
