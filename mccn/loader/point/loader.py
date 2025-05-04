@@ -63,7 +63,7 @@ def read_asset(
         date_format=item.config.date_format,
         Z_coord=item.config.Z,
         columns=list(item.load_bands),
-        timezone=item.config.timezone,
+        timezone=item.timezone,
     )
     # Prepare rename dict
     rename_dict = {}
