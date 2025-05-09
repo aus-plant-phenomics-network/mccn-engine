@@ -143,6 +143,7 @@ def multibands_ds() -> xr.Dataset:
     return xr.open_dataset(RASTER_FIXTURE_PATH / "multibands.cd")
 
 
+# Groupby Feature testing
 @pytest.mark.parametrize(
     "groupby,exp_ts",
     [
@@ -191,7 +192,7 @@ def multibands_ds() -> xr.Dataset:
     ],
     ids=["year", "month", "day", "hour"],
 )
-def test_raster_generation_expects_correct_time_rounded_ts(
+def test_raster_groupby(
     groupby: TimeGroupby,
     exp_ts: list[pd.Timestamp],
     request: pytest.FixtureRequest,
@@ -214,7 +215,7 @@ def test_raster_generation_expects_correct_time_rounded_ts(
     ],
     ids=["2015", "2016"],
 )
-def test_raster_year_generation_expects_full_matching(
+def test_raster_year(
     year_dsm_loaded: xr.Dataset,
     dsm_items: list[pystac.Item],
     dsm_geobox: GeoBox,
@@ -256,7 +257,7 @@ def test_raster_year_generation_expects_full_matching(
     ],
     ids=["2015-10", "2015-11", "2016-10", "2016-11"],
 )
-def test_raster_month_generation_expects_full_matching(
+def test_raster_month(
     dsm_items: list[pystac.Item],
     dsm_geobox: GeoBox,
     month_dsm_loaded: xr.Dataset,
@@ -274,24 +275,33 @@ def test_raster_month_generation_expects_full_matching(
     assert diff.max() == 0
 
 
-# FILTER BY DATE FEATURE TESTING
+# Filter by date Feature Testing
+# DSM Dates are
+# 2015-10-01, 2015-10-02, 2016-11-01, 2016-11-02
+# Groupby year: 2015-01-01, 2016-01-01
+# Groupby month: 2015-10-01, 2015-11-01, 2016-10-01, 2016-11-01
 @pytest.mark.parametrize(
     "start,end,groupby,exp",
     [
+        # No filter
         (
             None,
             None,
             "year",
             ["2015-01-01T00:00:00", "2016-01-01T00:00:00"],
         ),
+        # (2016-01-01,)
         ("2016-01-01T00:00:00Z", None, "year", ["2016-01-01T00:00:00"]),
+        # (,2016-01-01)
         (None, "2016-01-01T00:00:00Z", "year", ["2015-01-01T00:00:00"]),
+        # (2015-11-01, 2016-01-01)
         (
             "2015-11-01T00:00:00Z",
             "2016-01-01T00:00:00Z",
             "month",
             ["2015-11-01T00:00:00"],
         ),
+        # (2015-11-01, 2016-10-30)
         (
             "2015-11-01T00:00:00Z",
             "2016-10-30T00:00:00Z",
@@ -319,10 +329,16 @@ def test_raster_timeslicing(
     assert all(pd.DatetimeIndex(ds["time"].values) == [pd.Timestamp(t) for t in exp])
 
 
-# FILTER BY BAND
+# Filter by band
+# Refers to "tests/loader/raster/fixture/multibands_config.json"
+# Items - (name, common name):
+# dsm - dsm
+# rgb - red, green, blue
+# ms-rgb: (ms_red, red), (ms_green, green), (ms_blue, blue)
 @pytest.mark.parametrize(
     "bands, exp",
     [
+        # Set filter bands = None will load everything
         (
             None,
             {
@@ -335,19 +351,22 @@ def test_raster_timeslicing(
                 "ms-blue": "top_left_ms_loaded",
             },
         ),
+        # Set dsm - only get dsm layer
         (
             {"dsm"},
             {
                 "dsm": "top_left_dsm_loaded",
             },
         ),
+        # Set dsm and red - get dsm and red + ms-red
         (
             {"dsm", "red"},
             {
                 "dsm": "top_left_dsm_loaded",
-                "red": "top_left_rgb_loaded",
+                "red": "top_left_rgb_loaded",  # Note red and ms-red are overlapping here
             },
         ),
+        # Set dsm and ms-red - get dsm and ms-red
         (
             {"dsm", "ms-red"},
             {
@@ -355,10 +374,12 @@ def test_raster_timeslicing(
                 "ms-red": "top_left_ms_loaded",
             },
         ),
+        # Non existent band - get None
         (
             {"non-matching"},
             {},
         ),
+        # Non existent + existent bands
         (
             {"non-matching", "ms-blue", "green"},
             {
@@ -432,3 +453,44 @@ def test_raster_band_filter_ref_against_file(
     assert exp == set(ds.data_vars.keys())
     for k in exp:
         xr.testing.assert_equal(ds[k], multibands_ds[k])
+
+
+# Filter based on bbox
+# multiband collection are all top-left items
+def test_raster_geobox_filter_top_right_multibands_collection_expects_none(
+    multibands_collection: pystac.Collection, dsm_top_right_geobox: GeoBox
+) -> None:
+    client = MCCN(
+        collection=multibands_collection,
+        geobox=dsm_top_right_geobox,
+    )
+    ds = client.load()
+    assert len(ds.data_vars) == 0
+
+
+# Should load all bands
+def test_raster_geobox_filter_bottom_right_multibands_collection_expects_non_null(
+    multibands_collection: pystac.Collection, dsm_bottom_right_geobox: GeoBox
+) -> None:
+    client = MCCN(
+        collection=multibands_collection,
+        geobox=dsm_bottom_right_geobox,
+    )
+    ds = client.load()
+    assert len(ds.data_vars) == 7
+
+
+# Set dtype for band
+def test_raster_set_dtype(
+    multibands_collection: pystac.Collection, dsm_bottom_right_geobox: GeoBox
+) -> None:
+    dtype_map = {"dsm": "float32", "red": "float64", "green": "int32"}
+    client = MCCN(
+        collection=multibands_collection,
+        geobox=dsm_bottom_right_geobox,
+        bands={"dsm", "red", "green"},
+        dtype=dtype_map,
+    )
+    ds = client.load()
+    for k, v in dtype_map.items():
+        assert ds[k].dtype == v
