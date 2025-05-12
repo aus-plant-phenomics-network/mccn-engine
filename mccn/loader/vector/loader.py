@@ -95,10 +95,13 @@ class VectorLoader(Loader[ParsedVector]):
         # Prepare items
         for item in self.items:
             id = item.item.id
+            # Set mask name to be config's mask name if using comine mask mode
+            # otherwise mask name is item's id
             mask_name = (
                 self.cube_config.mask_name if self.cube_config.combine_mask else id
             )
             bands = {mask_name} | item.load_bands | item.load_aux_bands
+            # Remove date column since it's not for rasterising
             if (
                 item.config.join_config
                 and item.config.join_config.date_column

@@ -63,20 +63,29 @@ class Loader(abc.ABC, Generic[T]):
     def load(self) -> None:
         raise NotImplementedError
 
-    @staticmethod
     def apply_filter(
-        data: xr.Dataset,
+        self,
+        data: xr.Dataset | pd.DataFrame,
         filter_config: FilterConfig,
         cube_config: CubeConfig,
+        is_frame: bool,
     ) -> xr.Dataset:
         # Filter based on dates and geobox
-        data = data.sel(
-            {
-                cube_config.t_dim: slice(
-                    filter_config.start_no_tz, filter_config.end_no_tz
-                )
-            }
-        )
+        if not is_frame:
+            data = data.sel(
+                {
+                    cube_config.t_dim: slice(
+                        filter_config.start_no_tz, filter_config.end_no_tz
+                    )
+                }
+            )
+        else:
+            mask = pd.Series(True, index=data.index)
+            if filter_config.start_no_tz:
+                mask &= data[cube_config.t_dim] >= filter_config.start_no_tz
+            if filter_config.end_no_tz:
+                mask &= data[cube_config.t_dim] <= filter_config.end_no_tz
+            data = data[mask]
         return data
 
     def apply_process(
@@ -87,7 +96,7 @@ class Loader(abc.ABC, Generic[T]):
         if isinstance(data, pd.DataFrame):
             is_frame = True
         elif isinstance(data, xr.Dataset):
-            is_frame = True
+            is_frame = False
         else:
             raise ValueError(
                 f"Expeting data to be a dataframe or a dataset: {type(data)}"
@@ -95,6 +104,7 @@ class Loader(abc.ABC, Generic[T]):
         data = self.transform(data, is_frame)
         data = self.rename(data, is_frame)
         data = self.fillna(data, bands)
+        data = self.apply_filter(data, self.filter_config, self.cube_config, is_frame)
         return data
 
     def rename(

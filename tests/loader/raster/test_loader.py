@@ -140,7 +140,7 @@ def top_left_ms_loaded(
 
 @pytest.fixture(scope="module")
 def multibands_ds() -> xr.Dataset:
-    return xr.open_dataset(RASTER_FIXTURE_PATH / "multibands.cd")
+    return xr.open_dataset(RASTER_FIXTURE_PATH / "reference_cube/multibands.cd")
 
 
 # Groupby Feature testing

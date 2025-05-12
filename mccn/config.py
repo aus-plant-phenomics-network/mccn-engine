@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class FilterConfig:
-    """The config that describes the extent of the cube"""
+    """Config used for item filtering"""
 
     geobox: GeoBox
     """Spatial extent"""
@@ -36,30 +36,53 @@ class FilterConfig:
     bands: set[str] | None = None
     """Bands to be loaded"""
     mask_only: bool = False
-    """If true, will only load the mask layer for vector dtype"""
+    """If true, will only load the mask layers for vector assets. Any described vectors' columns will not be loaded."""
     use_all_vectors: bool = True
-    """When loading masks, only use band matching vector items or all. Default to False (use all vectors for MASK layer)"""
+    """If use_all_vector is False, only items with column_info matching filtered bands will be loaded. Otherwise, load all vectors."""
 
     @cached_property
-    def start_utc(self) -> pd.Timestamp:
+    def start_utc(self) -> pd.Timestamp | None:
+        """Start time in UTC tzinfo"""
         return self.to_timestamp(self.start_ts)
 
     @cached_property
-    def start_no_tz(self) -> pd.Timestamp:
+    def start_no_tz(self) -> pd.Timestamp | None:
+        """Start time not tz-aware"""
         return self.to_timestamp(self.start_ts, utc=False)
 
     @cached_property
-    def end_utc(self) -> pd.Timestamp:
+    def end_utc(self) -> pd.Timestamp | None:
+        """End time UTC tzinfo"""
         return self.to_timestamp(self.end_ts)
 
     @cached_property
-    def end_no_tz(self) -> pd.Timestamp:
+    def end_no_tz(self) -> pd.Timestamp | None:
+        """End time not tz aware"""
         return self.to_timestamp(self.end_ts, utc=False)
 
     @staticmethod
     def to_timestamp(
-        ts: datetime.datetime | pd.Timestamp | str | None, utc: bool = True
+        ts: datetime.datetime | pd.Timestamp | str | None,
+        utc: bool = True,
     ) -> pd.Timestamp | None:
+        """Convert datetime object to timestamps
+
+        Timestamps that are not tz-awared (has no tzinfo) will be assigned utc. Otherwise,
+        timestamps will be converted to utc.
+
+        If utc is True, will keep tzinfo as UTC, otherwise return a utc timestamps that has no
+        tzinfo
+
+        Args:
+            ts (datetime.datetime | pd.Timestamp | str | None): python datetime object
+            utc (bool, optional): whether to localise to utc. Defaults to True.
+
+        Raises:
+            ValueError: if unable to convert ts to timestamp
+
+        Returns:
+            pd.Timestamp | None: output
+        """
         if not ts:
             return None
         # Try parsing timestamp information
@@ -67,17 +90,18 @@ class FilterConfig:
             ts = pd.Timestamp(ts)
         except Exception as e:
             raise ValueError(f"Invalid timestamp value: {ts}") from e
-
+        # Localise to utc if not tzaware, then convert to UTC
         if ts.tzinfo is not None:
             ts = ts.tz_convert("utc")
         else:
             ts = ts.tz_localize("utc")
+        # keep utc tz else set None
         return ts if utc else ts.tz_localize(None)
 
 
 @dataclass
 class CubeConfig:
-    """The config that describes the datacube coordinates"""
+    """Config that describes the datacube coordinates"""
 
     x_dim: str = "lon"
     """Name of the x coordinate in the datacube"""
@@ -88,11 +112,13 @@ class CubeConfig:
     z_dim: str = "z"
     """Name of the z coordinate"""
     spatial_ref_dim: str = "spatial_ref"
+    """Spatial ref dimension - shows EPSG code"""
     use_z: bool = False
-    """Whether to use z coordinate"""
+    """Whether to use z coordinate. Currently has no effect"""
     mask_name: str = "__MASK__"
-    """Name of the mask layer"""
+    """Name of the mask layer, only comes in effect when combine_mask is True"""
     combine_mask: bool = False
+    """Whether to combine all geometry layers to a single mask layer"""
 
 
 @dataclass

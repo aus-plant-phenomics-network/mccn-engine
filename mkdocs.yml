@@ -1,0 +1,80 @@
+site_name: MCCN Engine
+theme:
+    icon:
+      repo: fontawesome/brands/github
+    name: 'material'
+    palette:
+      - scheme: 'default'
+        media: '(prefers-color-scheme: light)'
+        toggle:
+          icon: 'material/lightbulb'
+          name: "Switch to dark mode"
+      - scheme: 'slate'
+        media: '(prefers-color-scheme: dark)'
+        primary: 'blue'
+        toggle:
+          icon: 'material/lightbulb-outline'
+          name: 'Switch to light mode'
+    features:
+      - content.code.copy
+      - content.code.select
+      - search.suggest
+      - search.highlight
+      - search.share
+      - content.tabs.link
+
+repo_url: https://github.com/aus-plant-phenomics-network/mccn-engine
+
+extra:
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Quickstart:
+    - Setup: setup.md
+    - Vector - Geometry: vector_geometry.md
+    - Vector - Attributes: vector_attributes.md
+    - Vector - Joined Attributes: vector_joined.md
+    - Vector - Multilayered: vector_multilayered.md
+    - Point: point.md
+    - Raster: raster.md
+    - Composite: composite.md
+    - Misc: misc.md
+  - Concepts:
+    - STAC Metadata: stac_metadata.md
+    - STAC Generator Architecture: stac_generator_architecture.md
+    - Module: module.md
+  - API Reference:
+    - Schema: schema.md
+    - Generator: generator.md
+    - Factory: factory.md
+    - Utility: utility.md
+    - Exceptions: exception.md
+
+plugins:
+  - search
+  - table-reader
+  - autorefs
+  - mkdocstrings:
+      enable_inventory: true
+      handlers:
+        python:
+          paths: [stac_generator]
+          options:
+            docstring_style: google
+            show_source: false
+            heading_level: 2
+            members_order: source
+            annotations_path: source
+
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets

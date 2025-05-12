@@ -5,7 +5,7 @@
 groups = ["default", "analysis", "dev", "jupyter", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:8e6efadc1e389684c25871c5c458154476465921753cb442dbc74b1f95a358a0"
+content_hash = "sha256:7313e0305695719458073558342463db161e2ea3ca2126a4818f8b6766d0a1c1"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -2380,7 +2380,7 @@ files = [
 
 [[package]]
 name = "pystac-generator"
-version = "0.3.32"
+version = "0.3.34"
 requires_python = ">=3.11"
 path = "../stac-generator"
 summary = "A python package and CLI tool for generating STAC catalog from spatial data files"

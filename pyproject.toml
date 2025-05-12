@@ -6,7 +6,7 @@ authors = [
 ]
 dependencies = [
     "odc-stac>=0.3.10",
-    "pystac-generator>=0.3.31",
+    "pystac-generator>=0.3.34",
     "matplotlib>=3.10.1",
     "pystac-client>=0.8.6",
     "dask==2024.10.0",
@@ -114,4 +114,14 @@ filterwarnings = [
 [dependency-groups]
 dev = [
     "pystac-generator @ file:///${PROJECT_ROOT}/../stac-generator",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.5.39",
+    "mkdocstrings-python>=1.11.1",
+    "markdown-exec>=1.9.3",
+    "mkdocs-version-annotations>=1.0.0",
+    "mkdocs-autorefs>=1.2.0",
+    "mkdocs-jupyter>=0.25.0",
+    "mkdocs-table-reader-plugin>=3.1.0",
 ]

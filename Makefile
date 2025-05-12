@@ -76,7 +76,7 @@ lint: pre-commit mypy 						## Run all linting
 .PHONY: coverage
 coverage:  											## Run the tests and generate coverage report
 	@echo "=> Running tests with coverage"
-	@$(PDM) run pytest tests --cov src --cov-report html
+	@$(PDM) run pytest tests --cov mccn --cov-report html
 
 .PHONY: test
 test:  												## Run the tests
