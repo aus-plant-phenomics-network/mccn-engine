@@ -467,7 +467,7 @@ class Rasteriser:
                 if not self.canvas.has_band(band):
                     self.canvas.add_band(band)
                 raster_layer = raster[cast(str, band)].values[index, :, :]
-                self.canvas.draw(date, cast(str, band), raster_layer)
+                self.canvas.draw(pd.Timestamp(date), cast(str, band), raster_layer)
 
     @staticmethod
     def last_nodata(nodata: Nodata_T) -> Callable:
@@ -524,7 +524,7 @@ class Rasteriser:
                 grid_y = grid_data.index.get_level_values("grid_y").values.astype("int")
                 raster = self.canvas.get_drawer(band).alloc()
                 raster[grid_y, grid_x] = grid_data.values.reshape(-1)
-                self.canvas.draw(date, band, raster)
+                self.canvas.draw(pd.Timestamp(date), band, raster)
 
     def prepare_df(
         self, data: pd.DataFrame, band: str, date: str, dims: Sequence[str]
@@ -562,7 +562,7 @@ class Rasteriser:
                     out_shape=geobox.shape,
                     transform=geobox.transform,
                 )
-                self.canvas.draw(date, band, raster)
+                self.canvas.draw(pd.Timestamp(date), band, raster)
 
     def compile(self) -> xr.Dataset:
         return self.canvas.compile(self.attrs)

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "Q1_Soil",
+    "location": "tests/loader/point/fixtures/asset/Q1_Soil.csv",
+    "collection_date": "2025-01-01",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "X": "x",
+    "Y": "y",
+    "epsg": 4326,
+    "column_info": [
+      {
+        "name": "clay"
+      },
+      {
+        "name": "sand"
+      },
+      {
+        "name": "name"
+      },
+      {
+        "name": "moisture"
+      }
+    ]
+  },
+  {
+    "id": "Q2_Soil",
+    "location": "tests/loader/point/fixtures/asset/Q2_Soil.csv",
+    "collection_date": "2025-01-01",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "X": "x",
+    "Y": "y",
+    "epsg": 4326,
+    "column_info": [
+      {
+        "name": "clay"
+      },
+      {
+        "name": "sand"
+      },
+      {
+        "name": "name"
+      },
+      {
+        "name": "moisture"
+      }
+    ]
+  }
+]
