@@ -32,7 +32,7 @@ jobs:
               ./pdm.lock
 
         - name: Install dependencies
-          run: pdm install --without dev
+          run: pdm install
 
         - name: Run mypy
           run: pdm run mypy

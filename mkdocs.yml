@@ -31,26 +31,7 @@ extra:
 
 nav:
   - Home: index.md
-  - Quickstart:
-    - Setup: setup.md
-    - Vector - Geometry: vector_geometry.md
-    - Vector - Attributes: vector_attributes.md
-    - Vector - Joined Attributes: vector_joined.md
-    - Vector - Multilayered: vector_multilayered.md
-    - Point: point.md
-    - Raster: raster.md
-    - Composite: composite.md
-    - Misc: misc.md
-  - Concepts:
-    - STAC Metadata: stac_metadata.md
-    - STAC Generator Architecture: stac_generator_architecture.md
-    - Module: module.md
-  - API Reference:
-    - Schema: schema.md
-    - Generator: generator.md
-    - Factory: factory.md
-    - Utility: utility.md
-    - Exceptions: exception.md
+  - Reference: api_reference.md
 
 plugins:
   - search

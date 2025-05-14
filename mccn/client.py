@@ -85,6 +85,36 @@ class MCCN:
         # Multi-processing
         num_workers: int = 4,
     ) -> None:
+        """Constructor for the mccn engine
+
+        Args:
+            endpoint (str | Path | tuple[str, str] | None, optional): discover project by endpoint. Endpoint can be a tuple of string, which specifies the STAC API URL, and stac collection ID. Endpoint can also be a string or a Path object to a `collection.json` file on local file system. Defaults to None.
+            collection (pystac.Collection | None, optional): discover project by a pystac Collection object. Defaults to None.
+            items (Sequence[pystac.Item] | None, optional): discover project by a sequence of pystac Items. Defaults to None.
+            shape (Shape_T | None, optional): define the shape of geobox. Defaults to None.
+            resolution (Resolution_T | None, optional): define the resolution of the geobox. Defaults to None.
+            bbox (BBox_T | None, optional): define the bounding box of the geobox. Defaults to None.
+            anchor (AnchorPos_T, optional): additional geobox parameter. Defaults to "default".
+            crs (CRS_T, optional): geobox's crs. Defaults to 4326.
+            geobox (GeoBox | None, optional): geobox object. Defaults to None.
+            start_ts (str | pd.Timestamp | datetime.datetime | None, optional): date filtering - start. Defaults to None.
+            end_ts (str | pd.Timestamp | datetime.datetime | None, optional): date filtering - end. Defaults to None.
+            bands (set[str] | None, optional): set of requested bands. Defaults to None.
+            mask_only (bool, optional): whether to load only masks for vector assets. Defaults to False.
+            use_all_vectors (bool, optional): when bands are requested, should all vectors be loaded or only vectors with matching bands be loaded. Non-matching vectors will have their geometry layers loaded to the datacube if True. Defaults to True.
+            x_dim (str, optional): x dimension name of the datacube. Defaults to "x".
+            y_dim (str, optional): y dimension name of the datacube. Defaults to "y".
+            t_dim (str, optional): t dimension name of the datacube. Defaults to "time".
+            mask_name (str, optional): name of the combined mask layer, if combine_mask is True. Defaults to "__MASK__".
+            combine_mask (bool, optional): whether to combine all geometry layers of all vector assets into a single layer. By default, each geometry layer will be loaded as an independent geometry layer. Defaults to False.
+            nodata (Nodata_Map_T, optional): fill value for nodata. If a single value is provided, the value will be used for all layers. If a dictionary is provided, each nodata value will apply for matching key layers. Defaults to 0.
+            nodata_fallback (Nodata_T, optional): fill value fall back for nodata. If a dictionary is provided for nodata, the nodata_fallback value will be used for layers that are not in the nodata dict. Defaults to 0.
+            time_groupby (TimeGroupby, optional): how datetimes are groupped. Acceptable values are year, month, day, hour, minute or time. If time is provided, no time round up is performed. If time is a value, will round up to the nearest matching date. Defaults to "time".
+            merge_method (MergeMethod_Map_T, optional): how overlapping values are merged. Acceptable values are min, max, mean, sum, and replace and None. If None is provided, will use the replace strategy. Also accepts a dictionary if fine-grain control over a specific layer is required. Defaults to None.
+            merge_method_fallback (MergeMethod_T, optional): merge value fallback, applies when a layer name is not in merge_method dictionary. Defaults to "replace".
+            dtype (DType_Map_T, optional): set dtype for a layer. Also accepts a dictionary for fine-grained control. Defaults to None.
+            dtype_fallback (Dtype_T, optional): dtype fallback, when a layer's name is not in dtype dictionary. Defaults to "float64".
+        """
         # Fetch Collection
         self.items = self.get_items(items, collection, endpoint)
         # Make geobox
