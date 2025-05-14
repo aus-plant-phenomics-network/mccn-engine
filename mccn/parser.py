@@ -2,31 +2,85 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Sequence
-from typing import cast
+from dataclasses import dataclass, field
+from typing import Literal, cast
 
 import pandas as pd
 import pystac
-from stac_generator.core import PointConfig, RasterConfig, VectorConfig
+from pydantic import BaseModel
+from pyproj.crs.crs import CRS
+from stac_generator.core import (
+    PointOwnConfig,
+    RasterOwnConfig,
+    VectorOwnConfig,
+)
 from stac_generator.factory import StacGeneratorFactory
 
 from mccn._types import (
     BBox_T,
-    ParsedItem,
-    ParsedPoint,
-    ParsedRaster,
-    ParsedVector,
 )
 from mccn.config import FilterConfig
 from mccn.loader.utils import bbox_from_geobox, get_item_crs
 
 
+@dataclass(kw_only=True)
+class ParsedItem:
+    location: str
+    """Data asset href"""
+    bbox: BBox_T
+    """Data asset bbox - in WGS84"""
+    start: pd.Timestamp
+    """Data asset start_datetime. Defaults to item.datetime if item.start_datetime is null"""
+    end: pd.Timestamp
+    """Data asset end_datetime. Defaults to item.datetime if item.end_datetime is null"""
+    timezone: str | Literal["utc", "local"]
+    """Data asset timezone"""
+    config: BaseModel
+    """STAC Generator config - used for loading data into datacube"""
+    item: pystac.Item
+    """Reference to the actual STAC Item"""
+    bands: set[str]
+    """Bands (or columns) described in the Data asset"""
+    load_bands: set[str] = field(default_factory=set)
+    """Bands (or columns) to be loaded into the datacube from the Data asset"""
+
+
+@dataclass(kw_only=True)
+class ParsedPoint(ParsedItem):
+    crs: CRS
+    """Data asset's CRS"""
+    config: PointOwnConfig
+    """STAC Generator config - point type"""
+
+
+@dataclass(kw_only=True)
+class ParsedVector(ParsedItem):
+    crs: CRS
+    """Data asset's CRS"""
+    aux_bands: set[str] = field(default_factory=set)
+    """Bands (or columns) described in the join file - (external property file linked to the vector asset)"""
+    load_aux_bands: set[str] = field(default_factory=set)
+    """Bands (or columns) to be loaded into the datacube from the join file - i.e. external asset"""
+    config: VectorOwnConfig
+    """STAC Generator config - vector type"""
+
+
+@dataclass(kw_only=True)
+class ParsedRaster(ParsedItem):
+    alias: set[str] = field(default_factory=set)
+    """Band aliasing - derived from eobands common name"""
+    config: RasterOwnConfig
+    """STAC Generator config - raster type"""
+
+
 def _parse_vector(
-    config: VectorConfig,
+    config: VectorOwnConfig,
     location: str,
     bbox: BBox_T,
     start: datetime.datetime,
     end: datetime.datetime,
     item: pystac.Item,
+    timezone: str,
 ) -> ParsedVector:
     """
     Parse vector Item
@@ -48,6 +102,7 @@ def _parse_vector(
         bbox=bbox,
         start=start,
         end=end,
+        timezone=timezone,
         config=config,
         item=item,
         bands=bands,
@@ -59,12 +114,13 @@ def _parse_vector(
 
 
 def _parse_raster(
-    config: RasterConfig,
+    config: RasterOwnConfig,
     location: str,
     bbox: BBox_T,
     start: datetime.datetime,
     end: datetime.datetime,
     item: pystac.Item,
+    timezone: str,
 ) -> ParsedRaster:
     """
     Parse Raster Item
@@ -73,34 +129,30 @@ def _parse_raster(
         bands - bands described in band_info
         alias - eo:bands' common names
     """
-    bands = set([band["name"] for band in config.band_info])
-    alias = set(
-        [
-            band["common_name"]
-            for band in config.band_info
-            if band.get("common_name", None)
-        ]
-    )
+    bands = set([band.name for band in config.band_info])
+    alias = set([band.common_name for band in config.band_info if band.common_name])
     return ParsedRaster(
         location=location,
         bbox=bbox,
         start=start,
         end=end,
+        timezone=timezone,
         config=config,
         item=item,
         bands=bands,
         load_bands=bands,
-        alias=alias,
+        alias=cast(set[str], alias),
     )
 
 
 def _parse_point(
-    config: PointConfig,
+    config: PointOwnConfig,
     location: str,
     bbox: BBox_T,
     start: datetime.datetime,
     end: datetime.datetime,
     item: pystac.Item,
+    timezone: str,
 ) -> ParsedPoint:
     """
     Parse point Item
@@ -116,6 +168,7 @@ def _parse_point(
         bbox=bbox,
         start=start,
         end=end,
+        timezone=timezone,
         config=config,
         item=item,
         bands=bands,
@@ -141,7 +194,7 @@ def parse_item(item: pystac.Item) -> ParsedItem:
         ParsedItem: one of ParsedVector, ParsedRaster, and ParsedPoint
     """
     config = StacGeneratorFactory.extract_item_config(item)
-    location = config.location
+    location = StacGeneratorFactory.get_item_asset_href(item)
     bbox = cast(BBox_T, item.bbox)
     start = (
         pd.Timestamp(item.properties["start_datetime"])
@@ -153,13 +206,13 @@ def parse_item(item: pystac.Item) -> ParsedItem:
         if "end_datetime" in item.properties
         else pd.Timestamp(item.datetime)
     )
-
-    if isinstance(config, PointConfig):
-        return _parse_point(config, location, bbox, start, end, item)
-    if isinstance(config, VectorConfig):
-        return _parse_vector(config, location, bbox, start, end, item)
-    if isinstance(config, RasterConfig):
-        return _parse_raster(config, location, bbox, start, end, item)
+    timezone = StacGeneratorFactory.get_item_timezone(item)
+    if isinstance(config, PointOwnConfig):
+        return _parse_point(config, location, bbox, start, end, item, timezone)
+    if isinstance(config, VectorOwnConfig):
+        return _parse_vector(config, location, bbox, start, end, item, timezone)
+    if isinstance(config, RasterOwnConfig):
+        return _parse_raster(config, location, bbox, start, end, item, timezone)
     raise ValueError(f"Invalid config type: {type(config)}")
 
 
@@ -350,6 +403,14 @@ class Parser:
         self._raster_items: list[ParsedRaster] = list()
 
     @property
+    def parsed_items(self) -> list[ParsedItem]:
+        result: list[ParsedItem] = []
+        result.extend(self.point)
+        result.extend(self.vector)
+        result.extend(self.raster)
+        return result
+
+    @property
     def point(self) -> list[ParsedPoint]:
         return self._point_items
 
@@ -377,11 +438,11 @@ class Parser:
         parsed_item = band_filter(parsed_item, self.bands, self.filter_config)
         # Categorise parsed items
         if parsed_item:
-            if isinstance(parsed_item.config, VectorConfig):
+            if isinstance(parsed_item.config, VectorOwnConfig):
                 self._vector_items.append(cast(ParsedVector, parsed_item))
-            elif isinstance(parsed_item.config, RasterConfig):
+            elif isinstance(parsed_item.config, RasterOwnConfig):
                 self._raster_items.append(cast(ParsedRaster, parsed_item))
-            elif isinstance(parsed_item.config, PointConfig):
+            elif isinstance(parsed_item.config, PointOwnConfig):
                 self._point_items.append(cast(ParsedPoint, parsed_item))
             else:
                 raise ValueError(

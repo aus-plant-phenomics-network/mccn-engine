@@ -76,7 +76,7 @@ lint: pre-commit mypy 						## Run all linting
 .PHONY: coverage
 coverage:  											## Run the tests and generate coverage report
 	@echo "=> Running tests with coverage"
-	@$(PDM) run pytest tests --cov src --cov-report html
+	@$(PDM) run pytest tests --cov mccn --cov-report html
 
 .PHONY: test
 test:  												## Run the tests
@@ -117,27 +117,25 @@ gryfn:
 	@echo running config from $(CONFIG_PATH)/gryfn/config.json
 	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/gryfn/config.json --id Gryfn --dst generated -v
 
-.PHONY: llara_campey_raster
-llara_campey_raster:
-	@echo running config from $(CONFIG_PATH)/llara_campey/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/llara_campey/raster_config.json --id Llara_Campey_Raster --dst $(SERVER_PATH) -v
-
 .PHONY: case-study-1-raster
 case-study-1-raster:
 	@echo running config from $(CONFIG_PATH)/case-study-1/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster --dst $(SERVER_PATH) -v
+	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-1/raster_config.json --id Case_Study_1_Raster -v
 
-.PHONY: test-geotiff
-test-geotiff:
-	@echo running config from $(CONFIG_PATH)/test-geotiff/raster_config.json
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/test-geotiff/raster_config.json --id TestGeoTiff_Raster --dst $(SERVER_PATH) -v
+.PHONY: case-study-7-scenario-1
+case-study-7-scenario-1:
+	@cd configs/case-study-7
+	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_1_config.json --id CaseStudy7Scenario1 --dst generated --num_workers 4
 
-.PHONY: case-study-7-llara
-case-study-7-llara:
-	@echo running config from $(CONFIG_PATH)/case-study-7
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json --id Case_Study_7_Llara --dst generated -v
+.PHONY: case-study-7-scenario-2
+case-study-7-scenario-2:
+	@cd configs/case-study-7
+	@$(PDM) run stac_generator serialise llara_shape_config.json llara_raster_config.json llara_point_config.json scenario_2_config.json --id CaseStudy7Scenario2 --dst generated --num_workers 4
 
-.PHONY: case-study-7-llara-scenario1
-case-study-7-llara-scenario1:
-	@echo running config from $(CONFIG_PATH)/case-study-7
-	@$(PDM) run stac_generator serialise $(CONFIG_PATH)/case-study-7/llara_shape_config.json $(CONFIG_PATH)/case-study-7/scenario_1_config.json --id Case_Study_7_Llara_Scenario1 --dst generated -v
+.PHONY: docs
+docs: 												## Serve mkdocs locally
+	@$(PDM) run mkdocs serve
+
+.PHONY: docs-deploy
+docs-deploy:										## Deploy to docs to github pages
+	@$(PDM) run mkdocs gh-deploy

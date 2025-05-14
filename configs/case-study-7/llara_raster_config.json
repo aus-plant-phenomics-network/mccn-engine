@@ -4,6 +4,7 @@
         "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_ECa_all_kriged_harmonized.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "ECa"
@@ -15,6 +16,7 @@
         "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_ECa_all_kriged_harmonized.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "ECa"
@@ -26,6 +28,7 @@
         "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Llara_Gamma_K_all_kriged_harmonized.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "GammaK"
@@ -37,6 +40,7 @@
         "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/Campey_Gamma_K_all_kriged_harmonized.tif",
         "collection_date": "2025-01-01",
         "collection_time": "00:00",
+        "timezone": "utc",
         "band_info": [
             {
                 "name": "GammaK"

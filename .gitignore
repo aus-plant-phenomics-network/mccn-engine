@@ -167,3 +167,5 @@ cython_debug/
 
 dev_notebooks/
 .vscode/
+# Stac Generator default output
+generated/

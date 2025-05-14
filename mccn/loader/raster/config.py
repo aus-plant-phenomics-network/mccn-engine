@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
 )
 
 if TYPE_CHECKING:
-    from concurrent.futures import ThreadPoolExecutor
-    from typing import Literal, Mapping
-
     import pystac
-    from numpy.typing import DTypeLike
     from odc.stac._stac_load import GroupbyCallback
     from odc.stac.model import ParsedItem
 
@@ -58,13 +53,3 @@ def set_groupby(
             return _groupby_minute
         case _:
             return groupby
-
-
-@dataclass
-class RasterLoadConfig:
-    """Load config for raster asset. Parameters come from odc.stac.load"""
-
-    resampling: str | dict[str, str] | None = None
-    chunks: dict[str, int | Literal["auto"]] | None = None
-    pool: ThreadPoolExecutor | int | None = None
-    dtype: DTypeLike | Mapping[str, DTypeLike] = None

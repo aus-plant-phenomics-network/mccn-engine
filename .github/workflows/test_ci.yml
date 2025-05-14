@@ -38,7 +38,7 @@ jobs:
               ./pdm.lock
 
         - name: Install dependencies
-          run: pdm install -G:all
+          run: pdm install
 
         - name: Test with pytest
           run: pdm run pytest tests --cov=src --cov-report=xml --cov-fail-under=0

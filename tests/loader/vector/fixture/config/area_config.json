@@ -1,0 +1,133 @@
+[
+  {
+    "id": "point_cook_mask",
+    "location": "tests/loader/vector/fixture/asset/area.zip",
+    "layer": "PointCook",
+    "collection_date": "2016-10-01",
+    "collection_time": "00:00",
+    "timezone": "utc"
+  },
+  {
+    "id": "hoppers_crossing_name",
+    "location": "tests/loader/vector/fixture/asset/area.zip",
+    "layer": "HoppersCrossing",
+    "collection_date": "2016-10-02",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "column_info": [
+      {
+        "name": "name"
+      }
+    ]
+  },
+  {
+    "id": "werribee_crime",
+    "location": "tests/loader/vector/fixture/asset/area.zip",
+    "layer": "Werribee",
+    "collection_date": "2017-10-01",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "column_info": [
+      {
+        "name": "name"
+      },
+      {
+        "name": "area_sqkm"
+      }
+    ],
+    "join_config": {
+      "file": "tests/loader/vector/fixture/asset/crime.csv",
+      "left_on": "name",
+      "right_on": "name",
+      "column_info": [
+        {
+          "name": "name",
+          "description": "SA2 area name"
+        },
+        {
+          "name": "lga_name",
+          "description": "LGA name"
+        },
+        {
+          "name": "crime_incidents",
+          "description": "number of incidents reported"
+        },
+        {
+          "name": "crime_rate",
+          "description": "crime rate per 100000 people"
+        }
+      ]
+    }
+  },
+  {
+    "id": "sunbury_crime",
+    "location": "tests/loader/vector/fixture/asset/area.zip",
+    "layer": "Sunbury",
+    "collection_date": "2017-10-02",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "column_info": [
+      {
+        "name": "name"
+      },
+      {
+        "name": "area_sqkm"
+      }
+    ],
+    "join_config": {
+      "file": "tests/loader/vector/fixture/asset/crime.csv",
+      "left_on": "name",
+      "right_on": "name",
+      "column_info": [
+        {
+          "name": "name",
+          "description": "SA2 area name"
+        },
+        {
+          "name": "lga_name",
+          "description": "LGA name"
+        },
+        {
+          "name": "crime_incidents",
+          "description": "number of incidents reported"
+        },
+        {
+          "name": "crime_rate",
+          "description": "crime rate per 100000 people"
+        }
+      ]
+    }
+  },
+  {
+    "id": "sunbury_population",
+    "location": "tests/loader/vector/fixture/asset/area.zip",
+    "layer": "Sunbury",
+    "collection_date": "2017-11-01",
+    "collection_time": "00:00",
+    "timezone": "utc",
+    "column_info": [
+      {
+        "name": "name"
+      },
+      {
+        "name": "area_sqkm"
+      }
+    ],
+    "join_config": {
+      "file": "tests/loader/vector/fixture/asset/population.csv",
+      "left_on": "name",
+      "right_on": "name",
+      "date_column": "date",
+      "column_info": [
+        {
+          "name": "name",
+          "description": "SA2 area name"
+        },
+        {
+          "name": "population",
+          "description": "population"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,62 @@
+[
+    {
+        "id": "L1_2017_wheat",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/L1_2017_wheat.txt",
+        "epsg": "4326",
+        "collection_date": "2017-01-01",
+        "collection_time": "00:00",
+        "timezone": "utc",
+        "X": "longitude",
+        "Y": "latitude",
+        "Z": "elevation_m",
+        "column_info": [
+            {
+                "name": "yield_t_ha",
+                "description": "yield (t/ha)"
+            },
+            {
+                "name": "moisture"
+            }
+        ]
+    },
+    {
+        "id": "L1_2019_wheat",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/L1_2019_wheat.txt",
+        "epsg": "4326",
+        "collection_date": "2019-01-01",
+        "collection_time": "00:00",
+        "timezone": "utc",
+        "X": "long",
+        "Y": "lat",
+        "Z": "elevation",
+        "column_info": [
+            {
+                "name": "yield_t_ha",
+                "description": "yield (t/ha)"
+            },
+            {
+                "name": "moisture"
+            }
+        ]
+    },
+    {
+        "id": "L1_2021_wheat",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/L1_2021_wheat.txt",
+        "epsg": "4326",
+        "collection_date": "2021-01-01",
+        "collection_time": "00:00",
+        "timezone": "utc",
+        "X": "long",
+        "Y": "lat",
+        "Z": "elevation",
+        "column_info": [
+            {
+                "name": "yield_t_ha",
+                "description": "yield (t/ha)"
+            },
+            {
+                "name": "moisture"
+            }
+        ]
+    }
+]

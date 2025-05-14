@@ -1,0 +1,59 @@
+[
+    {
+        "id": "soil_measurement",
+        "location": "https://object-store.rc.nectar.org.au/v1/AUTH_2b454f47f2654ab58698afd4b4d5eba7/mccn-test-data/LlaraCampey/soil_data.csv",
+        "collection_date": "2016-01-01",
+        "collection_time": "10:00:00",
+        "X": "Long",
+        "Y": "Lat",
+        "Z": "mid-depth",
+        "epsg": 4326,
+        "timezone": "utc",
+        "column_info": [
+            {
+                "name": "ECa",
+                "description": "ECa"
+            },
+            {
+                "name": "GammaK",
+                "description": "GammaK"
+            },
+            {
+                "name": "DEM",
+                "description": "DEM"
+            },
+            {
+                "name": "NDVI10",
+                "description": "NDVI10"
+            },
+            {
+                "name": "NDVImed",
+                "description": "NDVImed"
+            },
+            {
+                "name": "NDVI90",
+                "description": "NDVI90"
+            },
+            {
+                "name": "Clay",
+                "description": "Clay"
+            },
+            {
+                "name": "Silt",
+                "description": "Silt"
+            },
+            {
+                "name": "Sand",
+                "description": "Sand"
+            },
+            {
+                "name": "pH",
+                "description": "pH"
+            },
+            {
+                "name": "EC",
+                "description": "EC"
+            }
+        ]
+    }
+]
