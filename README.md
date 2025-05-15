@@ -22,7 +22,7 @@
 
 Check out the [documentation 📚](https://aus-plant-phenomics-network.github.io/mccn-engine/)
 
-Also check out the [case studies](.https://github.com/aus-plant-phenomics-network/mccn-case-studies) notebooks.
+Also check out the [case studies](https://github.com/aus-plant-phenomics-network/mccn-case-studies) notebooks.
 
 ## About
 
