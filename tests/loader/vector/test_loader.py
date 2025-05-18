@@ -1,4 +1,5 @@
 import pickle
+from pathlib import Path
 from typing import Generator, cast
 
 import numpy as np
@@ -818,3 +819,15 @@ def test_set_dtype(
     )
     ds = client.load()
     assert ds["population"].dtype == dtype
+
+
+# Test serialisation
+def test_serialise(
+    area_collection: pystac.Collection, area_geobox: GeoBox, tmp_path: Path
+) -> None:
+    client = MCCN(collection=area_collection, geobox=area_geobox)
+    ds = client.load()
+    path = tmp_path / "area.cd"
+    client.to_cdf(ds, path)
+    ref_ds = client.from_cdf(path)
+    xr.testing.assert_equal(ds, ref_ds)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Mapping, Sequence
 
@@ -280,3 +281,28 @@ class MCCN:
             raise e
         except Exception as exception:
             raise EndpointException from exception
+
+    @staticmethod
+    def to_cdf(ds: xr.Dataset, path: str | Path) -> None:
+        if ds.attrs:
+            for k, v in ds.attrs.items():
+                if isinstance(v, dict):
+                    try:
+                        ds.attrs[k] = json.dumps(v)
+                    except Exception:
+                        raise ValueError(
+                            f"Unable to serialise cdf due to cube's attrs: {ds.attrs}"
+                        )
+        ds.to_netcdf(path)
+
+    @staticmethod
+    def from_cdf(path: str | Path) -> xr.Dataset:
+        ds = xr.open_dataset(path)
+        if ds.attrs:
+            for k, v in ds.attrs.items():
+                if isinstance(v, str):
+                    try:
+                        ds.attrs[k] = json.loads(v)
+                    except Exception:
+                        pass
+        return ds

@@ -10,6 +10,7 @@ from mccn.client import MCCN
 from tests.utils import RASTER_FIXTURE_PATH
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Callable
 
     import pystac
@@ -494,3 +495,17 @@ def test_raster_set_dtype(
     ds = client.load()
     for k, v in dtype_map.items():
         assert ds[k].dtype == v
+
+
+# Test serialisation
+def test_to_raster_from_raster_methods(
+    tmp_path: Path,
+    multiband_geobox: GeoBox,
+    multibands_collection: pystac.Collection,
+) -> None:
+    client = MCCN(collection=multibands_collection, geobox=multiband_geobox)
+    ds = client.load()
+    raster_path = tmp_path / "raster.cd"
+    client.to_cdf(ds, raster_path)
+    ref_ds = client.from_cdf(raster_path)
+    xr.testing.assert_equal(ds, ref_ds)
