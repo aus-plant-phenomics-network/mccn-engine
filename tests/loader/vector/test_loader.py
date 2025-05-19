@@ -828,6 +828,6 @@ def test_serialise(
     client = MCCN(collection=area_collection, geobox=area_geobox)
     ds = client.load()
     path = tmp_path / "area.cd"
-    client.to_cdf(ds, path)
-    ref_ds = client.from_cdf(path)
+    client.to_netcdf(ds, path)
+    ref_ds = client.from_netcdf(path)
     xr.testing.assert_equal(ds, ref_ds)

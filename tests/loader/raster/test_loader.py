@@ -506,6 +506,6 @@ def test_to_raster_from_raster_methods(
     client = MCCN(collection=multibands_collection, geobox=multiband_geobox)
     ds = client.load()
     raster_path = tmp_path / "raster.cd"
-    client.to_cdf(ds, raster_path)
-    ref_ds = client.from_cdf(raster_path)
+    client.to_netcdf(ds, raster_path)
+    ref_ds = client.from_netcdf(raster_path)
     xr.testing.assert_equal(ds, ref_ds)

@@ -283,7 +283,7 @@ class MCCN:
             raise EndpointException from exception
 
     @staticmethod
-    def to_cdf(ds: xr.Dataset, path: str | Path) -> None:
+    def to_netcdf(ds: xr.Dataset, path: str | Path) -> None:
         if ds.attrs:
             for k, v in ds.attrs.items():
                 if isinstance(v, dict):
@@ -296,7 +296,7 @@ class MCCN:
         ds.to_netcdf(path)
 
     @staticmethod
-    def from_cdf(path: str | Path) -> xr.Dataset:
+    def from_netcdf(path: str | Path) -> xr.Dataset:
         ds = xr.open_dataset(path)
         if ds.attrs:
             for k, v in ds.attrs.items():
