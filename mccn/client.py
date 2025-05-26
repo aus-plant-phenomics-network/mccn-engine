@@ -285,15 +285,18 @@ class MCCN:
     @staticmethod
     def to_netcdf(ds: xr.Dataset, path: str | Path) -> None:
         if ds.attrs:
-            for k, v in ds.attrs.items():
+            copy_ds = ds.copy(deep=True)
+            for k, v in copy_ds.attrs.items():
                 if isinstance(v, dict):
                     try:
-                        ds.attrs[k] = json.dumps(v)
+                        copy_ds.attrs[k] = json.dumps(v)
                     except Exception:
                         raise ValueError(
-                            f"Unable to serialise cdf due to cube's attrs: {ds.attrs}"
+                            f"Unable to serialise cdf due to cube's attrs: {copy_ds.attrs}"
                         )
-        ds.to_netcdf(path)
+            copy_ds.to_netcdf(path)
+        else:
+            ds.to_netcdf(path)
 
     @staticmethod
     def from_netcdf(path: str | Path) -> xr.Dataset:

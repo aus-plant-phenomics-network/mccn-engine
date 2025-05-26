@@ -831,3 +831,4 @@ def test_serialise(
     client.to_netcdf(ds, path)
     ref_ds = client.from_netcdf(path)
     xr.testing.assert_equal(ds, ref_ds)
+    assert sorted(ds.attrs) == sorted(ref_ds.attrs)
